@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>(Brand) Order Update</title>
+    <style>
+        /* Base styles with email client compatibility */
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            line-height: 1.5;
+            color: #1f2937;
+            margin: 0;
+            padding: 0;
+            background-color: #f3f4f6;
+            -webkit-text-size-adjust: 100%;
+        }
+        
+        table {
+            border-spacing: 0;
+            border-collapse: collapse;
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+        }
+        
+        td {
+            padding: 0;
+        }
+        
+        img {
+            border: 0;
+            line-height: 100%;
+            outline: none;
+            text-decoration: none;
+            -ms-interpolation-mode: bicubic;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .header {
+            background-color: #4338ca;
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: -0.5px;
+            margin-bottom: 6px;
+        }
+        
+        .header-title {
+            margin: 10px 0 5px;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+        }
+        
+        .header-subtitle {
+            margin: 10px 0 0;
+            font-size: 15px;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .greeting {
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0 0 15px;
+            color: #1f2937;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 8px;
+        }
+        
+        .order-summary {
+            background-color: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .order-id {
+            font-family: 'Courier New', monospace;
+            background-color: #e5e7eb;
+            padding: 3px 7px;
+            border-radius: 4px;
+            color: #4b5563;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        /* Status badges with CSS classes - restored working version */
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: capitalize;
+            margin-top: 5px;
+        }
+        
+        .status-pending { background-color: #FFF7CD; color: #7A4F01; }
+        .status-processing { background-color: #D0F2FF; color: #04297A; }
+        .status-shipping { background-color: #D8FBDE; color: #044A1A; }
+        .status-delivered { background-color: #C8FACD; color: #087532; }
+        .status-canceled { background-color: #FFE7D9; color: #7A0C2E; }
+        
+        .info-card {
+            padding: 18px;
+            background-color: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 18px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .info-card-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin: 0 0 12px;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+        }
+        
+        .info-card-content {
+            margin: 0;
+            font-size: 15px;
+            color: #4b5563;
+        }
+        
+        .items-container {
+            background-color: #f9fafb;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .price-summary {
+            background-color: #f9fafb;
+            border-radius: 8px;
+            padding: 18px 20px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 14px;
+        }
+        
+        .price-label {
+            color: #6b7280;
+        }
+        
+        .total-row {
+            font-size: 18px;
+            font-weight: 700;
+            padding-top: 10px;
+            margin-top: 10px;
+            border-top: 2px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: #4338ca;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 15px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 25px 30px;
+            background-color: #f3f4f6;
+            color: #6b7280;
+            font-size: 13px;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .footer p {
+            margin: 5px 0;
+        }
+        
+        .divider {
+            height: 1px;
+            background-color: #e5e7eb;
+            margin: 25px 0;
+        }
+        
+        @media screen and (max-width: 600px) {
+            .container {
+                width: 100% !important;
+                border-radius: 0;
+            }
+            
+            .content {
+                padding: 20px 15px;
+            }
+            
+            .btn {
+                display: block;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div style="background-color: #f3f4f6; padding: 20px 0;">
+        <div class="container">
+            <div class="header">
+                <div class="logo">(Brand)</div>
+                <h1 class="header-title">{{status_title}}</h1>
+                <p class="header-subtitle">Order #<span class="order-id">{{order_id}}</span></p>
+            </div>
+            
+            <div class="content">
+                <p class="greeting">Hello {{to_name}},</p>
+                <p>{{status_message}}</p>
+                
+                <div class="section">
+                    <h2 class="section-title">👤 Contact Information</h2>
+                    <div class="info-card">
+                        <p class="info-card-content">
+                            <strong>Name:</strong> {{to_name}}<br>
+                            <strong>Email:</strong> {{customer_email}}<br>
+                            <strong>Phone:</strong> {{customer_phone}}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2 class="section-title">📦 Order Summary</h2>
+                    <div class="order-summary">
+                        <p><strong>Order Date:</strong> {{order_date}}</p>
+                        <p>
+                            <strong>Status:</strong>
+                            <span class="status-badge status-{{order_status}}">{{order_status}}</span>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="info-card" style="border-left: 5px solid #4338ca;">
+                        <h3 class="info-card-title">
+                            <span style="margin-right: 8px;">📍</span> Shipping Information
+                        </h3>
+                        <p class="info-card-content"><strong>Address:</strong> {{shipping_address}}</p>
+                        <p class="info-card-content"><strong>Delivery:</strong> {{delivery_slot}}</p>
+                    </div>
+                    
+                    <div class="info-card" style="border-left: 5px solid #0EA5E9;">
+                        <h3 class="info-card-title">
+                            <span style="margin-right: 8px;">💳</span> Payment Information
+                        </h3>
+                        <p class="info-card-content"><strong>Method:</strong> {{payment_method}}</p>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">Order Items</h3>
+                    <div class="items-container">
+                        {{{order_items_formatted}}}
+                    </div>
+                </div>
+                
+                <div class="price-summary">
+                    <div class="price-row">
+                        <span class="price-label">Subtotal:</span>
+                        <span>{{subtotal}}</span>
+                    </div>
+                    <div class="price-row">
+                        <span class="price-label">Shipping:</span>
+                        <span>{{shipping_cost}}</span>
+                    </div>
+                    <div class="price-row">
+                        <span class="price-label">Tax:</span>
+                        <span>{{tax_amount}}</span>
+                    </div>
+                    <div class="price-row">
+                        <span class="price-label">Discount:</span>
+                        <span>{{discount_amount}}</span>
+                    </div>
+                    <div class="total-row">
+                        <span>Total:</span>
+                        <span>{{order_total}}</span>
+                    </div>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <p>If you have any questions about your order, please contact our customer service team.</p>
+                
+                <a href="https://yourstore.com/orders" class="btn">Track Your Order</a>
+            </div>
+            
+            <div class="footer">
+                <p>© 2024 (Brand). All rights reserved.</p>
+                <p>This email was sent to {{to_email}}</p>
+                <p>Please do not reply to this email as it is not monitored.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 
