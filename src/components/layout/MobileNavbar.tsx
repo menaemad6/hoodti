@@ -37,6 +37,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useRoleAccess } from "@/hooks/use-role-access";
+import { BRAND_NAME } from "@/lib/constants";
 
 interface NavItem {
   icon: React.ElementType;
@@ -288,7 +289,7 @@ const MobileNavbar = () => {
           <div className="flex-1 flex justify-center">
             <Link to="/" className="flex items-center">
               <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary/90 to-primary/70">
-              (Brand)
+                {BRAND_NAME}
               </span>
             </Link>
           </div>

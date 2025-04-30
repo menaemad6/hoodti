@@ -1,9 +1,9 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BRAND_NAME } from "@/lib/constants";
 
 interface SidebarHeaderProps {
   isSidebarOpen: boolean;
@@ -21,7 +21,7 @@ export const SidebarHeader: React.FC<SidebarHeaderProps> = ({
           <span className="text-lg font-bold text-primary">G</span>
         </div>
         {isSidebarOpen && (
-          <span className="text-xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">(Brand)</span>
+          <span className="text-xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">{BRAND_NAME}</span>
         )}
       </Link>
       <Button 

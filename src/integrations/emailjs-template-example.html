@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>(Brand) Order Update</title>
+    <title>{{brand_name}} Order Update</title>
     <style>
         /* Base styles with email client compatibility */
         body {
@@ -241,7 +241,7 @@
     <div style="background-color: #f3f4f6; padding: 20px 0;">
         <div class="container">
             <div class="header">
-                <div class="logo">(Brand)</div>
+                <div class="logo">{{brand_name}}</div>
                 <h1 class="header-title">{{status_title}}</h1>
                 <p class="header-subtitle">Order #<span class="order-id">{{order_id}}</span></p>
             </div>
@@ -327,7 +327,8 @@
             </div>
             
             <div class="footer">
-                <p>© 2024 (Brand). All rights reserved.</p>
+                <p>Thank you for shopping with us!</p>
+                <p>© 2024 {{brand_name}}. All rights reserved.</p>
                 <p>This email was sent to {{to_email}}</p>
                 <p>Please do not reply to this email as it is not monitored.</p>
             </div>

@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import GlassCard from "@/components/ui/glass-card";
 import Navbar from "@/components/layout/Navbar";
 import MobileNavbar from "@/components/layout/MobileNavbar";
+import { BRAND_NAME } from "@/lib/constants";
 
 const signupSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
@@ -331,12 +332,14 @@ const Signup = () => {
                     <ShoppingBag className="w-8 h-8 text-primary dark:text-primary/90" />
                   </div>
                 </div>
-                <h2 className="text-3xl font-bold text-foreground/90 dark:text-foreground/80 mb-4">
-                  Welcome to (Brand)
-                </h2>
-                <p className="text-lg text-muted-foreground dark:text-muted-foreground/90">
-                  Your premium destination for quality groceries and exceptional shopping experience. Join us today and discover a better way to shop.
-                </p>
+                <div className="space-y-3">
+                  <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-5xl">
+                    Welcome to {BRAND_NAME}
+                  </h2>
+                  <p className="text-lg text-muted-foreground dark:text-muted-foreground/90">
+                    Your premium destination for quality groceries and exceptional shopping experience. Join us today and discover a better way to shop.
+                  </p>
+                </div>
               </div>
             </div>
           </div>

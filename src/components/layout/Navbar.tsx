@@ -18,6 +18,7 @@ import {
 import { useTheme } from "@/context/ThemeContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { BRAND_NAME } from "@/lib/constants";
 
 const Navbar = () => {
   const { cartItemsCount } = useCart();
@@ -60,7 +61,7 @@ const Navbar = () => {
                       <Link to="/" className="flex items-center space-x-2 mb-6">
                         <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary/90 to-primary/70">
                           Glass
-                          <span className="text-foreground">(Brand)</span>
+                          <span className="text-foreground">{BRAND_NAME}</span>
                         </span>
                       </Link>
                       {/* Mobile Search */}
@@ -176,7 +177,7 @@ const Navbar = () => {
               {/* Logo */}
               <Link to="/" className="flex items-center space-x-2">
                 <span className="text-lg sm:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary/90 to-primary/70">
-                (Brand)
+                {BRAND_NAME}
                 </span>
               </Link>
 

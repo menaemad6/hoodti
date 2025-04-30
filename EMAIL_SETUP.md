@@ -40,6 +40,7 @@ Each email includes:
 4. Design your template using the visual editor or HTML
    - We've provided a sample template in `src/integrations/emailjs-template-example.html` that you can copy and paste
    - The template uses these dynamic variables:
+     - `{{brand_name}}`: Will be populated from app's BRAND_NAME constant
      - `{{to_email}}`: Customer's email
      - `{{to_name}}`: Customer's name
      - `{{order_id}}`: Order ID 

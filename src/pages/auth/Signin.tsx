@@ -19,6 +19,7 @@ import GlassCard from "@/components/ui/glass-card";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/layout/Navbar";
 import MobileNavbar from "@/components/layout/MobileNavbar";
+import { BRAND_NAME } from "@/lib/constants";
 
 const signinSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -128,12 +129,14 @@ const Signin = () => {
                     <ShoppingBag className="w-8 h-8 text-primary dark:text-primary/90" />
                   </div>
                 </div>
-                <h2 className="text-3xl font-bold text-foreground/90 dark:text-foreground/80 mb-4">
-                  Welcome back to (Brand)
-                </h2>
-                <p className="text-lg text-muted-foreground dark:text-muted-foreground/90">
-                  Sign in to your account and continue your exceptional shopping experience with us.
-                </p>
+                <div className="space-y-2 text-center">
+                  <h1 className="text-2xl font-bold tracking-tight">
+                    Welcome back to {BRAND_NAME}
+                  </h1>
+                  <p className="text-lg text-muted-foreground dark:text-muted-foreground/90">
+                    Sign in to your account and continue your exceptional shopping experience with us.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -156,7 +159,7 @@ const Signin = () => {
                   <div className="mt-3 relative">
                     <p className="text-base sm:text-lg text-muted-foreground dark:text-muted-foreground/90 relative z-10">
                       Sign in to continue to{" "}
-                      <span className="font-medium text-foreground dark:text-foreground/90">(Brand)</span>
+                      <span className="font-medium text-foreground dark:text-foreground/90">{BRAND_NAME}</span>
                     </p>
                     <div className="absolute -bottom-1 left-0 right-0 h-3 bg-primary/[0.08] dark:bg-primary/[0.04] -skew-x-6 transform" />
                   </div>
@@ -274,13 +277,14 @@ const Signin = () => {
           </div>
           
                 <div className="mt-6 sm:mt-8 text-center">
-                  <p className="text-muted-foreground">
-              Don't have an account?{" "}
-              <Link to="/signup" className="text-primary font-medium hover:underline">
-                Sign up
-              </Link>
-            </p>
-          </div>
+                  <div className="mt-4 text-center text-sm text-gray-500">
+                    Don't have an account?{" "}
+                    <Link to="/signup" className="font-medium text-primary hover:underline">
+                      Sign up
+                    </Link>{" "}
+                    for a <span className="font-medium text-foreground dark:text-foreground/90">{BRAND_NAME}</span> account today.
+                  </div>
+                </div>
         </GlassCard>
             </div>
           </div>

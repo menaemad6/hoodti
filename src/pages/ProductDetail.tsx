@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import WishlistButton from "@/components/product/WishlistButton";
+import { BRAND_NAME } from "@/lib/constants";
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -238,7 +239,7 @@ const ProductDetail = () => {
     if (navigator.share) {
       navigator.share({
         title: product.name,
-        text: `Check out ${product.name} on (Brand)`,
+        text: `Check out ${product.name} on ${BRAND_NAME}`,
         url: window.location.href
       })
       .then(() => {
