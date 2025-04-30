@@ -676,20 +676,38 @@ const Checkout = () => {
                       <RadioGroup 
                         defaultValue="cash"
                         name="paymentMethod" 
-                        onValueChange={(value) => handleRadioChange("paymentMethod", value)}
+                        onValueChange={(value) => {
+                          if (value === "credit-card" || value === "paypal") {
+                            toast({
+                              title: "Payment Method Unavailable",
+                              description: `${value === "credit-card" ? "Credit card" : "PayPal"} payment is not available yet.`,
+                              variant: "default"
+                            });
+                            // Keep cash as selected
+                            handleRadioChange("paymentMethod", "cash");
+                          } else {
+                            handleRadioChange("paymentMethod", value);
+                          }
+                        }}
                         className="grid grid-cols-1 gap-4 sm:grid-cols-3"
                       >
                         <div className="flex items-center space-x-2 rounded-lg border p-4">
                           <RadioGroupItem id="cash" value="cash" />
                           <Label htmlFor="cash">Cash on Delivery</Label>
                         </div>
-                        <div className="flex items-center space-x-2 rounded-lg border p-4">
-                          <RadioGroupItem id="credit-card" value="credit-card" />
-                          <Label htmlFor="credit-card">Credit Card</Label>
+                        <div className="flex items-center space-x-2 rounded-lg border p-4 relative group opacity-70 cursor-not-allowed">
+                          <RadioGroupItem id="credit-card" value="credit-card" disabled />
+                          <Label htmlFor="credit-card" className="cursor-not-allowed">Credit Card</Label>
+                          <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full">
+                            Soon
+                          </span>
                         </div>
-                        <div className="flex items-center space-x-2 rounded-lg border p-4">
-                          <RadioGroupItem id="paypal" value="paypal" />
-                          <Label htmlFor="paypal">PayPal</Label>
+                        <div className="flex items-center space-x-2 rounded-lg border p-4 relative group opacity-70 cursor-not-allowed">
+                          <RadioGroupItem id="paypal" value="paypal" disabled />
+                          <Label htmlFor="paypal" className="cursor-not-allowed">PayPal</Label>
+                          <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full">
+                            Soon
+                          </span>
                         </div>
                       </RadioGroup>
                     </GlassCard>

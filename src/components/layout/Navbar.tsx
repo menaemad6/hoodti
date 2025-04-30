@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, ShoppingCart, User, Search, Sun, Moon, Laptop } from "lucide-react";
+import { Menu, ShoppingCart, User, Sun, Moon, Laptop } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
@@ -23,17 +22,8 @@ import { BRAND_NAME } from "@/lib/constants";
 const Navbar = () => {
   const { cartItemsCount } = useCart();
   const { isAuthenticated, user } = useAuth();
-  const [searchTerm, setSearchTerm] = useState("");
   const { theme, setTheme, resolvedTheme } = useTheme();
   const navigate = useNavigate();
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchTerm.trim()) {
-      navigate(`/shop?search=${encodeURIComponent(searchTerm.trim())}`);
-      setSearchTerm("");
-    }
-  };
 
   return (
     <div className="sticky top-0 z-50 w-full px-1 sm:px-4">
@@ -64,24 +54,6 @@ const Navbar = () => {
                           <span className="text-foreground">{BRAND_NAME}</span>
                         </span>
                       </Link>
-                      {/* Mobile Search */}
-                      <form onSubmit={handleSearch} className="relative">
-                        <Input
-                          type="search"
-                          placeholder="Search products..."
-                          className="w-full rounded-full bg-accent/50 border-accent focus-visible:ring-accent"
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                        <Button 
-                          type="submit" 
-                          variant="ghost" 
-                          size="icon" 
-                          className="absolute right-0 top-0 hover:bg-accent rounded-full"
-                        >
-                          <Search className="h-4 w-4" />
-                        </Button>
-                      </form>
                     </div>
 
                     {/* Profile Card for Mobile */}
@@ -197,19 +169,8 @@ const Navbar = () => {
                 </Link>
               </nav>
 
-              {/* Desktop Search and Actions */}
+              {/* Desktop Actions */}
               <div className="hidden md:flex items-center space-x-2">
-                <form onSubmit={handleSearch} className="relative hidden lg:block w-64">
-                  <Input
-                    type="search"
-                    placeholder="Search products..."
-                    className="pl-9 h-9 rounded-full bg-muted/50"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                </form>
-                
                 <ThemeToggle />
                 
                 {isAuthenticated ? (

@@ -283,3 +283,10 @@
 .animate-float-4 { animation: float-4 9s ease-in-out infinite; }
 .animate-float-5 { animation: float-5 10s ease-in-out infinite; }
 .animate-float-6 { animation: float-6 11s ease-in-out infinite; }
+
+
+@layer components {
+  .clip-edges {
+    clip-path: polygon(0 0, 100% 8%, 95% 94%, 4% 100%);
+  }
+}

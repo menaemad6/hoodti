@@ -1,0 +1,290 @@
+import React, { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { ShoppingBag, ArrowRight, ChevronDown } from "lucide-react";
+
+const StreetHero: React.FC = () => {
+  const [activeBackground, setActiveBackground] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [isLocked, setIsLocked] = useState(true);
+  const [showUnlockMessage, setShowUnlockMessage] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  
+  // GIF sources
+  const backgrounds = [
+    "/hero-sectio-gif-1.gif",
+    "/hero-sectio-gif-2.gif"
+  ];
+  
+  // On mount, fix the top space issue and initialize overlay position
+  useEffect(() => {
+    // Force document to start at top with no margin/padding
+    document.documentElement.style.margin = '0';
+    document.documentElement.style.padding = '0';
+    document.body.style.margin = '0';
+    document.body.style.padding = '0';
+    
+    // Force scroll to absolute top
+    window.scrollTo(0, 0);
+    
+    // Initialize overlay position
+    if (overlayRef.current) {
+      overlayRef.current.style.transform = 'translateY(0%)';
+    }
+    
+    return () => {
+      // Clean up
+      document.documentElement.style.margin = '';
+      document.documentElement.style.padding = '';
+      document.body.style.margin = '';
+      document.body.style.padding = '';
+    };
+  }, []);
+  
+  // Switch background every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setActiveBackground((prev) => (prev === 0 ? 1 : 0));
+        setIsTransitioning(false);
+      }, 1000); // 1 second for fade transition
+    }, 5000); // 5 seconds between switches
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  // Initial setup - force page to top and prevent scrolling
+  useEffect(() => {
+    if (isLocked) {
+      // Force scroll to top
+      window.scrollTo(0, 0);
+      
+      // Prevent scrolling on body
+      document.body.style.overflow = 'hidden';
+    } else {
+      // Re-enable scrolling
+      document.body.style.overflow = '';
+    }
+    
+    return () => {
+      // Cleanup - always re-enable scrolling when component unmounts
+      document.body.style.overflow = '';
+    };
+  }, [isLocked]);
+  
+  // Simple scroll detection that only tracks wheel events while locked
+  useEffect(() => {
+    if (!isLocked) return; // Only add listener when locked
+    
+    let accumulatedScroll = 0;
+    const totalRequired = window.innerHeight * 3; // 3x viewport height
+    
+    const handleWheel = (e: WheelEvent) => {
+      if (!isLocked) return;
+      
+      e.preventDefault();
+      
+      // Only count downward scrolls
+      if (e.deltaY > 0) {
+        accumulatedScroll += e.deltaY;
+        
+        // Calculate progress (0-100%)
+        const progress = Math.min(100, (accumulatedScroll / totalRequired) * 100);
+        setScrollProgress(progress);
+        
+        // Update the overlay with vertical reveal effect - move from top to bottom
+        if (overlayRef.current) {
+          // Start at 0% (positioned at the top) and move down as progress increases
+          const translateY = `${progress}%`;
+          overlayRef.current.style.transform = `translateY(${translateY})`;
+          
+          // When fully revealed (100% progress), hide it completely
+          if (progress >= 100) {
+            setTimeout(() => {
+              if (overlayRef.current) {
+                overlayRef.current.style.display = 'none';
+              }
+            }, 300);
+          }
+        }
+        
+        // Check for unlock threshold
+        if (progress >= 100) {
+          unlockScrolling();
+        }
+      }
+    };
+    
+    // Add event listener with passive: false to allow preventDefault
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    
+    return () => {
+      window.removeEventListener('wheel', handleWheel);
+    };
+  }, [isLocked]);
+  
+  // Function to properly unlock scrolling
+  const unlockScrolling = () => {
+    setIsLocked(false);
+    
+    // Ensure overlay is moved completely off screen
+    if (overlayRef.current) {
+      overlayRef.current.style.transform = 'translateY(100%)';
+      setTimeout(() => {
+        if (overlayRef.current) {
+          overlayRef.current.style.display = 'none';
+        }
+      }, 500);
+    }
+    
+    // Show unlock message
+    setShowUnlockMessage(true);
+    setTimeout(() => {
+      setShowUnlockMessage(false);
+    }, 2000);
+  };
+
+  // Skip function - bypasses the scroll requirement
+  const handleSkip = () => {
+    unlockScrolling();
+    setScrollProgress(100);
+    
+    // After a short delay, scroll down to the next section
+    setTimeout(() => {
+      if (sectionRef.current) {
+        window.scrollTo({
+          top: sectionRef.current.offsetHeight,
+          behavior: 'smooth'
+        });
+      }
+    }, 100);
+  };
+  
+  return (
+    <>
+      {/* Full-screen overlay that moves down with scroll progress */}
+      <div 
+        ref={overlayRef}
+        className="fixed top-0 left-0 w-full h-screen z-[100]"
+        style={{ 
+          transform: 'translateY(0%)',
+          transition: 'transform 0.3s ease',
+          willChange: 'transform',
+          background: 'linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0.4))'
+        }}
+      />
+      
+      <section 
+        ref={sectionRef} 
+        className="relative h-screen w-full overflow-hidden m-0 p-0"
+        style={{ margin: 0, padding: 0 }}
+      >
+        {/* Background GIFs */}
+        {backgrounds.map((bg, index) => (
+          <div 
+            key={index}
+            className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ${
+              activeBackground === index
+                ? "opacity-100 z-10"
+                : "opacity-0 z-0"
+            } ${isTransitioning && activeBackground === index ? "opacity-0" : ""}`}
+          >
+            <div 
+              className="absolute inset-0 w-full h-full"
+              style={{
+                backgroundImage: `url(${bg})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center center'
+              }}
+            />
+          </div>
+        ))}
+        
+        {/* Dark overlay for better text readability */}
+        <div 
+          className="absolute inset-0 z-20"
+          style={{ 
+            background: `linear-gradient(to right, rgba(0,0,0,0.5), rgba(0,0,0,0.3), rgba(0,0,0,0.5))`
+          }}
+        />
+        
+        {/* Content */}
+        <div className="relative z-30 h-full w-full flex flex-col items-center justify-center text-center">
+          <div className="max-w-4xl">
+            {/* Badge */}
+            <div className="inline-flex items-center bg-white/10 backdrop-blur-sm text-white px-4 py-1.5 rounded-full text-sm font-medium mb-6 border border-white/20">
+              LIMITED DROP
+            </div>
+            
+            {/* Headline */}
+            <h1 className="text-6xl sm:text-7xl md:text-[8rem] font-black mb-4 leading-none tracking-tight text-white">
+              <span className="block mb-2 md:mb-4 text-primary">STREET</span>
+              <span className="block">CULTURE</span>
+            </h1>
+            
+            {/* Subheading */}
+            <p className="text-xl sm:text-2xl text-white/80 mb-10 max-w-lg mx-auto font-medium">
+              Authentic urban apparel for those who define their own path. 
+              Express yourself without limits.
+            </p>
+            
+            {/* CTA Button */}
+            <Button 
+              className="h-14 px-8 rounded-none text-base group border-2 border-primary 
+                       hover:bg-primary/20 hover:border-primary bg-transparent text-white 
+                       transition-all duration-300 overflow-hidden relative"
+              size="lg" 
+              asChild
+            >
+              <Link to="/shop" className="relative z-10 flex items-center">
+                <ShoppingBag className="w-5 h-5 mr-3" />
+                SHOP NOW
+                <ArrowRight className="w-5 h-5 ml-3 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </Button>
+          </div>
+          
+          {/* Scroll progress indicator - now horizontal */}
+          <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 flex flex-col items-center">
+            {/* Label - Now above progress bar */}
+            <button 
+              onClick={handleSkip}
+              className="flex flex-col items-center cursor-pointer bg-transparent border-0 focus:outline-none mb-3"
+            >
+              <span className="text-white/50 text-xs uppercase tracking-widest flex items-center mb-1">
+                {isLocked ? `Scroll down (${Math.floor(scrollProgress)}%)` : 'Continue'}
+              </span>
+              <ChevronDown className={`text-white/50 w-5 h-5 ${isLocked ? 'animate-bounce' : ''}`} />
+            </button>
+            
+            {/* Horizontal progress bar */}
+            <div className="relative w-48 h-1 bg-white/20 rounded-full overflow-hidden">
+              <div 
+                className="absolute left-0 top-0 h-full bg-primary rounded-full transition-all duration-100"
+                style={{ width: `${scrollProgress}%` }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Unlock Message - appears when page unlocks */}
+        <div 
+          className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[101]
+                     bg-black/80 backdrop-blur-md border border-primary/50 text-white 
+                     px-8 py-4 rounded-lg transition-all duration-500
+                     ${showUnlockMessage ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none'}`}
+        >
+          <div className="text-center">
+            <span className="text-primary font-bold">Unlocked!</span>
+            <p className="text-white/80 text-sm">Continue scrolling to explore</p>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+};
+
+export default StreetHero; 

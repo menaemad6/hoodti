@@ -53,7 +53,11 @@ interface SidebarNavItem {
   iconColor?: string;
 }
 
-const MobileNavbar = () => {
+interface MobileNavbarProps {
+  isVisible?: boolean;
+}
+
+const MobileNavbar: React.FC<MobileNavbarProps> = ({ isVisible = true }) => {
   const location = useLocation();
   const { cartItemsCount } = useCart();
   const { theme, setTheme } = useTheme();
@@ -191,10 +195,18 @@ const MobileNavbar = () => {
     return name.split(" ").map(part => part[0]).join("").toUpperCase().substring(0, 2);
   };
 
+  const visibilityClass = isVisible 
+    ? "translate-y-0 opacity-100 pointer-events-auto" 
+    : "translate-y-[-100%] opacity-0 pointer-events-none";
+  
+  const bottomVisibilityClass = isVisible 
+    ? "translate-y-0 opacity-100 pointer-events-auto" 
+    : "translate-y-[200%] opacity-0 pointer-events-none";
+
   return (
     <>
       {/* Top navbar - mobile: profile dropdown and cart */}
-      <div className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md md:hidden">
+      <div className={`fixed top-0 left-0 right-0 z-50 w-full bg-background/80 backdrop-blur-md md:hidden transition-all duration-300 ${visibilityClass}`}>
         <div className="flex h-16 items-center px-4">
           {/* Left: Profile dropdown */}
           <div className="flex-1 flex justify-start">
@@ -312,7 +324,7 @@ const MobileNavbar = () => {
       </div>
       
       {/* Bottom navbar with More option - mobile only */}
-      <div className="fixed bottom-4 left-0 z-50 w-full px-4 md:hidden">
+      <div className={`fixed bottom-4 left-0 z-50 w-full px-4 md:hidden transition-all duration-300 ${bottomVisibilityClass}`}>
         <div className="rounded-full border border-border/40 bg-gradient-to-r from-background/80 via-background/90 to-background/80 backdrop-blur-2xl shadow-lg shadow-background/5 relative overflow-hidden">
           {/* Animated gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-secondary/5 to-primary/10 opacity-50"></div>
