@@ -18,8 +18,11 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isCategoriesLoading, setIsCategoriesLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [featuredActiveIndex, setFeaturedActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [isFeaturedPaused, setIsFeaturedPaused] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
+  const featuredCarouselRef = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
   const { addToCart } = useCart();
 
@@ -86,43 +89,62 @@ const Index = () => {
   }, [addToCart]);
 
   // Scroll carousel to specific index
-  const scrollToIndex = useCallback((index: number) => {
-    if (carouselRef.current) {
-      const carousel = carouselRef.current;
+  const scrollToIndex = useCallback((index: number, isNewArrivals: boolean = true) => {
+    const ref = isNewArrivals ? carouselRef : featuredCarouselRef;
+    
+    if (ref.current) {
+      const carousel = ref.current;
       const itemWidth = carousel.querySelector('.snap-start')?.clientWidth || 0;
       const gap = 24; // 6rem gap in tailwind
       carousel.scrollTo({
         left: index * (itemWidth + gap),
         behavior: 'smooth'
       });
-      setActiveIndex(index);
+      
+      if (isNewArrivals) {
+        setActiveIndex(index);
+      } else {
+        setFeaturedActiveIndex(index);
+      }
     }
   }, []);
 
   // Scroll carousel left or right
-  const scrollCarousel = useCallback((direction: 'left' | 'right') => {
-    if (!products.length) return;
+  const scrollCarousel = useCallback((direction: 'left' | 'right', isNewArrivals: boolean = true) => {
+    const items = isNewArrivals ? products : products.filter(p => p.featured);
+    const totalItems = items.length || 8;
+    const currentIndex = isNewArrivals ? activeIndex : featuredActiveIndex;
     
-    const totalItems = products.length || 8;
-    let newIndex = direction === 'left' ? activeIndex - 1 : activeIndex + 1;
+    let newIndex = direction === 'left' ? currentIndex - 1 : currentIndex + 1;
     
     // Loop back to the first/last item
     if (newIndex < 0) newIndex = totalItems - 1;
     if (newIndex >= totalItems) newIndex = 0;
     
-    scrollToIndex(newIndex);
-  }, [activeIndex, products.length, scrollToIndex]);
+    scrollToIndex(newIndex, isNewArrivals);
+  }, [activeIndex, featuredActiveIndex, products, scrollToIndex]);
 
   // Automatic scrolling for carousel
   useEffect(() => {
     if (isPaused) return;
     
     const interval = setInterval(() => {
-      scrollCarousel('right');
+      scrollCarousel('right', true);
     }, 5000);
     
     return () => clearInterval(interval);
   }, [scrollCarousel, isPaused]);
+  
+  // Automatic scrolling for featured carousel
+  useEffect(() => {
+    if (isFeaturedPaused) return;
+    
+    const interval = setInterval(() => {
+      scrollCarousel('right', false);
+    }, 6000); // Slightly different timing to avoid both carousels moving at the same time
+    
+    return () => clearInterval(interval);
+  }, [scrollCarousel, isFeaturedPaused]);
 
   // Track carousel scrolling for indicators
   useEffect(() => {
@@ -146,6 +168,29 @@ const Index = () => {
     carousel.addEventListener('scroll', handleScroll);
     return () => carousel.removeEventListener('scroll', handleScroll);
   }, [activeIndex]);
+  
+  // Track featured carousel scrolling for indicators
+  useEffect(() => {
+    const carousel = featuredCarouselRef.current;
+    if (!carousel) return;
+    
+    const handleScroll = () => {
+      const scrollLeft = carousel.scrollLeft;
+      const itemWidth = carousel.querySelector('.snap-start')?.clientWidth || 0;
+      const gap = 24; // 6rem in tailwind
+      
+      if (itemWidth === 0) return;
+      
+      // Calculate which item is most visible
+      const newIndex = Math.round(scrollLeft / (itemWidth + gap));
+      if (newIndex !== featuredActiveIndex) {
+        setFeaturedActiveIndex(newIndex);
+      }
+    };
+    
+    carousel.addEventListener('scroll', handleScroll);
+    return () => carousel.removeEventListener('scroll', handleScroll);
+  }, [featuredActiveIndex]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -377,7 +422,7 @@ const Index = () => {
                     onClick={() => {
                       setIsPaused(true);
                       setTimeout(() => setIsPaused(false), 10000);
-                      scrollCarousel('left');
+                      scrollCarousel('left', true);
                     }}
                     aria-label="Previous product"
                   >
@@ -390,7 +435,7 @@ const Index = () => {
                     onClick={() => {
                       setIsPaused(true);
                       setTimeout(() => setIsPaused(false), 10000);
-                      scrollCarousel('right');
+                      scrollCarousel('right', true);
                     }}
                     aria-label="Next product"
                   >
@@ -409,7 +454,7 @@ const Index = () => {
                       onClick={() => {
                         setIsPaused(true);
                         setTimeout(() => setIsPaused(false), 10000);
-                        scrollToIndex(index);
+                        scrollToIndex(index, true);
                       }}
                       aria-label={`Go to product ${index + 1}`}
                     />
@@ -692,207 +737,257 @@ const Index = () => {
             </div>
           ) : (
             <div className="space-y-12">
-              {/* Featured Products Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {(products && products.length > 0 ? 
-                  products.filter(product => product.featured).slice(0, 8) : 
-                  Array(8).fill(null)).map((product, index) => (
-                  <AnimatedWrapper 
-                    key={product?.id || `featured-${index}`} 
-                    animation="fade-in" 
-                    delay={`${(index % 8) * 100}` as DelayType} 
-                    className="group transition-all hover:-translate-y-2 duration-300"
+              {/* Featured Products Carousel */}
+              <div className="relative group">
+                {/* Carousel Navigation Buttons */}
+                <div className="absolute -left-2 md:-left-4 top-1/2 transform -translate-y-1/2 z-20 opacity-80 group-hover:opacity-100 transition-opacity">
+                  <button 
+                    className="h-10 w-10 md:h-12 md:w-12 rounded-full flex items-center justify-center bg-background/80 backdrop-blur-sm shadow-lg border border-border hover:bg-amber-500 hover:text-amber-50 transition-all hover:scale-110 active:scale-95"
+                    onClick={() => {
+                      setIsFeaturedPaused(true);
+                      setTimeout(() => setIsFeaturedPaused(false), 10000);
+                      scrollCarousel('left', false);
+                    }}
+                    aria-label="Previous featured product"
                   >
-                    <div className="block h-full relative overflow-hidden bg-card hover:bg-accent/10 transition-all duration-300 rounded-xl shadow-sm hover:shadow-xl border border-border/40">
-                      <Link to={product ? `/product/${product.id}` : "#"} className="block">
-                        {/* Featured badge - on left top corner with improved styling */}
-                        <div className="absolute top-3 left-3 z-20">
-                          <span className="inline-flex items-center px-2 py-1 bg-amber-500 text-white text-xs font-bold rounded-md shadow-sm transform -rotate-2">
-                            <span className="flex h-1.5 w-1.5 rounded-full bg-white mr-1"></span>
-                            FEATURED
-                          </span>
-                        </div>
-                        
-                        {/* Discount badge - now on right corner with improved styling */}
-                        {(product?.original_price || index % 3 === 0) && (
-                          <div className="absolute top-3 right-3 z-20">
-                            <span className="inline-flex items-center px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-md shadow-sm transform rotate-2">
-                              -{product?.original_price ? 
-                                Math.round(((product.original_price - product.price) / product.original_price) * 100) : 
-                                '25'}%
-                              <span className="flex h-1.5 w-1.5 rounded-full bg-white ml-1"></span>
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                </div>
+                <div className="absolute -right-2 md:-right-4 top-1/2 transform -translate-y-1/2 z-20 opacity-80 group-hover:opacity-100 transition-opacity">
+                  <button 
+                    className="h-10 w-10 md:h-12 md:w-12 rounded-full flex items-center justify-center bg-background/80 backdrop-blur-sm shadow-lg border border-border hover:bg-amber-500 hover:text-amber-50 transition-all hover:scale-110 active:scale-95"
+                    onClick={() => {
+                      setIsFeaturedPaused(true);
+                      setTimeout(() => setIsFeaturedPaused(false), 10000);
+                      scrollCarousel('right', false);
+                    }}
+                    aria-label="Next featured product"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                </div>
+                
+                {/* Carousel Progress Indicators */}
+                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-20 flex items-center gap-1.5 bg-background/50 backdrop-blur-sm rounded-full px-2 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {(products.filter(p => p.featured).length > 0 ? 
+                    Array.from({ length: Math.min(products.filter(p => p.featured).length, 8) }) : 
+                    Array.from({ length: 8 })).map((_, index) => (
+                    <button
+                      key={index}
+                      className={`w-1.5 h-1.5 rounded-full transition-all ${
+                        index === featuredActiveIndex ? 'bg-amber-500 w-4' : 'bg-border'
+                      }`}
+                      onClick={() => {
+                        setIsFeaturedPaused(true);
+                        setTimeout(() => setIsFeaturedPaused(false), 10000);
+                        scrollToIndex(index, false);
+                      }}
+                      aria-label={`Go to featured product ${index + 1}`}
+                    />
+                  ))}
+                </div>
+                
+                {/* Scrollable Carousel */}
+                <div 
+                  ref={featuredCarouselRef}
+                  id="featured-carousel" 
+                  className="flex overflow-x-auto hide-scrollbar snap-x snap-mandatory gap-6 pb-8 px-1 pt-2"
+                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                  onMouseEnter={() => setIsFeaturedPaused(true)}
+                  onMouseLeave={() => setIsFeaturedPaused(false)}
+                >
+                  {(products && products.length > 0 ? 
+                    products.filter(product => product.featured || Math.random() > 0.7).slice(0, 8) : 
+                    Array(8).fill(null)).map((product, index) => (
+                    <AnimatedWrapper 
+                      key={product?.id || `featured-${index}`} 
+                      animation="fade-in" 
+                      delay={`${(index % 8) * 100}` as DelayType} 
+                      className="group snap-start flex-shrink-0 w-[280px] sm:w-[320px] transition-all hover:-translate-y-2 duration-300"
+                    >
+                      <div className="block h-full relative overflow-hidden bg-card hover:bg-accent/10 transition-all duration-300 rounded-xl shadow-sm hover:shadow-xl border border-border/40">
+                        <Link to={product ? `/product/${product.id}` : "#"} className="block">
+                          {/* Featured badge - on left top corner with improved styling */}
+                          <div className="absolute top-3 left-3 z-20">
+                            <span className="inline-flex items-center px-2 py-1 bg-amber-500 text-white text-xs font-bold rounded-md shadow-sm transform -rotate-2">
+                              <span className="flex h-1.5 w-1.5 rounded-full bg-white mr-1"></span>
+                              FEATURED
                             </span>
                           </div>
-                        )}
-                        
-                        {/* Star icon overlay */}
-                        <div className="absolute top-0 right-0 z-10 rotate-12 translate-x-2 -translate-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                          <svg className="w-24 h-24 text-primary/20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                            <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clipRule="evenodd" />
-                          </svg>
-                        </div>
+                          
+                          {/* Discount badge - now on right corner with improved styling */}
+                          {(product?.original_price || index % 3 === 0) && (
+                            <div className="absolute top-3 right-3 z-20">
+                              <span className="inline-flex items-center px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-md shadow-sm transform rotate-2">
+                                -{product?.original_price ? 
+                                  Math.round(((product.original_price - product.price) / product.original_price) * 100) : 
+                                  '25'}%
+                                <span className="flex h-1.5 w-1.5 rounded-full bg-white ml-1"></span>
+                              </span>
+                            </div>
+                          )}
+                          
+                          {/* Product Image */}
+                          <div className="aspect-square overflow-hidden rounded-t-xl relative">
+                            {/* Hover overlay with quick action */}
+                            <div className="absolute inset-0 bg-black/30 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center z-20">
+                              <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 flex flex-col items-center gap-3">
+                                <Button size="sm" variant="default" className="bg-amber-500 hover:bg-amber-600 text-white rounded-full px-5">
+                                  Quick View
+                                </Button>
+                                
+                                {/* Quick add to cart button */}
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="bg-background/80 hover:bg-amber-500 border-border hover:border-amber-500 text-foreground hover:text-white rounded-full px-5 backdrop-blur-sm"
+                                  onClick={(e) => handleAddToCart(product, e)}
+                                >
+                                  <ShoppingBag className="h-3.5 w-3.5 mr-1.5" />
+                                  Add to Cart
+                                </Button>
+                              </div>
+                            </div>
+                            
+                            <img
+                              src={product?.image || `/collab-collection.jpg`}
+                              alt={product?.name || "Product"}
+                              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = "/collab-collection.jpg";
+                              }}
+                            />
+                          </div>
+                        </Link>
 
-                        {/* Product Image */}
-                        <div className="aspect-square overflow-hidden rounded-t-xl relative">
-                          {/* Hover overlay with quick action */}
-                          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center z-20">
-                            <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 flex flex-col items-center gap-3">
-                              <Button size="sm" variant="default" className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-5">
-                                Quick View
-                              </Button>
-                              
-                              {/* Quick add to cart button */}
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                className="bg-background/80 hover:bg-primary border-border hover:border-primary text-foreground hover:text-primary-foreground rounded-full px-5 backdrop-blur-sm"
-                                onClick={(e) => handleAddToCart(product, e)}
-                              >
-                                <ShoppingBag className="h-3.5 w-3.5 mr-1.5" />
-                                Add to Cart
-                              </Button>
+                        {/* Product Info */}
+                        <div className="p-4">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm text-amber-600 font-medium uppercase">
+                              {product?.category?.name || ['Premium', 'Signature', 'Limited', 'Collectors', 'Exclusive', 'Elite', 'Designer', 'Luxury'][index % 8]}
+                            </span>
+                            
+                            {/* Product color dots - with proper colors */}
+                            <div className="flex items-center gap-1.5">
+                              {(() => {
+                                // Define default color array based on index for placeholders
+                                const defaultColors = [
+                                  ['black', 'blue', 'red'],
+                                  ['black', 'green', 'purple'],
+                                  ['black', 'orange', 'gray'],
+                                  ['blue', 'red', 'orange'],
+                                  ['green', 'black', 'red'],
+                                  ['purple', 'blue', 'black'],
+                                  ['gray', 'orange', 'green'], 
+                                  ['white', 'black', 'red']
+                                ][index % 8];
+                                
+                                // Parse product colors or use defaults
+                                let colors: string[] = defaultColors;
+                                
+                                if (product?.color) {
+                                  try {
+                                    // Try to parse as JSON array first
+                                    if (product.color.startsWith('[') && product.color.endsWith(']')) {
+                                      const parsedColors = JSON.parse(product.color);
+                                      if (Array.isArray(parsedColors)) {
+                                        colors = parsedColors.map(c => c.toString().replace(/"/g, '').trim());
+                                      }
+                                    } else {
+                                      // Fall back to comma-separated string
+                                      colors = product.color.split(',').map(c => c.replace(/"/g, '').trim());
+                                    }
+                                  } catch (error) {
+                                    console.error('Error parsing product colors:', error);
+                                    // Keep using default colors if parsing fails
+                                  }
+                                }
+                                  
+                                // Create a mapping of color names to hex values
+                                const colorMap: Record<string, string> = {
+                                  'black': '#000000',
+                                  'blue': '#3b82f6',
+                                  'red': '#ef4444',
+                                  'green': '#84cc16',
+                                  'orange': '#f97316',
+                                  'purple': '#a855f7',
+                                  'white': '#ffffff',
+                                  'gray': '#6b7280',
+                                  'yellow': '#fbbf24',
+                                  'pink': '#ec4899',
+                                  'brown': '#a16207',
+                                  'navy': '#1e3a8a',
+                                  'teal': '#0d9488',
+                                  'indigo': '#6366f1',
+                                  'lime': '#bef264',
+                                  'cyan': '#22d3ee',
+                                  'amber': '#fbbf24',
+                                  'emerald': '#10b981',
+                                  'violet': '#8b5cf6',
+                                  'fuchsia': '#d946ef',
+                                  'rose': '#f43f5e',
+                                  'slate': '#64748b'
+                                };
+                                
+                                return (
+                                  <>
+                                    {colors.slice(0, 3).map((color, i) => {
+                                      const hexColor = colorMap[color.toLowerCase()] || color;
+                                      return (
+                                        <span 
+                                          key={i} 
+                                          className="w-3 h-3 rounded-full block border border-border" 
+                                          style={{ backgroundColor: hexColor }}
+                                        ></span>
+                                      );
+                                    })}
+                                  </>
+                                );
+                              })()}
                             </div>
                           </div>
                           
-                          <img
-                            src={product?.image || `/collab-collection.jpg`}
-                            alt={product?.name || "Product"}
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = "/collab-collection.jpg";
-                            }}
-                          />
-                        </div>
-                      </Link>
-
-                      {/* Product Info */}
-                      <div className="p-4">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm text-primary/80 font-medium uppercase">
-                            {product?.category?.name || ['Premium', 'Signature', 'Limited', 'Collectors', 'Exclusive', 'Elite', 'Designer', 'Luxury'][index % 8]}
-                          </span>
+                          <Link to={product ? `/product/${product.id}` : "#"} className="group-hover:text-primary">
+                            <h3 className="font-bold text-lg mb-1 line-clamp-1">{product?.name || "Premium Product"}</h3>
+                          </Link>
                           
-                          {/* Product color dots - with proper colors */}
-                          <div className="flex items-center gap-1.5">
-                            {(() => {
-                              // Define default color array based on index for placeholders
-                              const defaultColors = [
-                                ['black', 'blue', 'red'],
-                                ['black', 'green', 'purple'],
-                                ['black', 'orange', 'gray'],
-                                ['blue', 'red', 'orange'],
-                                ['green', 'black', 'red'],
-                                ['purple', 'blue', 'black'],
-                                ['gray', 'orange', 'green'], 
-                                ['white', 'black', 'red']
-                              ][index % 8];
-                              
-                              // Parse product colors or use defaults
-                              let colors: string[] = defaultColors;
-                              
-                              if (product?.color) {
-                                try {
-                                  // Try to parse as JSON array first
-                                  if (product.color.startsWith('[') && product.color.endsWith(']')) {
-                                    const parsedColors = JSON.parse(product.color);
-                                    if (Array.isArray(parsedColors)) {
-                                      colors = parsedColors.map(c => c.toString().replace(/"/g, '').trim());
-                                    }
-                                  } else {
-                                    // Fall back to comma-separated string
-                                    colors = product.color.split(',').map(c => c.replace(/"/g, '').trim());
-                                  }
-                                } catch (error) {
-                                  console.error('Error parsing product colors:', error);
-                                  // Keep using default colors if parsing fails
-                                }
-                              }
-                                
-                              // Create a mapping of color names to hex values
-                              const colorMap: Record<string, string> = {
-                                'black': '#000000',
-                                'blue': '#3b82f6',
-                                'red': '#ef4444',
-                                'green': '#84cc16',
-                                'orange': '#f97316',
-                                'purple': '#a855f7',
-                                'white': '#ffffff',
-                                'gray': '#6b7280',
-                                'yellow': '#fbbf24',
-                                'pink': '#ec4899',
-                                'brown': '#a16207',
-                                'navy': '#1e3a8a',
-                                'teal': '#0d9488',
-                                'indigo': '#6366f1',
-                                'lime': '#bef264',
-                                'cyan': '#22d3ee',
-                                'amber': '#fbbf24',
-                                'emerald': '#10b981',
-                                'violet': '#8b5cf6',
-                                'fuchsia': '#d946ef',
-                                'rose': '#f43f5e',
-                                'slate': '#64748b'
-                              };
-                              
-                              return colors.map((color, i) => {
-                                // Parse the color and get the hex value
-                                const lowerColor = color.toLowerCase().trim();
-                                const bgColor = lowerColor.startsWith('#') ? 
-                                  lowerColor : 
-                                  colorMap[lowerColor] || '#000000';
-                                  
-                                return (
-                                  <span 
-                                    key={i} 
-                                    className={`w-3 h-3 rounded-full border shadow-sm cursor-pointer transition-transform hover:scale-110 ${bgColor === '#ffffff' ? 'border-gray-300' : 'border-transparent'}`}
-                                    style={{ backgroundColor: bgColor }}
-                                    title={color}
-                                  ></span>
-                                );
-                              });
-                            })()}
+                          <div className="flex justify-between items-center">
+                            <div className="flex flex-col">
+                              <span className="text-xl font-black">${product?.price?.toFixed(2) || (59.99 + index * 10).toFixed(2)}</span>
+                              {product?.original_price && (
+                                <span className="text-xs text-muted-foreground line-through">
+                                  ${Number(product.original_price).toFixed(2)}
+                                </span>
+                              )}
+                              {!product?.original_price && index % 3 === 0 && (
+                                <span className="text-xs text-muted-foreground line-through">
+                                  ${((59.99 + index * 10) * 1.25).toFixed(2)}
+                                </span>
+                              )}
+                            </div>
+                            {/* Add to cart button - same style as new arrivals */}
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="p-0 h-8 w-8 rounded-full border border-border hover:border-amber-500 hover:bg-amber-500 hover:text-white transition-all duration-300 transform hover:scale-110 active:scale-95"
+                              onClick={(e) => handleAddToCart(product, e)}
+                              aria-label="Add to cart"
+                            >
+                              <ShoppingBag className="h-4 w-4" />
+                            </Button>
                           </div>
-                        </div>
-                        <Link to={product ? `/product/${product.id}` : "#"}>
-                          <h3 className="text-lg font-bold mb-2 group-hover:text-primary transition-colors truncate">
-                            {product?.name || ["Featured Street Style", "Premium Hoodie", "Limited Edition Tee", "Exclusive Sneakers", "Signature Cap", "Luxury Necklace", "Designer Jeans", "Collector's Jacket"][index % 8]}
-                          </h3>
-                        </Link>
-                        <div className="flex justify-between items-center">
-                          <div className="flex flex-col">
-                            <span className="text-xl font-black">${product ? Number(product.price).toFixed(2) : (69.99 + index * 10).toFixed(2)}</span>
-                            {product?.original_price && (
-                              <span className="text-xs text-muted-foreground line-through">
-                                ${Number(product.original_price).toFixed(2)}
-                              </span>
-                            )}
-                            {!product?.original_price && index % 3 === 0 && (
-                              <span className="text-xs text-muted-foreground line-through">
-                                ${((69.99 + index * 10) * 1.25).toFixed(2)}
-                              </span>
-                            )}
-                          </div>
-                          {/* Add to cart button */}
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            className="p-0 h-8 w-8 rounded-full border border-border hover:border-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 transform hover:scale-110 active:scale-95"
-                            onClick={(e) => handleAddToCart(product, e)}
-                            aria-label="Add to cart"
-                          >
-                            <ShoppingBag className="h-4 w-4" />
-                          </Button>
                         </div>
                       </div>
-                    </div>
-                  </AnimatedWrapper>
-                ))}
+                    </AnimatedWrapper>
+                  ))}
+                </div>
               </div>
-
-              <div className="flex justify-center mt-12">
+              
+              {/* View All Button */}
+              <div className="text-center mt-12">
                 <Link
                   to="/shop/featured"
-                  className="inline-flex items-center gap-2 px-8 py-3.5 bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-sm uppercase transition-colors duration-300 rounded-full shadow-md hover:shadow-lg"
+                  className="inline-flex items-center gap-2 px-8 py-3.5 bg-amber-500 hover:bg-amber-600 text-white font-medium text-sm uppercase transition-colors duration-300 rounded-full shadow-md hover:shadow-lg"
                 >
                   Shop All Featured Items
                   <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
@@ -1133,8 +1228,8 @@ const Index = () => {
             <AnimatedWrapper animation="fade-in">
               <div className="flex flex-col items-center text-center mb-12">
                 <div className="mb-4 flex items-center justify-center">
-                  <div className="w-10 h-[1px] bg-gradient-to-r from-transparent to-primary/70"></div>
-                  <span className="mx-4 text-sm font-medium text-primary uppercase tracking-widest">Our Philosophy</span>
+                  <div className="w-10 h-[1px] bg-primary"></div>
+                  <span className="mx-4 text-sm font-medium text-primary uppercase tracking-widest px-3 py-1 border border-primary/30 rounded-full">Our Philosophy</span>
                   <div className="w-10 h-[1px] bg-gradient-to-l from-transparent to-primary/70"></div>
                 </div>
                 

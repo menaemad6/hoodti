@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, TouchEvent } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, ArrowRight, ChevronDown } from "lucide-react";
@@ -9,7 +9,8 @@ const StreetHero: React.FC = () => {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isLocked, setIsLocked] = useState(true);
   const [showUnlockMessage, setShowUnlockMessage] = useState(false);
-  const [touchStartY, setTouchStartY] = useState(0);
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
+  const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
   const sectionRef = useRef<HTMLElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   
@@ -18,6 +19,45 @@ const StreetHero: React.FC = () => {
     "/hero-sectio-gif-1.gif",
     "/hero-sectio-gif-2.gif"
   ];
+  
+  // Dynamic viewport height adjustment to handle mobile browser UI
+  useEffect(() => {
+    const updateViewportHeight = () => {
+      // For mobile devices, use a smaller fixed height to account for browser chrome
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        // Use visual viewport height if available (accounts for browser UI)
+        const vvh = window.visualViewport?.height || window.innerHeight;
+        setViewportHeight(vvh);
+        
+        // Apply the height directly to avoid delays
+        if (sectionRef.current) {
+          sectionRef.current.style.height = `${vvh}px`;
+        }
+      } else {
+        // For desktop, use regular 100vh
+        setViewportHeight(window.innerHeight);
+        
+        if (sectionRef.current) {
+          sectionRef.current.style.height = `100vh`;
+        }
+      }
+    };
+    
+    // Update on mount
+    updateViewportHeight();
+    
+    // Set up event listeners for orientation changes and resize
+    window.visualViewport?.addEventListener('resize', updateViewportHeight);
+    window.addEventListener('resize', updateViewportHeight);
+    window.addEventListener('orientationchange', updateViewportHeight);
+    
+    // Clean up
+    return () => {
+      window.visualViewport?.removeEventListener('resize', updateViewportHeight);
+      window.removeEventListener('resize', updateViewportHeight);
+      window.removeEventListener('orientationchange', updateViewportHeight);
+    };
+  }, []);
   
   // On mount, fix the top space issue and initialize overlay position
   useEffect(() => {
@@ -76,11 +116,53 @@ const StreetHero: React.FC = () => {
     };
   }, [isLocked]);
   
-  // Shared function to update scroll progress
+  // Detect device type and handle mobile differently
+  useEffect(() => {
+    // Function to detect if user is on mobile
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    setIsMobileDevice(isMobile);
+    
+    if (isMobile) {
+      // For mobile devices, make the unlock button more visible but smaller
+      const skipButton = document.querySelector('.skip-button');
+      if (skipButton) {
+        (skipButton as HTMLElement).style.background = 'rgba(255,255,255,0.15)';
+        (skipButton as HTMLElement).style.padding = '8px 16px';
+        (skipButton as HTMLElement).style.borderRadius = '16px';
+      }
+      
+      // Automatically unlock after a small timeout for mobile
+      setTimeout(() => {
+        unlockScrolling();
+        setScrollProgress(100);
+      }, 1500);
+    }
+  }, []);
+  
+  // Desktop scroll handling - only add for non-mobile
+  useEffect(() => {
+    if (isMobileDevice || !isLocked) return;
+    
+    const handleWheel = (e: WheelEvent) => {
+      if (!isLocked) return;
+      
+      e.preventDefault();
+      updateScrollProgress(e.deltaY);
+    };
+    
+    // Add event listener with passive: false to allow preventDefault
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    
+    return () => {
+      window.removeEventListener('wheel', handleWheel);
+    };
+  }, [isLocked, scrollProgress, isMobileDevice]);
+  
+  // Shared function to update scroll progress for desktop
   const updateScrollProgress = (deltaY: number) => {
     if (!isLocked) return;
     
-    const totalRequired = window.innerHeight * 2; // Reduced from 3x to 2x for mobile
+    const totalRequired = window.innerHeight * 1.5;
     
     // Only count downward scrolls
     if (deltaY > 0) {
@@ -111,46 +193,7 @@ const StreetHero: React.FC = () => {
       }
     }
   };
-  
-  // Simple scroll detection that only tracks wheel events while locked
-  useEffect(() => {
-    if (!isLocked) return; // Only add listener when locked
-    
-    const handleWheel = (e: WheelEvent) => {
-      if (!isLocked) return;
-      
-      e.preventDefault();
-      updateScrollProgress(e.deltaY);
-    };
-    
-    // Add event listener with passive: false to allow preventDefault
-    window.addEventListener('wheel', handleWheel, { passive: false });
-    
-    return () => {
-      window.removeEventListener('wheel', handleWheel);
-    };
-  }, [isLocked, scrollProgress]);
-  
-  // Handle touch events for mobile devices
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (!isLocked) return;
-    setTouchStartY(e.touches[0].clientY);
-  };
-  
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isLocked) return;
-    
-    e.preventDefault();
-    const touchY = e.touches[0].clientY;
-    const deltaY = touchStartY - touchY; // Positive when scrolling down
-    
-    if (deltaY > 0) {
-      updateScrollProgress(deltaY * 2); // Multiply by 2 to make it more responsive on mobile
-    }
-    
-    setTouchStartY(touchY);
-  };
-  
+
   // Function to properly unlock scrolling
   const unlockScrolling = () => {
     setIsLocked(false);
@@ -193,8 +236,9 @@ const StreetHero: React.FC = () => {
       {/* Full-screen overlay that moves down with scroll progress */}
       <div 
         ref={overlayRef}
-        className="fixed top-0 left-0 w-full h-screen z-[100]"
+        className="fixed top-0 left-0 w-full z-[60]" // Reduced z-index to be below the button
         style={{ 
+          height: `${viewportHeight}px`,
           transform: 'translateY(0%)',
           transition: 'transform 0.3s ease',
           willChange: 'transform',
@@ -204,10 +248,13 @@ const StreetHero: React.FC = () => {
       
       <section 
         ref={sectionRef} 
-        className="relative h-screen w-full overflow-hidden m-0 p-0"
-        style={{ margin: 0, padding: 0 }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
+        className="relative w-full overflow-hidden m-0 p-0"
+        style={{ 
+          margin: 0,
+          padding: 0,
+          height: `${viewportHeight}px`,
+          maxHeight: `${viewportHeight}px`,
+        }}
       >
         {/* Background GIFs */}
         {backgrounds.map((bg, index) => (
@@ -240,27 +287,27 @@ const StreetHero: React.FC = () => {
         
         {/* Content */}
         <div className="relative z-30 h-full w-full flex flex-col items-center justify-center text-center">
-          <div className="max-w-4xl">
+          <div className="max-w-4xl px-4">
             {/* Badge */}
             <div className="inline-flex items-center bg-white/10 backdrop-blur-sm text-white px-4 py-1.5 rounded-full text-sm font-medium mb-6 border border-white/20">
               LIMITED DROP
             </div>
             
             {/* Headline */}
-            <h1 className="text-6xl sm:text-7xl md:text-[8rem] font-black mb-4 leading-none tracking-tight text-white">
+            <h1 className="text-5xl sm:text-7xl md:text-[8rem] font-black mb-4 leading-none tracking-tight text-white">
               <span className="block mb-2 md:mb-4 text-primary">STREET</span>
               <span className="block">CULTURE</span>
             </h1>
             
             {/* Subheading */}
-            <p className="text-xl sm:text-2xl text-white/80 mb-10 max-w-lg mx-auto font-medium">
+            <p className="text-lg sm:text-2xl text-white/80 mb-10 max-w-lg mx-auto font-medium">
               Authentic urban apparel for those who define their own path. 
               Express yourself without limits.
             </p>
             
             {/* CTA Button */}
             <Button 
-              className="h-14 px-8 rounded-none text-base group border-2 border-primary 
+              className="h-12 sm:h-14 px-6 sm:px-8 rounded-none text-base group border-2 border-primary 
                        hover:bg-primary/20 hover:border-primary bg-transparent text-white 
                        transition-all duration-300 overflow-hidden relative"
               size="lg" 
@@ -274,26 +321,30 @@ const StreetHero: React.FC = () => {
             </Button>
           </div>
           
-          {/* Scroll progress indicator - now horizontal */}
-          <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 flex flex-col items-center">
+          {/* Skip button with higher z-index to be above overlay */}
+          <div className="absolute bottom-6 sm:bottom-10 left-1/2 transform -translate-x-1/2 flex flex-col items-center z-[70]">
             {/* Label - Now above progress bar */}
             <button 
               onClick={handleSkip}
-              className="flex flex-col items-center cursor-pointer bg-transparent border-0 focus:outline-none mb-3"
+              className="skip-button flex flex-col items-center cursor-pointer bg-transparent border-0 focus:outline-none mb-3 px-4 py-2 hover:bg-white/10 rounded-full transition-all"
             >
-              <span className="text-white/50 text-xs uppercase tracking-widest flex items-center mb-1">
-                {isLocked ? `Scroll down (${Math.floor(scrollProgress)}%) or tap here to skip` : 'Continue'}
+              <span className={`text-white/70 ${isMobileDevice ? 'text-xs' : 'text-sm'} font-medium uppercase tracking-widest flex items-center mb-1`}>
+                {isMobileDevice 
+                  ? (isLocked ? `Tap to continue` : 'Continue')
+                  : (isLocked ? `Scroll down (${Math.floor(scrollProgress)}%) or tap to skip` : 'Continue')}
               </span>
-              <ChevronDown className={`text-white/50 w-5 h-5 ${isLocked ? 'animate-bounce' : ''}`} />
+              <ChevronDown className={`text-white/70 w-5 h-5 ${isLocked ? 'animate-bounce' : ''}`} />
             </button>
             
             {/* Horizontal progress bar */}
-            <div className="relative w-48 h-1 bg-white/20 rounded-full overflow-hidden">
-              <div 
-                className="absolute left-0 top-0 h-full bg-primary rounded-full transition-all duration-100"
-                style={{ width: `${scrollProgress}%` }}
-              />
-            </div>
+            {isLocked && (
+              <div className="relative w-48 h-1 bg-white/20 rounded-full overflow-hidden">
+                <div 
+                  className="absolute left-0 top-0 h-full bg-primary rounded-full transition-all duration-100"
+                  style={{ width: `${scrollProgress}%` }}
+                />
+              </div>
+            )}
           </div>
         </div>
 
@@ -314,4 +365,4 @@ const StreetHero: React.FC = () => {
   );
 };
 
-export default StreetHero; 
+export default StreetHero;
