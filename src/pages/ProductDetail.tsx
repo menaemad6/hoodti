@@ -215,23 +215,23 @@ const ProductDetail = () => {
   const features = [
     {
       icon: <Check className="w-5 h-5" />,
-      title: "Quality Materials",
-      description: "Premium fabrics and materials"
+      title: "Premium Quality",
+      description: "Hand-crafted with premium materials"
     },
     {
       icon: <Truck className="w-5 h-5" />,
       title: "Fast Shipping",
-      description: "Express delivery within 24 hours"
+      description: "Expedited delivery within 24-48 hours"
     },
     {
       icon: <Shield className="w-5 h-5" />,
-      title: "Easy Returns",
-      description: "30-day return policy"
+      title: "Secure Payment",
+      description: "Multiple secure payment options available"
     },
     {
       icon: <Leaf className="w-5 h-5" />,
-      title: "Sustainable",
-      description: "Eco-friendly practices"
+      title: "Eco-Friendly",
+      description: "Sustainable production practices"
     }
   ];
   
@@ -558,27 +558,39 @@ const ProductDetail = () => {
               </div>
                 
               {/* Features section - Premium Redesign */}
-              <div className="grid grid-cols-2 sm:grid-cols-2 gap-4">
-                {features.map((feature, index) => (
-                  <div 
-                    key={index} 
-                    className="flex items-start gap-3 p-4 rounded-2xl bg-background/60 backdrop-blur-md border border-border/30 dark:border-border/10 hover:border-primary/40 transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 dark:hover:shadow-primary/3"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/[0.15] to-primary/[0.05] dark:from-primary/[0.1] dark:to-primary/[0.02] flex items-center justify-center flex-shrink-0 shadow-inner shadow-primary/5">
-                      <div className="text-primary/90 dark:text-primary/80">
-                        {feature.icon}
+              <div className="space-y-3 my-6">
+                <h3 className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
+                  <Star className="w-4 h-4 text-primary" />
+                  Product Benefits
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {features.map((feature, index) => (
+                    <motion.div 
+                      key={index}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.1 * index }}
+                      className="group flex items-start gap-3 p-3 rounded-xl bg-gradient-to-br from-background/80 to-background/40 backdrop-blur-md border border-border/20 hover:border-primary/30 transition-all duration-300 hover:shadow-sm hover:shadow-primary/5 dark:hover:shadow-primary/3 overflow-hidden relative"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 dark:from-primary/15 dark:to-primary/5 flex items-center justify-center flex-shrink-0 shadow-sm shadow-primary/5 z-10 group-hover:scale-110 transition-transform duration-300">
+                        <div className="text-primary dark:text-primary/90">
+                          {feature.icon}
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-foreground/90 dark:text-foreground/80">
-                        {feature.title}
-                      </h3>
-                      <p className="text-xs text-muted-foreground dark:text-muted-foreground/90">
-                        {feature.description}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                      
+                      <div className="z-10">
+                        <h3 className="font-medium text-sm text-foreground/90 dark:text-foreground/80 group-hover:text-primary/90 transition-colors duration-300">
+                          {feature.title}
+                        </h3>
+                        <p className="text-xs text-muted-foreground dark:text-muted-foreground/80">
+                          {feature.description}
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
               </div>
                   
               {/* Add to cart section - Premium Redesign */}

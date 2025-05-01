@@ -93,9 +93,9 @@ const Signup = () => {
         {/* Content */}
         <div className="relative min-h-full flex flex-col lg:flex-row items-center">
           {/* Left side - Form */}
-          <div className="w-full lg:w-1/2 px-4 sm:px-6 lg:px-12 py-8 lg:py-12">
+          <div className="w-full lg:w-1/2 px-4 sm:px-6 lg:px-12 py-8 pt-20 sm:pt-24 md:pt-28 lg:py-12">
             <div className="w-full max-w-md mx-auto">
-              <div className="text-center lg:text-left mb-8">
+              <div className="text-center lg:text-left mb-8 mt-8 sm:mt-10">
                 <div className="inline-block">
                   <div className="flex items-center justify-center lg:justify-start space-x-2 mb-4">
                     <div className="h-1 w-1 rounded-full bg-primary/90 dark:bg-primary/80 animate-pulse" />

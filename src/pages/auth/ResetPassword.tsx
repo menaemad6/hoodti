@@ -174,9 +174,9 @@ const ResetPassword = () => {
           </div>
 
           {/* Right side - Form */}
-          <div className="w-full lg:w-1/2 lg:ml-auto px-4 sm:px-6 lg:px-12 py-8 lg:py-12">
+          <div className="w-full lg:w-1/2 lg:ml-auto px-4 sm:px-6 lg:px-12 py-8 pt-20 sm:pt-24 md:pt-28 lg:py-12">
             <div className="w-full max-w-md mx-auto">
-              <div className="text-center lg:text-left mb-6 sm:mb-8">
+              <div className="text-center lg:text-left mb-8 mt-8 sm:mt-10">
                 <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-2 sm:mb-3">
                   Reset your password
                 </h1>

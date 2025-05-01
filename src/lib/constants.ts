@@ -1,1 +1,1 @@
-export const BRAND_NAME = "DropThread"; 
+export const BRAND_NAME = "DeadStocked"; 

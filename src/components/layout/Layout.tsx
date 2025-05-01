@@ -24,7 +24,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </div>
       
       {/* Main content with padding adjustment for mobile bottom navbar */}
-      <main className="flex-1 container mx-auto px-4 pb-24 md:pb-6">{children}</main>
+      <main className="flex-1 container mx-auto px-4 pb-24 md:pb-6 mt-10 md:mt-0">{children}</main>
       
       <Footer />
     </div>

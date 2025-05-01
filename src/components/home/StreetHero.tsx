@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, TouchEvent } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, ArrowRight, ChevronDown } from "lucide-react";
@@ -9,6 +9,7 @@ const StreetHero: React.FC = () => {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isLocked, setIsLocked] = useState(true);
   const [showUnlockMessage, setShowUnlockMessage] = useState(false);
+  const [touchStartY, setTouchStartY] = useState(0);
   const sectionRef = useRef<HTMLElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   
@@ -75,47 +76,51 @@ const StreetHero: React.FC = () => {
     };
   }, [isLocked]);
   
+  // Shared function to update scroll progress
+  const updateScrollProgress = (deltaY: number) => {
+    if (!isLocked) return;
+    
+    const totalRequired = window.innerHeight * 2; // Reduced from 3x to 2x for mobile
+    
+    // Only count downward scrolls
+    if (deltaY > 0) {
+      // Calculate progress (0-100%)
+      const increment = deltaY;
+      const newProgress = Math.min(100, scrollProgress + (increment / totalRequired) * 100);
+      setScrollProgress(newProgress);
+      
+      // Update the overlay with vertical reveal effect - move from top to bottom
+      if (overlayRef.current) {
+        // Start at 0% (positioned at the top) and move down as progress increases
+        const translateY = `${newProgress}%`;
+        overlayRef.current.style.transform = `translateY(${translateY})`;
+        
+        // When fully revealed (100% progress), hide it completely
+        if (newProgress >= 100) {
+          setTimeout(() => {
+            if (overlayRef.current) {
+              overlayRef.current.style.display = 'none';
+            }
+          }, 300);
+        }
+      }
+      
+      // Check for unlock threshold
+      if (newProgress >= 100) {
+        unlockScrolling();
+      }
+    }
+  };
+  
   // Simple scroll detection that only tracks wheel events while locked
   useEffect(() => {
     if (!isLocked) return; // Only add listener when locked
-    
-    let accumulatedScroll = 0;
-    const totalRequired = window.innerHeight * 3; // 3x viewport height
     
     const handleWheel = (e: WheelEvent) => {
       if (!isLocked) return;
       
       e.preventDefault();
-      
-      // Only count downward scrolls
-      if (e.deltaY > 0) {
-        accumulatedScroll += e.deltaY;
-        
-        // Calculate progress (0-100%)
-        const progress = Math.min(100, (accumulatedScroll / totalRequired) * 100);
-        setScrollProgress(progress);
-        
-        // Update the overlay with vertical reveal effect - move from top to bottom
-        if (overlayRef.current) {
-          // Start at 0% (positioned at the top) and move down as progress increases
-          const translateY = `${progress}%`;
-          overlayRef.current.style.transform = `translateY(${translateY})`;
-          
-          // When fully revealed (100% progress), hide it completely
-          if (progress >= 100) {
-            setTimeout(() => {
-              if (overlayRef.current) {
-                overlayRef.current.style.display = 'none';
-              }
-            }, 300);
-          }
-        }
-        
-        // Check for unlock threshold
-        if (progress >= 100) {
-          unlockScrolling();
-        }
-      }
+      updateScrollProgress(e.deltaY);
     };
     
     // Add event listener with passive: false to allow preventDefault
@@ -124,7 +129,27 @@ const StreetHero: React.FC = () => {
     return () => {
       window.removeEventListener('wheel', handleWheel);
     };
-  }, [isLocked]);
+  }, [isLocked, scrollProgress]);
+  
+  // Handle touch events for mobile devices
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!isLocked) return;
+    setTouchStartY(e.touches[0].clientY);
+  };
+  
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isLocked) return;
+    
+    e.preventDefault();
+    const touchY = e.touches[0].clientY;
+    const deltaY = touchStartY - touchY; // Positive when scrolling down
+    
+    if (deltaY > 0) {
+      updateScrollProgress(deltaY * 2); // Multiply by 2 to make it more responsive on mobile
+    }
+    
+    setTouchStartY(touchY);
+  };
   
   // Function to properly unlock scrolling
   const unlockScrolling = () => {
@@ -173,7 +198,7 @@ const StreetHero: React.FC = () => {
           transform: 'translateY(0%)',
           transition: 'transform 0.3s ease',
           willChange: 'transform',
-          background: 'linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0.4))'
+          background: 'linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.2))'
         }}
       />
       
@@ -181,6 +206,8 @@ const StreetHero: React.FC = () => {
         ref={sectionRef} 
         className="relative h-screen w-full overflow-hidden m-0 p-0"
         style={{ margin: 0, padding: 0 }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
       >
         {/* Background GIFs */}
         {backgrounds.map((bg, index) => (
@@ -207,7 +234,7 @@ const StreetHero: React.FC = () => {
         <div 
           className="absolute inset-0 z-20"
           style={{ 
-            background: `linear-gradient(to right, rgba(0,0,0,0.5), rgba(0,0,0,0.3), rgba(0,0,0,0.5))`
+            background: `linear-gradient(to right, rgba(0,0,0,0.3), rgba(0,0,0,0.2), rgba(0,0,0,0.3))`
           }}
         />
         
@@ -255,7 +282,7 @@ const StreetHero: React.FC = () => {
               className="flex flex-col items-center cursor-pointer bg-transparent border-0 focus:outline-none mb-3"
             >
               <span className="text-white/50 text-xs uppercase tracking-widest flex items-center mb-1">
-                {isLocked ? `Scroll down (${Math.floor(scrollProgress)}%)` : 'Continue'}
+                {isLocked ? `Scroll down (${Math.floor(scrollProgress)}%) or tap here to skip` : 'Continue'}
               </span>
               <ChevronDown className={`text-white/50 w-5 h-5 ${isLocked ? 'animate-bounce' : ''}`} />
             </button>
