@@ -6,12 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Minus, Plus, ShoppingCart, Trash2, ArrowRight, DollarSign, Truck, BadgePercent } from "lucide-react";
 import { useCart } from "@/context/CartContext";
-import { getShippingFee } from '../integrations/supabase/settings.service';
+import { getShippingFee, getTaxRate } from '../integrations/supabase/settings.service';
 import OrderSummary from '@/components/checkout/OrderSummary';
+
+// Custom styles for animations and effects
+import "./cart.css";
 
 const Cart = () => {
   const { cart, updateQuantity, removeFromCart, cartTotal } = useCart();
   const [shippingFee, setShippingFee] = useState<number>(5.99);
+  const [taxRate, setTaxRate] = useState<number>(0.08); // Default tax rate
   const [discount, setDiscount] = useState<number>(0);
   const [discountId, setDiscountId] = useState<string | null>(null);
   const [discountCode, setDiscountCode] = useState<string | null>(null);
@@ -39,7 +43,8 @@ const Cart = () => {
   const subtotal = cartTotal;
   const isFreeShipping = subtotal >= 50;
   const shipping = isFreeShipping ? 0 : shippingFee;
-  const total = subtotal + shipping - discount;
+  const tax = subtotal * taxRate;
+  const total = subtotal + shipping + tax - discount;
   
   // Load discount from session storage on initial load
   useEffect(() => {
@@ -73,7 +78,19 @@ const Cart = () => {
       }
     };
     
+    // Fetch the current tax rate from settings
+    const fetchTaxRate = async () => {
+      try {
+        const rate = await getTaxRate();
+        setTaxRate(rate);
+      } catch (error) {
+        console.error("Error fetching tax rate:", error);
+        // Keep the default value
+      }
+    };
+    
     fetchShippingFee();
+    fetchTaxRate();
   }, []);
   
   if (cart.length === 0) {
@@ -155,8 +172,127 @@ const Cart = () => {
   
   return (
     <Layout>
-      <div className="pt-8 sm:pt-12 mb-12">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-8 text-center">Your Shopping Cart</h1>
+      <div className="mb-12">
+        {/* Ultra-modern hero section with 3D effects and animations */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-primary/20 pt-20 pb-14 mb-8">
+          {/* Dynamic background blobs */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute -top-24 -left-24 w-96 h-96 bg-gradient-to-br from-primary/20 to-violet-500/10 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute top-10 right-0 w-96 h-96 bg-gradient-to-tr from-blue-500/10 to-primary/5 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-gradient-to-r from-violet-500/10 to-pink-500/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1.5s' }}></div>
+            
+            {/* Floating particles */}
+            <div className="hidden md:block absolute top-1/4 left-1/4 w-2 h-2 bg-primary/40 rounded-full animate-float"></div>
+            <div className="hidden md:block absolute top-1/3 right-1/4 w-3 h-3 bg-blue-400/30 rounded-full animate-float" style={{ animationDelay: '1s' }}></div>
+            <div className="hidden md:block absolute bottom-1/4 left-1/3 w-2 h-2 bg-violet-400/30 rounded-full animate-float" style={{ animationDelay: '2s' }}></div>
+            
+            {/* Decorative circles */}
+            <div className="hidden md:block absolute top-1/4 right-1/5 w-32 h-32 border border-primary/10 rounded-full opacity-30 animate-spin-slow"></div>
+            <div className="hidden md:block absolute bottom-1/4 left-1/5 w-40 h-40 border border-blue-500/10 rounded-full opacity-20"></div>
+          </div>
+          
+          {/* Subtle grid pattern */}
+          <div className="absolute inset-0 bg-grid-small-white/[0.03] -z-10"></div>
+          
+          {/* Radial gradient overlay */}
+          <div className="absolute inset-0 bg-radial-gradient"></div>
+          
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
+              {/* 3D floating cart icon with animated rings */}
+              <div className="relative mb-10 p-3 transform hover:scale-105 transition-transform duration-300">
+                {/* Outer animated ring */}
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary/30 via-blue-500/20 to-violet-500/30 animate-spin-slow"></div>
+                
+                {/* Middle pulsing ring */}
+                <div className="absolute inset-1 rounded-full bg-gradient-to-r from-primary/20 to-blue-400/20 animate-pulse"></div>
+                
+                {/* Inner glass effect */}
+                <div className="relative bg-background/60 backdrop-blur-lg rounded-full p-6 border border-white/10 shadow-2xl group">
+                  <div className="relative z-10 transform group-hover:rotate-12 transition-transform duration-300">
+                    <ShoppingCart className="h-10 w-10 text-primary" strokeWidth={1.5} />
+                    
+                    {/* Small item count badge */}
+                    <div className="absolute -top-1 -right-1 bg-gradient-to-r from-primary to-violet-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      {cart.length}
+                    </div>
+                  </div>
+                  
+                  {/* Subtle glow effect */}
+                  <div className="absolute inset-0 bg-primary/5 rounded-full blur-md"></div>
+                </div>
+              </div>
+              
+              {/* Ultra-modern heading with animated gradient */}
+              <h1 className="text-4xl md:text-6xl font-extrabold mb-4 tracking-tight relative">
+                <span className="animate-gradient-x bg-clip-text text-transparent bg-gradient-to-r from-primary via-blue-500 to-violet-500">
+                  Your Shopping Cart
+                </span>
+                <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-36 h-1 bg-gradient-to-r from-primary/50 to-violet-500/50 rounded-full blur-sm"></div>
+              </h1>
+              
+              {/* Elegant subheading */}
+              <p className="text-lg text-foreground/80 max-w-xl mb-6 leading-relaxed">
+                Continue your shopping journey with these carefully selected items
+              </p>
+              
+              {/* Stats in a stylish card */}
+              <div className="bg-background/40 backdrop-blur-lg border border-primary/10 rounded-2xl px-6 py-4 mb-8 shadow-lg shadow-primary/5">
+                <div className="flex flex-wrap justify-center gap-6 sm:gap-10 text-sm">
+                  <div className="flex flex-col items-center">
+                    <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500">
+                      {cart.length}
+                    </span>
+                    <span className="text-muted-foreground text-xs uppercase tracking-wide mt-1">
+                      {cart.length === 1 ? 'Item' : 'Items'}
+                    </span>
+                  </div>
+                  
+                  <div className="h-10 w-px bg-gradient-to-b from-border/0 via-border/60 to-border/0"></div>
+                  
+                  <div className="flex flex-col items-center">
+                    <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500">
+                      ${cartTotal.toFixed(2)}
+                    </span>
+                    <span className="text-muted-foreground text-xs uppercase tracking-wide mt-1">
+                      Subtotal
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Action buttons */}
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                <Button 
+                  asChild 
+                  className="rounded-full px-8 h-12 bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 text-white shadow-lg shadow-primary/20 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30"
+                >
+                  <Link to="/checkout" className="flex items-center gap-2">
+                    <span>Proceed to Checkout</span>
+                    <ArrowRight className="h-5 w-5" />
+                  </Link>
+                </Button>
+                
+                <Link 
+                  to="/shop" 
+                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-all duration-300 mt-2 sm:mt-0 group"
+                >
+                  <span>Continue Shopping</span>
+                  <div className="w-6 h-6 rounded-full bg-background border border-border/50 flex items-center justify-center group-hover:border-primary/50 transition-colors duration-300">
+                    <Plus className="h-3 w-3 group-hover:rotate-90 transition-transform duration-300" />
+                  </div>
+                </Link>
+              </div>
+            </div>
+          </div>
+          
+          {/* Decorative bottom wave */}
+          <div className="absolute bottom-0 left-0 right-0">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 100" className="w-full h-auto text-background fill-current">
+              <path d="M0,64L60,58.7C120,53,240,43,360,48C480,53,600,75,720,80C840,85,960,75,1080,64C1200,53,1320,43,1380,37.3L1440,32L1440,100L1380,100C1320,100,1200,100,1080,100C960,100,840,100,720,100C600,100,480,100,360,100C240,100,120,100,60,100L0,100Z"></path>
+            </svg>
+          </div>
+        </div>
         
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -164,13 +300,17 @@ const Cart = () => {
               <GlassCard>
                 <div className="flow-root">
                   <ul className="divide-y divide-border">
-                    {cart.map((item) => (
-                      <li key={item.product.id} className="py-6 flex animate-fade-in">
-                        <div className="flex-shrink-0 w-16 h-16 sm:w-24 sm:h-24 rounded-md overflow-hidden">
+                    {cart.map((item, index) => (
+                      <li 
+                        key={item.product.id} 
+                        className="py-6 flex animate-fade-in cart-item rounded-xl hover:bg-background/60 p-3"
+                        style={{ animationDelay: `${index * 0.1}s` }}
+                      >
+                        <div className="flex-shrink-0 w-16 h-16 sm:w-24 sm:h-24 rounded-xl overflow-hidden shadow-md">
                           <img
                             src={item.product.image}
                             alt={item.product.name}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                           />
                         </div>
                         
@@ -178,25 +318,31 @@ const Cart = () => {
                           <div className="flex flex-col sm:flex-row sm:justify-between">
                             <div>
                               <h3 className="text-base sm:text-lg font-medium">
-                                <Link to={`/products/${item.product.id}`} className="hover:text-primary">
+                                <Link to={`/product/${item.product.id}`} className="hover:text-primary transition-colors duration-200 flex items-center gap-1">
                                   {item.product.name}
+                                  <div className="w-4 h-px bg-primary/30 animate-pulse hidden sm:block"></div>
                                 </Link>
                               </h3>
                               <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
-                                ${item.product.price.toFixed(2)} per {item.product.unit}
+                                <span className="text-primary/80">${item.product.price.toFixed(2)}</span> per item
                               </p>
                               {/* Display selected color and size if available */}
                               {(item.selectedColor || item.selectedSize) && (
                                 <div className="mt-1 flex flex-wrap gap-2">
                                   {item.selectedSize && (
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-muted/50">
+                                    <span className="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium bg-background/70 border border-primary/10 backdrop-blur-sm shadow-sm">
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="mr-1 text-primary/70">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                                        <path d="M8 10h8" />
+                                        <path d="M8 14h4" />
+                                      </svg>
                                       Size: {item.selectedSize}
                                     </span>
                                   )}
                                   {item.selectedColor && (
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-muted/50">
+                                    <span className="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium bg-background/70 border border-primary/10 backdrop-blur-sm shadow-sm">
                                       <span 
-                                        className="w-2 h-2 rounded-full mr-1"
+                                        className="w-3 h-3 rounded-full mr-1.5 ring-1 ring-border/60"
                                         style={{ 
                                           backgroundColor: 
                                             ['black', 'white', 'red', 'blue', 'green', 'yellow', 'orange', 'purple', 'pink', 'brown', 'gray']
@@ -205,7 +351,7 @@ const Cart = () => {
                                               : '#888' 
                                         }}
                                       ></span>
-                                      {item.selectedColor}
+                                      Color: {item.selectedColor}
                                     </span>
                                   )}
                                 </div>
@@ -263,7 +409,8 @@ const Cart = () => {
                   items={cart}
                   subtotal={subtotal}
                   shipping={shipping}
-                  tax={0}
+                  shipping_fee={shippingFee}
+                  tax={tax}
                   discount={discount}
                   total={total}
                   onApplyPromo={handleApplyPromo}

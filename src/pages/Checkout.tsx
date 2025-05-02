@@ -767,6 +767,7 @@ const Checkout = () => {
                       items={cart}
                       subtotal={subtotal}
                       shipping={shipping}
+                      shipping_fee={shippingFee}
                       tax={tax}
                       discount={discount}
                       total={total}

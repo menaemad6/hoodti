@@ -12,6 +12,7 @@ interface OrderSummaryProps {
   items: CartItem[];
   subtotal: number;
   shipping: number;
+  shipping_fee?: number;
   tax: number;
   discount?: number;
   total: number;
@@ -22,6 +23,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   items,
   subtotal,
   shipping,
+  shipping_fee,
   tax,
   discount = 0,
   total,
@@ -243,19 +245,19 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
               <Truck className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-muted-foreground" />
               Shipping
             </span>
-            <span>{shipping > 0 ? `$${shipping.toFixed(2)}` : "Free"}</span>
+            <span>
+              ${shipping_fee ? shipping_fee.toFixed(2) : shipping.toFixed(2)}
+            </span>
           </div>
           
-          {/* Only show tax if it's not zero */}
-          {tax > 0 && (
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground flex items-center">
-                <Calculator className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-muted-foreground" />
-                Tax
-              </span>
-              <span>${tax.toFixed(2)}</span>
-            </div>
-          )}
+          {/* Always show tax */}
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground flex items-center">
+              <Calculator className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-muted-foreground" />
+              Tax
+            </span>
+            <span>${tax.toFixed(2)}</span>
+          </div>
           
           {discount > 0 && (
             <div className="flex justify-between items-center text-green-600">
@@ -269,7 +271,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           
           <div className="border-t border-border pt-2 sm:pt-3 flex justify-between font-semibold">
             <span>Total</span>
-            <span>${total.toFixed(2)}</span>
+            <span>${(subtotal + (shipping_fee || shipping) + tax - discount).toFixed(2)}</span>
           </div>
         </div>
       </div>

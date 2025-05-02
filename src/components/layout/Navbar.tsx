@@ -173,14 +173,6 @@ const Navbar = () => {
               <div className="hidden md:flex items-center space-x-2">
                 <ThemeToggle />
                 
-                {isAuthenticated ? (
-                  <ProfileButton user={user} />
-                ) : (
-                  <Button variant="ghost" size="sm" asChild className="hidden sm:flex ml-1">
-                    <Link to="/signin">Sign In</Link>
-                  </Button>
-                )}
-                
                 <Button variant="ghost" size="icon" asChild className="relative">
                   <Link to="/cart">
                     <ShoppingCart className="h-5 w-5" />
@@ -194,6 +186,20 @@ const Navbar = () => {
                     )}
                   </Link>
                 </Button>
+                
+                {isAuthenticated ? (
+                  <ProfileButton user={user} />
+                ) : (
+                  <Link to="/signin" className="hidden sm:flex">
+                    <div className="relative overflow-hidden rounded-full group">
+                      <div className="absolute inset-0 bg-gradient-to-r from-primary/80 via-secondary/70 to-primary/80 group-hover:bg-gradient-to-r group-hover:from-primary group-hover:via-secondary group-hover:to-primary transition-all duration-300"></div>
+                      <div className="relative px-4 py-1.5 text-sm font-medium text-white flex items-center space-x-1 group-hover:scale-105 transition-transform duration-200">
+                        <User className="h-3.5 w-3.5 mr-1.5" />
+                        <span>Sign In</span>
+                      </div>
+                    </div>
+                  </Link>
+                )}
               </div>
             </div>
           </div>

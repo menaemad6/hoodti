@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Minus, Plus, ShoppingCart, ChevronLeft, Truck, Shield, 
   Star, Package, Check, ArrowRight, Share2, Leaf, 
-  ChevronRight, Camera, Globe
+  ChevronRight, Camera, Globe, X
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import ProductGrid from "@/components/shop/ProductGrid";
@@ -20,6 +20,25 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import WishlistButton from "@/components/product/WishlistButton";
 import { BRAND_NAME } from "@/lib/constants";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -40,6 +59,9 @@ const ProductDetail = () => {
   // Add zoom effect state
   const [isZoomed, setIsZoomed] = useState(false);
   const [lastAddedTimestamp, setLastAddedTimestamp] = useState(0);
+  
+  // Add state for image modal
+  const [imageModalOpen, setImageModalOpen] = useState(false);
   
   // Add utility function to parse array fields (handle either JSON strings or actual arrays)
   const parseArrayField = (field: string | string[] | null | undefined): string[] => {
@@ -310,6 +332,7 @@ const ProductDetail = () => {
                 )}
                 onMouseEnter={() => setIsZoomed(true)}
                 onMouseLeave={() => setIsZoomed(false)}
+                onClick={() => setImageModalOpen(true)}
               >
                 <motion.div 
                   initial={{ opacity: 0, y: 10 }}
@@ -332,6 +355,13 @@ const ProductDetail = () => {
                       <WishlistButton productId={id} variant="icon" />
                     </div>
                   )}
+                  
+                  {/* Image zoom indicator */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="bg-background/80 dark:bg-background/60 backdrop-blur-md rounded-full p-3 shadow-lg">
+                      <Camera className="h-5 w-5 text-foreground/70" />
+                    </div>
+                  </div>
                 </motion.div>
               </div>
               
@@ -362,6 +392,23 @@ const ProductDetail = () => {
                   ))}
                 </div>
               )}
+              
+              {/* Image Modal */}
+              <Dialog open={imageModalOpen} onOpenChange={setImageModalOpen}>
+                <DialogContent className="w-[90%] sm:w-[80%] h-[70vh] p-0 bg-background border-border/30 dark:border-border/10">
+                  <div className="flex items-center justify-center h-full w-full">
+                    <img 
+                      src={activeImage || product.image} 
+                      alt={product.name} 
+                      className="max-h-[95%] max-w-[95%] object-contain"
+                    />
+                  </div>
+                  <DialogClose className="absolute top-2 right-2 rounded-full w-8 h-8 flex items-center justify-center bg-background/80 backdrop-blur-sm border border-border/30 hover:bg-background hover:border-primary/40 shadow-sm transition-all duration-200 z-50">
+                    <X className="h-4 w-4" />
+                    <span className="sr-only">Close</span>
+                  </DialogClose>
+                </DialogContent>
+              </Dialog>
             </div>
               
             {/* Product Info - Enhanced */}
@@ -553,6 +600,66 @@ const ProductDetail = () => {
                         </button>
                       ))}
                     </div>
+                    
+                    {/* Size Measurement Table */}
+                    {availableSizes.length > 0 && (
+                      <div className="mt-5 rounded-xl overflow-hidden border border-border/30 dark:border-border/20 bg-background/60 backdrop-blur-sm shadow-sm">
+                        <div className="p-3 bg-gradient-to-r from-muted/50 to-muted/30 dark:from-muted/30 dark:to-muted/10 border-b border-border/30 dark:border-border/10">
+                          <h4 className="font-medium text-sm flex items-center">
+                            <span className="inline-block w-4 h-4 mr-2 rounded-full bg-primary/10 flex items-center justify-center">
+                              <span className="text-primary text-xs">i</span>
+                            </span>
+                            Product Measurement
+                          </h4>
+                        </div>
+                        <div className="p-4">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className="w-[100px]">Size</TableHead>
+                                <TableHead>Shoulder</TableHead>
+                                <TableHead>Length</TableHead>
+                                <TableHead>Sleeve Length</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {availableSizes.map((size) => (
+                                <TableRow key={size}>
+                                  <TableCell className="font-medium">{size}</TableCell>
+                                  <TableCell>
+                                    {size === 'XS' && '34 cm'}
+                                    {size === 'S' && '36 cm'}
+                                    {size === 'M' && '38 cm'}
+                                    {size === 'L' && '40 cm'}
+                                    {size === 'XL' && '42 cm'}
+                                    {size === 'XXL' && '44 cm'}
+                                  </TableCell>
+                                  <TableCell>
+                                    {size === 'XS' && '41 cm'}
+                                    {size === 'S' && '43 cm'}
+                                    {size === 'M' && '45 cm'}
+                                    {size === 'L' && '47 cm'}
+                                    {size === 'XL' && '49 cm'}
+                                    {size === 'XXL' && '51 cm'}
+                                  </TableCell>
+                                  <TableCell>
+                                    {size === 'XS' && '14.5 cm'}
+                                    {size === 'S' && '15.5 cm'}
+                                    {size === 'M' && '16.5 cm'}
+                                    {size === 'L' && '17.5 cm'}
+                                    {size === 'XL' && '18.5 cm'}
+                                    {size === 'XXL' && '19.5 cm'}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                          <p className="mt-3 text-xs text-muted-foreground">
+                            All measurements are in centimeters. Please allow a 1-2 cm difference due to manual measurement.
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

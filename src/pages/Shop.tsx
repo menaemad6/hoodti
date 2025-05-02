@@ -34,6 +34,7 @@ import {
   ArrowUpDown,
   Search,
   ChevronRight,
+  X,
   ShoppingBag
 } from "lucide-react";
 import {
@@ -70,12 +71,43 @@ const Shop = () => {
   const [openAccordion, setOpenAccordion] = useState<string>("categories");
   const searchInputRef = useRef<HTMLInputElement>(null);
   
-  // Add clothing-specific filters
-  const [selectedSize, setSelectedSize] = useState<string>("");
-  const [selectedColor, setSelectedColor] = useState<string>("");
+  // Added state for clothing filters
+  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [selectedGender, setSelectedGender] = useState<string>("");
   
+  // Dynamic arrays based on product data
+  const [availableSizes, setAvailableSizes] = useState<string[]>(["XS", "S", "M", "L", "XL", "XXL"]);
+  const [availableColors, setAvailableColors] = useState<string[]>(["Black", "White", "Red", "Blue", "Green", "Yellow", "Gray", "Brown", "Pink", "Purple", "Orange"]);
+  const [availableGenders, setAvailableGenders] = useState<string[]>(["Men", "Female", "Unisex", "Kids"]);
+  
   const toggleFilters = () => setShowFilters(!showFilters);
+
+  // Helper functions to extract unique values from products
+  const extractUniqueValues = (products: SupabaseProduct[], property: keyof SupabaseProduct): string[] => {
+    const allValues = new Set<string>();
+    
+    products.forEach(product => {
+      if (!product[property]) return;
+      
+      const value = product[property] as string;
+      try {
+        // Try to parse as JSON array
+        if (value.startsWith('[') && value.endsWith(']')) {
+          const parsedValues = JSON.parse(value);
+          parsedValues.forEach((val: string) => allValues.add(val.trim()));
+        } else {
+          // Handle as comma-separated string
+          value.split(',').forEach(val => allValues.add(val.trim()));
+        }
+      } catch (e) {
+        // If parsing fails, add as a single value
+        allValues.add(value.trim());
+      }
+    });
+    
+    return Array.from(allValues).filter(Boolean).sort();
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -96,6 +128,24 @@ const Shop = () => {
           setPriceRange([minPrice, maxPrice]);
           setMinPriceInput(minPrice.toString());
           setMaxPriceInput(maxPrice.toString());
+          
+          // Extract unique options from product data
+          const sizes = extractUniqueValues(productsData, 'size');
+          if (sizes.length > 0) setAvailableSizes(sizes);
+          
+          const colors = extractUniqueValues(productsData, 'color');
+          if (colors.length > 0) setAvailableColors(colors);
+          
+          // Ensure we keep our default gender values
+          const defaultGenders = ["Men", "Female", "Unisex", "Kids"];
+          const extractedGenders = extractUniqueValues(productsData, 'gender');
+          
+          // Combine default and extracted genders, remove duplicates
+          const combinedGenders = [...new Set([...defaultGenders, ...extractedGenders])];
+          setAvailableGenders(combinedGenders);
+          
+          // Log to debug
+          console.log("Gender values set:", combinedGenders);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -124,6 +174,47 @@ const Shop = () => {
   useEffect(() => {
     let result = [...products];
     
+    // Add debug logging for the first few products
+    if (products.length > 0) {
+      console.log("First product data:", {
+        name: products[0].name,
+        size: products[0].size,
+        sizeType: typeof products[0].size,
+        color: products[0].color,
+        colorType: typeof products[0].color,
+        gender: products[0].gender,
+        genderType: typeof products[0].gender
+      });
+      
+      // Log available filters
+      console.log("Available filter options:", {
+        sizes: availableSizes,
+        colors: availableColors,
+        genders: availableGenders
+      });
+      
+      // Log selected filters
+      console.log("Selected filters:", {
+        sizes: selectedSizes,
+        colors: selectedColors,
+        gender: selectedGender
+      });
+      
+      if (products.length > 1) {
+        console.log("Second product data:", {
+          name: products[1].name,
+          size: products[1].size,
+          sizeType: typeof products[1].size,
+          color: products[1].color,
+          colorType: typeof products[1].color,
+          gender: products[1].gender,
+          genderType: typeof products[1].gender
+        });
+      }
+    }
+    
+    console.log(`Filtering ${products.length} products`);
+
     // Category filter
     if (selectedCategory) {
       result = result.filter(product => matchesCategory(product, selectedCategory));
@@ -134,6 +225,83 @@ const Shop = () => {
       product.price >= priceRange[0] && 
       product.price <= priceRange[1]
     );
+    
+    // Size filter
+    if (selectedSizes.length > 0) {
+      const beforeFilter = result.length;
+      result = result.filter(product => {
+        // Check if the product's size matches any of the selected sizes
+        if (!product.size) return false;
+        
+        let productSizes: string[] = [];
+        
+        // Handle if size is a JSON string array
+        try {
+          if (product.size.startsWith('[') && product.size.endsWith(']')) {
+            productSizes = JSON.parse(product.size);
+          } else {
+            // Handle as comma-separated string
+            productSizes = product.size.split(',').map(s => s.trim().toLowerCase());
+          }
+        } catch (e) {
+          // If parsing fails, treat as a single string
+          productSizes = [product.size.toLowerCase()];
+        }
+        
+        const matches = selectedSizes.some(size => 
+          productSizes.includes(size.toLowerCase()) || 
+          productSizes.some(pSize => pSize.toLowerCase() === size.toLowerCase())
+        );
+        
+        return matches;
+      });
+      console.log(`Size filter: ${beforeFilter} → ${result.length} products`);
+    }
+    
+    // Color filter
+    if (selectedColors.length > 0) {
+      const beforeFilter = result.length;
+      result = result.filter(product => {
+        // Check if the product's color matches any of the selected colors
+        if (!product.color) return false;
+        
+        let productColors: string[] = [];
+        
+        // Handle if color is a JSON string array
+        try {
+          if (product.color.startsWith('[') && product.color.endsWith(']')) {
+            productColors = JSON.parse(product.color);
+          } else {
+            // Handle as comma-separated string
+            productColors = product.color.split(',').map(c => c.trim().toLowerCase());
+          }
+        } catch (e) {
+          // If parsing fails, treat as a single string
+          productColors = [product.color.toLowerCase()];
+        }
+        
+        const matches = selectedColors.some(color => 
+          productColors.includes(color.toLowerCase()) || 
+          productColors.some(pColor => pColor.toLowerCase() === color.toLowerCase())
+        );
+        
+        return matches;
+      });
+      console.log(`Color filter: ${beforeFilter} → ${result.length} products`);
+    }
+    
+    // Gender filter
+    if (selectedGender) {
+      const beforeFilter = result.length;
+      result = result.filter(product => {
+        if (!product.gender) return false;
+        
+        // Case-insensitive comparison for gender
+        const matches = product.gender.toLowerCase() === selectedGender.toLowerCase();
+        return matches;
+      });
+      console.log(`Gender filter: ${beforeFilter} → ${result.length} products`);
+    }
     
     // Search query filter
     if (debouncedSearchQuery) {
@@ -157,21 +325,6 @@ const Shop = () => {
     // Discounted products filter
     if (showDiscounted) {
       result = result.filter(product => product.discount > 0);
-    }
-
-    // Size filter
-    if (selectedSize) {
-      result = result.filter(product => product.size === selectedSize);
-    }
-
-    // Color filter
-    if (selectedColor) {
-      result = result.filter(product => product.color === selectedColor);
-    }
-
-    // Gender filter
-    if (selectedGender) {
-      result = result.filter(product => product.gender === selectedGender);
     }
     
     // Sorting
@@ -203,7 +356,7 @@ const Shop = () => {
       searchParams.delete("category");
     }
     setSearchParams(searchParams);
-  }, [products, selectedCategory, selectedSort, priceRange, debouncedSearchQuery, showFeatured, showNew, showDiscounted, searchParams, setSearchParams, selectedSize, selectedColor, selectedGender]);
+  }, [products, selectedCategory, selectedSort, priceRange, debouncedSearchQuery, showFeatured, showNew, showDiscounted, searchParams, setSearchParams, selectedSizes, selectedColors, selectedGender]);
 
   const clearFilters = () => {
     setSelectedCategory("");
@@ -219,8 +372,9 @@ const Shop = () => {
     setShowFeatured(false);
     setShowNew(false);
     setShowDiscounted(false);
-    setSelectedSize("");
-    setSelectedColor("");
+    // Clear clothing filters
+    setSelectedSizes([]);
+    setSelectedColors([]);
     setSelectedGender("");
   };
 
@@ -253,6 +407,60 @@ const Shop = () => {
 
   const FilterSection = () => (
     <div className="space-y-6">
+      {/* Active Filter Badges */}
+      {(selectedSizes.length > 0 || selectedColors.length > 0 || selectedGender) && (
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <h3 className="text-sm font-medium">Active Filters</h3>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={clearFilters}
+              className="h-7 px-2 text-xs"
+            >
+              Clear All
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {selectedSizes.map(size => (
+              <div 
+                key={`badge-size-${size}`} 
+                className="flex items-center bg-primary/10 text-primary text-xs rounded-full px-2 py-1"
+              >
+                <span className="mr-1">Size: {size}</span>
+                <X 
+                  className="h-3 w-3 cursor-pointer" 
+                  onClick={() => setSelectedSizes(selectedSizes.filter(s => s !== size))}
+                />
+              </div>
+            ))}
+            {selectedColors.map(color => (
+              <div 
+                key={`badge-color-${color}`} 
+                className="flex items-center bg-primary/10 text-primary text-xs rounded-full px-2 py-1"
+              >
+                <span className="mr-1">Color: {color}</span>
+                <X 
+                  className="h-3 w-3 cursor-pointer" 
+                  onClick={() => setSelectedColors(selectedColors.filter(c => c !== color))}
+                />
+              </div>
+            ))}
+            {selectedGender && (
+              <div 
+                className="flex items-center bg-primary/10 text-primary text-xs rounded-full px-2 py-1"
+              >
+                <span className="mr-1">Gender: {selectedGender}</span>
+                <X 
+                  className="h-3 w-3 cursor-pointer" 
+                  onClick={() => setSelectedGender("")}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <Accordion 
         type="single" 
         value={openAccordion} 
@@ -303,107 +511,220 @@ const Shop = () => {
           </AccordionTrigger>
           <AccordionContent>
             <div className="space-y-4">
-              <Slider
-                value={priceRange}
-                min={Math.min(...products.map(p => p.price))}
-                max={Math.max(...products.map(p => p.price))}
-                step={1}
-                onValueChange={handlePriceRangeChange}
-                formatLabel={formatPrice}
-              />
-              <div className="flex gap-2">
+              <div className="flex gap-4">
                 <div className="space-y-1.5 flex-1">
-                  <Label htmlFor="minPrice">Min</Label>
+                  <Label htmlFor="minPrice">Min Price</Label>
                   <Input
                     id="minPrice"
                     value={minPriceInput}
                     onChange={(e) => handlePriceInputChange('min', e.target.value)}
                     placeholder="Min"
                     className="text-sm"
+                    type="number"
+                    min="0"
                   />
                 </div>
                 <div className="space-y-1.5 flex-1">
-                  <Label htmlFor="maxPrice">Max</Label>
+                  <Label htmlFor="maxPrice">Max Price</Label>
                   <Input
                     id="maxPrice"
                     value={maxPriceInput}
                     onChange={(e) => handlePriceInputChange('max', e.target.value)}
                     placeholder="Max"
                     className="text-sm"
+                    type="number"
+                    min="0"
                   />
                 </div>
+              </div>
+              <div className="flex justify-between items-center text-xs text-muted-foreground">
+                <span>Current range: ${priceRange[0]} - ${priceRange[1]}</span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    const prices = products.map(p => p.price);
+                    const minPrice = Math.floor(Math.min(...prices));
+                    const maxPrice = Math.ceil(Math.max(...prices));
+                    setPriceRange([minPrice, maxPrice]);
+                    setMinPriceInput(minPrice.toString());
+                    setMaxPriceInput(maxPrice.toString());
+                  }}
+                  className="h-7 text-xs"
+                >
+                  Reset
+                </Button>
               </div>
             </div>
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="clothing" className="border-b">
+        {/* Size Filter */}
+        <AccordionItem value="sizes" className="border-b">
           <AccordionTrigger className="hover:no-underline">
             <div className="flex items-center gap-2">
-              <ShoppingBag className="h-4 w-4" />
-              <span>Clothing Options</span>
+              <SlidersHorizontal className="h-4 w-4" />
+              <span>Sizes</span>
+              {selectedSizes.length > 0 && (
+                <span className="ml-auto mr-2 text-xs bg-primary/10 text-primary rounded-full px-2">
+                  {selectedSizes.length}
+                </span>
+              )}
             </div>
           </AccordionTrigger>
           <AccordionContent>
-            <div className="space-y-4">
-              {/* Size filter */}
-              <div className="space-y-1.5">
-                <Label>Size</Label>
-                <Select value={selectedSize} onValueChange={setSelectedSize}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select size" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">All Sizes</SelectItem>
-                    <SelectItem value="XS">XS</SelectItem>
-                    <SelectItem value="S">S</SelectItem>
-                    <SelectItem value="M">M</SelectItem>
-                    <SelectItem value="L">L</SelectItem>
-                    <SelectItem value="XL">XL</SelectItem>
-                    <SelectItem value="XXL">XXL</SelectItem>
-                  </SelectContent>
-                </Select>
+            <div className="space-y-2">
+              {availableSizes.map((size) => (
+                <div 
+                  key={size}
+                  className={`flex items-center space-x-2 cursor-pointer ${
+                    selectedSizes.includes(size) ? "text-primary font-medium" : ""
+                  }`}
+                >
+                  <Checkbox 
+                    id={`size-${size}`}
+                    checked={selectedSizes.includes(size)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedSizes([...selectedSizes, size]);
+                      } else {
+                        setSelectedSizes(selectedSizes.filter(s => s !== size));
+                      }
+                    }}
+                  />
+                  <Label 
+                    htmlFor={`size-${size}`} 
+                    className="cursor-pointer w-full"
+                    onClick={() => {
+                      if (selectedSizes.includes(size)) {
+                        setSelectedSizes(selectedSizes.filter(s => s !== size));
+                      } else {
+                        setSelectedSizes([...selectedSizes, size]);
+                      }
+                    }}
+                  >
+                    {size}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Color Filter */}
+        <AccordionItem value="colors" className="border-b">
+          <AccordionTrigger className="hover:no-underline">
+            <div className="flex items-center gap-2">
+              <div className="h-4 w-4 bg-gradient-to-r from-red-500 via-green-500 to-blue-500 rounded-full" />
+              <span>Colors</span>
+              {selectedColors.length > 0 && (
+                <span className="ml-auto mr-2 text-xs bg-primary/10 text-primary rounded-full px-2">
+                  {selectedColors.length}
+                </span>
+              )}
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="grid grid-cols-2 gap-2">
+              {availableColors.map((color) => (
+                <div 
+                  key={color}
+                  className={`flex items-center space-x-2 cursor-pointer ${
+                    selectedColors.includes(color) ? "text-primary font-medium" : ""
+                  }`}
+                >
+                  <Checkbox 
+                    id={`color-${color}`}
+                    checked={selectedColors.includes(color)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedColors([...selectedColors, color]);
+                      } else {
+                        setSelectedColors(selectedColors.filter(c => c !== color));
+                      }
+                    }}
+                  />
+                  <Label 
+                    htmlFor={`color-${color}`} 
+                    className="cursor-pointer w-full"
+                    onClick={() => {
+                      if (selectedColors.includes(color)) {
+                        setSelectedColors(selectedColors.filter(c => c !== color));
+                      } else {
+                        setSelectedColors([...selectedColors, color]);
+                      }
+                    }}
+                  >
+                    {color}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Gender Filter */}
+        <AccordionItem value="gender" className="border-b">
+          <AccordionTrigger className="hover:no-underline">
+            <div className="flex items-center gap-2">
+              <div className="h-4 w-4 flex items-center justify-center">
+                <span className="text-xs">⚥</span>
+              </div>
+              <span>Gender</span>
+              {selectedGender && (
+                <span className="ml-auto mr-2 text-xs bg-primary/10 text-primary rounded-full px-2">
+                  1
+                </span>
+              )}
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="space-y-2">
+              <div 
+                className={`flex items-center space-x-2 cursor-pointer ${
+                  selectedGender === "" ? "text-primary font-medium" : ""
+                }`}
+              >
+                <Checkbox 
+                  id="gender-all"
+                  checked={selectedGender === ""}
+                  onCheckedChange={(checked) => {
+                    if (checked) setSelectedGender("");
+                  }}
+                />
+                <Label 
+                  htmlFor="gender-all" 
+                  className="cursor-pointer w-full"
+                  onClick={() => setSelectedGender("")}
+                >
+                  All
+                </Label>
               </div>
               
-              {/* Color filter */}
-              <div className="space-y-1.5">
-                <Label>Color</Label>
-                <Select value={selectedColor} onValueChange={setSelectedColor}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select color" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">All Colors</SelectItem>
-                    <SelectItem value="Black">Black</SelectItem>
-                    <SelectItem value="White">White</SelectItem>
-                    <SelectItem value="Red">Red</SelectItem>
-                    <SelectItem value="Blue">Blue</SelectItem>
-                    <SelectItem value="Green">Green</SelectItem>
-                    <SelectItem value="Yellow">Yellow</SelectItem>
-                    <SelectItem value="Purple">Purple</SelectItem>
-                    <SelectItem value="Pink">Pink</SelectItem>
-                    <SelectItem value="Brown">Brown</SelectItem>
-                    <SelectItem value="Gray">Gray</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {/* Gender filter */}
-              <div className="space-y-1.5">
-                <Label>Gender</Label>
-                <Select value={selectedGender} onValueChange={setSelectedGender}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select gender" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">All Genders</SelectItem>
-                    <SelectItem value="men">Men</SelectItem>
-                    <SelectItem value="women">Women</SelectItem>
-                    <SelectItem value="kids">Kids</SelectItem>
-                    <SelectItem value="unisex">Unisex</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Explicitly render each required gender */}
+              {["Men", "Female", "Unisex", "Kids"].map((gender) => (
+                <div 
+                  key={gender}
+                  className={`flex items-center space-x-2 cursor-pointer ${
+                    selectedGender === gender ? "text-primary font-medium" : ""
+                  }`}
+                >
+                  <Checkbox 
+                    id={`gender-${gender}`}
+                    checked={selectedGender === gender}
+                    onCheckedChange={(checked) => {
+                      if (checked) setSelectedGender(gender);
+                    }}
+                  />
+                  <Label 
+                    htmlFor={`gender-${gender}`} 
+                    className="cursor-pointer w-full"
+                    onClick={() => setSelectedGender(gender)}
+                  >
+                    {gender}
+                  </Label>
+                </div>
+              ))}
             </div>
           </AccordionContent>
         </AccordionItem>

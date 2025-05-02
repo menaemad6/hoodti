@@ -1,1 +1,1 @@
-export const BRAND_NAME = "DeadStocked"; 
+export const BRAND_NAME = "Hoodti"; 
