@@ -316,7 +316,7 @@ export async function createOrder(orderData: {
       .from('orders')
       .insert({
         user_id: orderData.user_id,
-        total: orderData.total,
+        total: parseFloat(orderData.total.toFixed(2)),
         status: orderData.status,
         address_id: orderData.address_id,
         delivery_slot: deliverySlot, // Use the combined date and time slot
@@ -324,9 +324,9 @@ export async function createOrder(orderData: {
         billing_address: orderData.billing_address,
         payment_method: orderData.payment_method,
         order_notes: orderData.order_notes,
-        tax: orderData.tax,
-        discount_amount: orderData.discount_amount,
-        shipping_amount: orderData.shipping_amount,
+        tax: orderData.tax !== undefined ? parseFloat(Number(orderData.tax).toFixed(2)) : null,
+        discount_amount: orderData.discount_amount !== undefined ? parseFloat(Number(orderData.discount_amount).toFixed(2)) : null,
+        shipping_amount: orderData.shipping_amount !== undefined ? parseFloat(Number(orderData.shipping_amount).toFixed(2)) : null,
         email: orderData.email,
         phone_number: orderData.phone_number,
         full_name: orderData.full_name

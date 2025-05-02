@@ -26,6 +26,7 @@ import { ProfileRow } from "@/integrations/supabase/types.service";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { BRAND_NAME } from "@/lib/constants";
 
 // Define types for slots and order data
 interface DeliverySlot {
@@ -316,9 +317,13 @@ const Checkout = () => {
     
     try {
       const subtotal = cartTotal;
-      const shipping = calculateShipping();
+      // Use the same shipping calculation as the one used in the UI
+      const isFreeShipping = subtotal >= 50;
+      const shipping = isFreeShipping ? 0 : shippingFee;
       const tax = calculateTax();
-      const total = subtotal + shipping + tax - discount;
+      
+      // Calculate the total with the shipping fee
+      const total = subtotal + shippingFee + tax - discount;
       
       const selectedAddress = addresses.find(addr => addr.id === selectedAddressId);
       const shippingAddressText = selectedAddress ? 
@@ -345,9 +350,9 @@ const Checkout = () => {
         shipping_address: shippingAddressText,
         payment_method: formData.paymentMethod,
         order_notes: formData.notes,
-        tax: tax,
-        discount_amount: discount,
-        shipping_amount: shipping,
+        tax: parseFloat(tax.toFixed(2)),
+        discount_amount: parseFloat(discount.toFixed(2)),
+        shipping_amount: parseFloat(shippingFee.toFixed(2)), // Always use the actual shipping fee from settings
         items: orderItems,
         // Add the new fields to save to the database
         email: emailToUse,
@@ -403,6 +408,8 @@ const Checkout = () => {
         const emailItems = cart.map(item => ({
           quantity: item.quantity,
           price_at_time: item.product.price,
+          selected_color: item.selectedColor || null,
+          selected_size: item.selectedSize || null,
           products: {  // Change from 'product' to 'products' to match the structure expected by the email service
             name: item.product.name,
             price: item.product.price,
@@ -430,10 +437,11 @@ const Checkout = () => {
           deliverySlot: deliverySlotText,
           // Include financial details
           subtotal: `$${subtotal.toFixed(2)}`,
-          shippingCost: `$${shipping.toFixed(2)}`,
+          shippingCost: `$${shippingFee.toFixed(2)}`,
           taxAmount: `$${tax.toFixed(2)}`,
           discountAmount: discount > 0 ? `-$${discount.toFixed(2)}` : '$0.00',
           customerPhone: formData.phone, // Add the customer's phone number
+          brandName: BRAND_NAME // Add brand name for the email template
         });
         
         console.log('Order confirmation email sent successfully');

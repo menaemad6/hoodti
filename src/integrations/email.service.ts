@@ -1,5 +1,7 @@
 import emailjs from '@emailjs/browser';
 import { EMAIL_CONFIG } from './email.config';
+import { BRAND_NAME } from '@/lib/constants';
+import { supabase } from './supabase/client';
 
 interface OrderStatusEmailProps {
   userEmail: string;      // Recipient email
@@ -8,7 +10,7 @@ interface OrderStatusEmailProps {
   orderStatus: string;    // New status (pending, processing, shipping, delivered, canceled)
   orderTotal: string;     // Order total amount
   orderDate: string;      // Order date
-  orderItems?: any[];     // Optional order items
+  orderItems?: OrderEmailItem[];     // Optional order items
   subtotal?: string;      // Optional subtotal
   shippingCost?: string;  // Optional shipping cost
   taxAmount?: string;     // Optional tax amount
@@ -18,6 +20,7 @@ interface OrderStatusEmailProps {
   deliverySlot?: string;    // Delivery slot (optional for status updates)
   customerPhone?: string;   // Customer's phone number (optional)
   customerEmail?: string;   // Customer's email (might be different from recipient)
+  brandName?: string;       // Store/brand name (optional)
 }
 
 interface OrderConfirmationEmailProps {
@@ -26,7 +29,7 @@ interface OrderConfirmationEmailProps {
   orderId: string;        // Order ID
   orderTotal: string;     // Order total amount
   orderDate: string;      // Order date
-  orderItems: any[];      // Order items
+  orderItems: OrderEmailItem[];      // Order items
   shippingAddress: string; // Shipping address
   paymentMethod: string;   // Payment method
   deliverySlot?: string;   // Delivery slot information (optional)
@@ -36,48 +39,104 @@ interface OrderConfirmationEmailProps {
   discountAmount?: string; // Discount amount (optional)
   customerPhone?: string;  // Customer's phone number (optional)
   customerEmail?: string;  // Customer's email (might be different from recipient)
+  brandName?: string;      // Store/brand name (optional)
+}
+
+// Define an interface for order item structure
+interface OrderEmailItem {
+  quantity: number;
+  price_at_time: number;
+  products?: {
+    name: string;
+    price: number;
+    image?: string;
+  };
+  selected_color?: string | null;
+  selected_size?: string | null;
+}
+
+interface OrderDetails {
+  shippingAddress?: string;
+  paymentMethod?: string;
+  deliverySlot?: string;
+  customerEmail?: string;
+  [key: string]: unknown; // For any other properties that might be returned
+}
+
+// Define a type for the order data from the database
+interface OrderData {
+  id: string;
+  shipping_address?: string;
+  payment_method?: string;
+  delivery_slot?: string;
+  email?: string;
+  phone_number?: string;
+  [key: string]: unknown; // For other fields
 }
 
 // Build a simple HTML table for order items that won't be escaped
-const buildItemsTable = (items: any[]) => {
+const buildItemsTable = (items: OrderEmailItem[]): string => {
   if (!items || items.length === 0) {
-    return '<div style="text-align: center; padding: 15px 0;">No items available</div>';
+    return '<div style="text-align: center; padding: 20px; background-color: #f9fafb; border-radius: 8px; color: #6b7280; font-size: 14px;">No items available</div>';
   }
   
   let tableHTML = `
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;">
-    <thead>
-      <tr>
-        <th align="left" style="padding: 10px 5px; border-bottom: 1px solid #e5e7eb; width: 60%; font-weight: 600; color: #4b5563;">Item</th>
-        <th align="center" style="padding: 10px 5px; border-bottom: 1px solid #e5e7eb; width: 15%; font-weight: 600; color: #4b5563;">Qty</th>
-        <th align="right" style="padding: 10px 5px; border-bottom: 1px solid #e5e7eb; width: 25%; font-weight: 600; color: #4b5563;">Price</th>
-      </tr>
-    </thead>
-    <tbody>
+  <div style="border-radius: 10px; overflow: hidden; border: 1px solid #e5e7eb; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+    <!-- Header Row -->
+    <div style="background-color: #f3f4f6; padding: 12px 15px; display: grid; grid-template-columns: 60% 15% 25%; font-weight: 600; color: #374151; font-size: 14px;">
+      <div style="text-align: left;">Product</div>
+      <div style="text-align: center;">Qty</div>
+      <div style="text-align: right;">Price</div>
+    </div>
   `;
   
-  items.forEach(item => {
+  // Add each product as a row
+  items.forEach((item, index) => {
     const name = item.products?.name || 'Product';
     const quantity = item.quantity || 1;
     const unitPrice = parseFloat(item.price_at_time?.toString() || '0');
     const totalPrice = (unitPrice * quantity).toFixed(2);
     
+    // Extract color and size information
+    const selectedColor = item.selected_color || null;
+    const selectedSize = item.selected_size || null;
+    
+    // Determine if this is the last item (for border styling)
+    const isLastItem = index === items.length - 1;
+    const borderStyle = isLastItem ? '' : 'border-bottom: 1px solid #e5e7eb;';
+    
+    // Build product details with color and size if available
+    let productDetails = `<div style="font-weight: 500; color: #111827;">${name}</div>`;
+    if (selectedSize || selectedColor) {
+      productDetails += '<div style="font-size: 12px; color: #6b7280; margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px;">';
+      if (selectedSize) {
+        productDetails += `<span style="display: inline-block; background-color: #f3f4f6; padding: 3px 8px; border-radius: 15px; font-weight: 500;">Size: ${selectedSize}</span>`;
+      }
+      if (selectedColor) {
+        // Check if it's a standard color that can be displayed directly
+        const standardColors = ['black', 'white', 'red', 'blue', 'green', 'yellow', 'orange', 'purple', 'pink', 'brown', 'gray'];
+        // Add color swatch if it's a standard color
+        const colorDot = standardColors.includes(selectedColor.toLowerCase())
+          ? `<span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${selectedColor.toLowerCase()}; margin-right: 4px; border: 1px solid rgba(0,0,0,0.1);"></span>`
+          : '';
+        
+        productDetails += `<span style="display: inline-block; background-color: #f3f4f6; padding: 3px 8px; border-radius: 15px; font-weight: 500;">${colorDot}Color: ${selectedColor}</span>`;
+      }
+      productDetails += '</div>';
+    }
+    
+    // Create the row with elegant styling
     tableHTML += `
-      <tr>
-        <td align="left" style="padding: 10px 5px; border-bottom: 1px solid #e5e7eb;">${name}</td>
-        <td align="center" style="padding: 10px 5px; border-bottom: 1px solid #e5e7eb;">${quantity}</td>
-        <td align="right" style="padding: 10px 5px; border-bottom: 1px solid #e5e7eb;">$${totalPrice}</td>
-      </tr>
+      <div style="padding: 15px; display: grid; grid-template-columns: 60% 15% 25%; ${borderStyle} background-color: white;">
+        <div style="text-align: left;">${productDetails}</div>
+        <div style="text-align: center; align-self: center; color: #4b5563;">${quantity}</div>
+        <div style="text-align: right; align-self: center; font-weight: 500; color: #111827;">$${totalPrice}</div>
+      </div>
     `;
   });
   
-  // Remove border from last row
-  tableHTML = tableHTML.replace(/border-bottom: 1px solid #e5e7eb;([^<]*)<\/td>\s*<\/tr>\s*<\/tbody>/g, '$1</td></tr></tbody>');
-  
-  tableHTML += `
-    </tbody>
-  </table>
-  `;
+  // Close the container
+  tableHTML += '</div>';
   
   return tableHTML;
 };
@@ -115,6 +174,7 @@ export const sendOrderConfirmationEmail = async (emailData: OrderConfirmationEma
       to_email: emailData.userEmail,
       to_name: emailData.userName,
       order_id: emailData.orderId.slice(0, 8),
+      full_order_id: emailData.orderId,
       order_total: emailData.orderTotal,
       order_date: emailData.orderDate,
       status_title: "Thank You for Your Order!",
@@ -132,7 +192,8 @@ export const sendOrderConfirmationEmail = async (emailData: OrderConfirmationEma
       order_items_formatted: itemsTableHTML,
       // Customer contact information
       customer_email: emailData.customerEmail || emailData.userEmail,
-      customer_phone: emailData.customerPhone || "Not provided"
+      customer_phone: emailData.customerPhone || "Not provided",
+      brand_name: emailData.brandName || BRAND_NAME
     };
 
     console.log('Sending order confirmation email with params:', {
@@ -164,15 +225,40 @@ export const sendOrderConfirmationEmail = async (emailData: OrderConfirmationEma
  * @param orderId The order ID to look up
  * @returns Any additional order information that was found
  */
-const fetchAdditionalOrderDetails = async (orderId: string): Promise<any> => {
-  // In a real implementation, this would query your database
-  // For now, we're returning placeholder data
-  console.log(`Fetching additional details for order ${orderId}`);
-  return {
-    shippingAddress: "Shipping address would be fetched from database",
-    paymentMethod: "Payment method would be fetched from database",
-    deliverySlot: "Delivery information would be fetched from database"
-  };
+const fetchAdditionalOrderDetails = async (orderId: string): Promise<OrderDetails> => {
+  try {
+    // Query the orders table to get the email address from the order itself
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', orderId)
+      .single();
+    
+    if (error) {
+      console.error('Error fetching order details:', error);
+      throw error;
+    }
+    
+    // Use a more specific type for the order data
+    const orderData = data as OrderData;
+    
+    // Return actual data from the database, checking if each field exists
+    return {
+      shippingAddress: orderData?.shipping_address || "",
+      paymentMethod: orderData?.payment_method || "",
+      deliverySlot: orderData?.delivery_slot || "",
+      customerEmail: orderData?.email || "", // Get email directly from the order
+    };
+  } catch (error) {
+    console.error(`Error fetching details for order ${orderId}:`, error);
+    // Return empty values if there's an error
+    return {
+      shippingAddress: "",
+      paymentMethod: "",
+      deliverySlot: "",
+      customerEmail: "",
+    };
+  }
 };
 
 /**
@@ -184,6 +270,9 @@ export const sendOrderStatusEmail = async (emailData: OrderStatusEmailProps) => 
   try {
     // Get status-specific messaging
     const statusMessage = getStatusMessage(emailData.orderStatus);
+    
+    // Get additional order details including the customer's email from the order record
+    const orderDetails = await fetchAdditionalOrderDetails(emailData.orderId);
     
     // Use the exact tax amount provided, don't recalculate
     let taxAmount = emailData.taxAmount || '';
@@ -197,22 +286,25 @@ export const sendOrderStatusEmail = async (emailData: OrderStatusEmailProps) => 
       }
     }
     
-    // Log the tax amount for debugging
-    console.log("Tax amount being used in status email:", taxAmount);
-    
     // Format order items using table HTML
     const itemsTableHTML = buildItemsTable(emailData.orderItems || []);
     
-    // Use shipping and payment info if provided, otherwise use generic placeholders
-    const shippingAddress = emailData.shippingAddress || "Please refer to your order confirmation email for shipping details";
-    const paymentMethod = emailData.paymentMethod || "Please refer to your order confirmation email for payment details";
-    const deliverySlot = emailData.deliverySlot || "Please refer to your order confirmation email for delivery details";
+    // Use order details if available, otherwise use what was provided in the function call
+    const shippingAddress = orderDetails.shippingAddress || emailData.shippingAddress || "Please refer to your order confirmation email for shipping details";
+    const paymentMethod = orderDetails.paymentMethod || emailData.paymentMethod || "Please refer to your order confirmation email for payment details";
+    const deliverySlot = orderDetails.deliverySlot || emailData.deliverySlot || "Please refer to your order confirmation email for delivery details";
+    
+    // For the recipient email, strongly prioritize the email from the order record
+    const recipientEmail = orderDetails.customerEmail || emailData.customerEmail || emailData.userEmail;
+    
+    console.log('Sending order status update to email:', recipientEmail);
     
     // Prepare template parameters based on EmailJS template
     const templateParams = {
-      to_email: emailData.userEmail,
+      to_email: recipientEmail, // Use order's customer email instead of profile email
       to_name: emailData.userName,
       order_id: emailData.orderId.slice(0, 8),
+      full_order_id: emailData.orderId, // Add full order ID for tracking link
       order_status: emailData.orderStatus,
       order_total: emailData.orderTotal,
       order_date: emailData.orderDate,
@@ -230,8 +322,9 @@ export const sendOrderStatusEmail = async (emailData: OrderStatusEmailProps) => 
       // Order items as HTML table
       order_items_formatted: itemsTableHTML,
       // Customer contact information
-      customer_email: emailData.customerEmail || emailData.userEmail,
-      customer_phone: emailData.customerPhone || "Not provided"
+      customer_email: recipientEmail, // Show same email in the email body
+      customer_phone: emailData.customerPhone || "Not provided",
+      brand_name: emailData.brandName || BRAND_NAME
     };
 
     // Send the email using credentials from config
