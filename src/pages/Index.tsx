@@ -1032,7 +1032,7 @@ const Index = () => {
             <div className="text-center mb-20">
               <div className="inline-flex items-center justify-center mb-3">
                 <div className="h-px w-5 bg-primary"></div>
-                <span className="mx-4 text-sm font-medium text-primary uppercase tracking-widest px-3 py-1 border border-primary/30 rounded-full">Limited Edition</span>
+                <span className="mx-4 text-sm font-medium text-primary uppercase tracking-widest px-3 py-1 border border-primary/30 rounded-full">Special Partnership</span>
                 <div className="h-px w-5 bg-primary"></div>
               </div>
               <h2 className="text-6xl sm:text-7xl font-black uppercase mb-6 tracking-tight">
@@ -1041,7 +1041,7 @@ const Index = () => {
                 </span>
               </h2>
               <p className="text-white/60 max-w-2xl mx-auto text-lg font-light leading-relaxed">
-                Exclusive collaborations with world-class artists and designers pushing the boundaries of street fashion
+                Exclusive collaboration with El Salam School bringing our premium hoodies to their students and community
               </p>
             </div>
           </AnimatedWrapper>
@@ -1063,24 +1063,22 @@ const Index = () => {
                   
                   {/* Image */}
                   <img 
-                    src="/collab-collection.jpg" 
-                    alt="Collaboration with Street Artist" 
+                    src="/hoodti-collab.webp" 
+                    alt="Collaboration with El Salam School" 
                     className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 filter brightness-90 group-hover:brightness-105"
                   />
                   
                   {/* Gradient overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-80 z-10"></div>
                   
-                  {/* Artist credit */}
+                  {/* School credit */}
                   <div className="absolute top-8 left-8 text-white/90 flex items-center z-30">
-                    <img 
-                      src="https://randomuser.me/api/portraits/men/35.jpg" 
-                      alt="Takashi Murakami" 
-                      className="w-10 h-10 rounded-full border-2 border-primary/80 shadow-glow"
-                    />
+                    <div className="w-10 h-10 rounded-full border-2 border-primary/80 shadow-glow flex items-center justify-center bg-white">
+                      <span className="text-primary font-bold text-xs">ES</span>
+                    </div>
                     <div className="ml-3">
-                      <p className="text-xs text-white/60 font-medium uppercase tracking-wide">Artist</p>
-                      <p className="font-bold text-sm">Takashi Murakami</p>
+                      <p className="text-xs text-white/60 font-medium uppercase tracking-wide">Partner</p>
+                      <p className="font-bold text-sm">El Salam School</p>
                     </div>
                   </div>
                   
@@ -1088,9 +1086,9 @@ const Index = () => {
                   <div className="absolute bottom-0 left-0 right-0 p-8 transform translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-500 ease-out z-30">
                     <div className="flex flex-col items-start gap-5">
                       <div>
-                        <p className="text-white/70 text-sm mb-2 font-medium uppercase tracking-wider">Spring/Summer 2023</p>
+                        <p className="text-white/70 text-sm mb-2 font-medium uppercase tracking-wider">School Year 2023/2024</p>
                         <h3 className="text-3xl font-black text-white bg-clip-text">
-                          <span className="bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">Blossom </span>
+                          <span className="bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">School </span>
                           Collection
                         </h3>
                       </div>
@@ -1099,7 +1097,7 @@ const Index = () => {
                         className="group/btn bg-white hover:bg-primary text-black hover:text-white font-semibold transition-all duration-300 rounded-none px-8 py-6 h-auto flex items-center"
                         asChild
                       >
-                        <Link to="/collections/artist-collab">
+                        <Link to="/collections/school-collab">
                           SHOP THE COLLECTION
                           <div className="w-6 h-px bg-black group-hover/btn:bg-white ml-2 transition-all duration-300 group-hover/btn:w-8"></div>
                         </Link>
@@ -1117,16 +1115,16 @@ const Index = () => {
                 <div className="absolute bottom-0 right-0 w-24 h-24 rounded-full bg-primary/10 blur-xl"></div>
                 
                 <h3 className="text-5xl font-black mb-8 leading-tight">
-                  <span className="bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent inline-block mb-2">URBAN</span>
+                  <span className="bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent inline-block mb-2">STUDENT</span>
                   <br />
-                  <span className="text-white">LEGENDS</span>
-                  <span className="block mt-3 text-xl font-medium text-white/70 tracking-wide">× TAKASHI MURAKAMI</span>
+                  <span className="text-white">STYLE</span>
+                  <span className="block mt-3 text-xl font-medium text-white/70 tracking-wide">× EL SALAM SCHOOL</span>
                 </h3>
 
                 <p className="text-lg text-white/80 mb-10 leading-relaxed">
-                  Our exclusive collaboration with renowned artist Takashi Murakami brings his iconic 
-                  flower motifs to streetwear. Each piece is a wearable art statement that blends 
-                  street culture with high-end design.
+                  Our exclusive collaboration with El Salam School brings premium quality hoodies to their 
+                  students. Each hoodie is designed for comfort, style, and school pride, featuring 
+                  custom school branding.
                 </p>
 
                 <div className="space-y-5 mb-12">
@@ -1135,28 +1133,28 @@ const Index = () => {
                                    bg-primary/10 group-hover:bg-primary/20 transition-colors duration-300">
                       <Check className="text-primary w-5 h-5" />
                     </div>
-                    <span className="text-white/90 group-hover:text-white transition-colors duration-300">Limited edition run of 500 pieces</span>
+                    <span className="text-white/90 group-hover:text-white transition-colors duration-300">Custom school branding and colors</span>
                   </div>
                   <div className="flex items-center group">
                     <div className="w-12 h-12 rounded-full flex items-center justify-center mr-5 
                                    bg-primary/10 group-hover:bg-primary/20 transition-colors duration-300">
                       <Check className="text-primary w-5 h-5" />
                     </div>
-                    <span className="text-white/90 group-hover:text-white transition-colors duration-300">Handcrafted details on each item</span>
+                    <span className="text-white/90 group-hover:text-white transition-colors duration-300">Premium quality materials for comfort</span>
                   </div>
                   <div className="flex items-center group">
                     <div className="w-12 h-12 rounded-full flex items-center justify-center mr-5 
                                    bg-primary/10 group-hover:bg-primary/20 transition-colors duration-300">
                       <Check className="text-primary w-5 h-5" />
                     </div>
-                    <span className="text-white/90 group-hover:text-white transition-colors duration-300">Includes numbered authenticity card</span>
+                    <span className="text-white/90 group-hover:text-white transition-colors duration-300">Available in multiple sizes for all students</span>
                   </div>
                   <div className="flex items-center group">
                     <div className="w-12 h-12 rounded-full flex items-center justify-center mr-5 
                                    bg-primary/10 group-hover:bg-primary/20 transition-colors duration-300">
                       <Check className="text-primary w-5 h-5" />
                     </div>
-                    <span className="text-white/90 group-hover:text-white transition-colors duration-300">Premium packaging and custom box</span>
+                    <span className="text-white/90 group-hover:text-white transition-colors duration-300">Special pricing for El Salam School students</span>
                   </div>
                 </div>
 
@@ -1168,7 +1166,7 @@ const Index = () => {
                     asChild
                   >
                     <Link to="/shop">
-                      EXPLORE ITEMS
+                      EXPLORE HOODIES
                       <ArrowRight className="ml-2 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                     </Link>
                   </Button>
@@ -1180,7 +1178,7 @@ const Index = () => {
                     variant="outline"
                   >
                     <Link to="/">
-                      ABOUT THE ARTIST
+                      ABOUT THE SCHOOL
                     </Link>
                   </Button>
                 </div>
