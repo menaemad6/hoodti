@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import HomeLayout from "@/components/layout/HomeLayout";
 import { getProducts } from "@/integrations/supabase/products.service";
@@ -88,9 +88,45 @@ const Index = () => {
     }, 800);
   }, [addToCart]);
 
+  // Filter for featured products
+  const getFeaturedProducts = useCallback((products: Product[]) => {
+    // Create a copy of the array to avoid modifying the original
+    return products
+      .filter(product => product.featured)
+      .map(product => ({
+        ...product,
+        id: `featured-${product.id}` // Ensure unique IDs for featured products
+      }))
+      .slice(0, 8);
+  }, []);
+
+  // Filter for new arrivals
+  const getNewArrivals = useCallback((products: Product[]) => {
+    return products
+      .filter(product => product.is_new === true)
+      .map(product => ({
+        ...product, 
+        id: `new-${product.id}` // Ensure unique IDs for new arrivals
+      }))
+      .slice(0, 8);
+  }, []);
+
+  // Memoized filtered products to prevent excessive recalculations
+  const newArrivalsProducts = useMemo(() => {
+    return products.length > 0 ? getNewArrivals(products) : [];
+  }, [products, getNewArrivals]);
+
+  const featuredProducts = useMemo(() => {
+    return products.length > 0 ? getFeaturedProducts(products) : [];
+  }, [products, getFeaturedProducts]);
+
   // Scroll carousel to specific index
   const scrollToIndex = useCallback((index: number, isNewArrivals: boolean = true) => {
     const ref = isNewArrivals ? carouselRef : featuredCarouselRef;
+    const totalItems = isNewArrivals ? newArrivalsProducts.length : featuredProducts.length;
+    
+    // Don't scroll if index is out of bounds
+    if (index >= totalItems) return;
     
     if (ref.current) {
       const carousel = ref.current;
@@ -107,12 +143,16 @@ const Index = () => {
         setFeaturedActiveIndex(index);
       }
     }
-  }, []);
+  }, [newArrivalsProducts.length, featuredProducts.length]);
 
   // Scroll carousel left or right
   const scrollCarousel = useCallback((direction: 'left' | 'right', isNewArrivals: boolean = true) => {
-    const items = isNewArrivals ? products : products.filter(p => p.featured);
-    const totalItems = items.length || 8;
+    const items = isNewArrivals ? newArrivalsProducts : featuredProducts;
+    const totalItems = items.length;
+    
+    // Don't scroll if there are no items
+    if (totalItems === 0) return;
+    
     const currentIndex = isNewArrivals ? activeIndex : featuredActiveIndex;
     
     let newIndex = direction === 'left' ? currentIndex - 1 : currentIndex + 1;
@@ -122,7 +162,7 @@ const Index = () => {
     if (newIndex >= totalItems) newIndex = 0;
     
     scrollToIndex(newIndex, isNewArrivals);
-  }, [activeIndex, featuredActiveIndex, products, scrollToIndex]);
+  }, [activeIndex, featuredActiveIndex, newArrivalsProducts, featuredProducts, scrollToIndex]);
 
   // Automatic scrolling for carousel
   useEffect(() => {
@@ -130,7 +170,7 @@ const Index = () => {
     
     const interval = setInterval(() => {
       scrollCarousel('right', true);
-    }, 5000);
+    }, 3000);
     
     return () => clearInterval(interval);
   }, [scrollCarousel, isPaused]);
@@ -141,7 +181,7 @@ const Index = () => {
     
     const interval = setInterval(() => {
       scrollCarousel('right', false);
-    }, 6000); // Slightly different timing to avoid both carousels moving at the same time
+    }, 4000);
     
     return () => clearInterval(interval);
   }, [scrollCarousel, isFeaturedPaused]);
@@ -421,7 +461,7 @@ const Index = () => {
                     className="h-10 w-10 md:h-12 md:w-12 rounded-full flex items-center justify-center bg-background/80 backdrop-blur-sm shadow-lg border border-border hover:bg-primary hover:text-primary-foreground transition-all hover:scale-110 active:scale-95"
                     onClick={() => {
                       setIsPaused(true);
-                      setTimeout(() => setIsPaused(false), 10000);
+                      setTimeout(() => setIsPaused(false), 5000);
                       scrollCarousel('left', true);
                     }}
                     aria-label="Previous product"
@@ -434,7 +474,7 @@ const Index = () => {
                     className="h-10 w-10 md:h-12 md:w-12 rounded-full flex items-center justify-center bg-background/80 backdrop-blur-sm shadow-lg border border-border hover:bg-primary hover:text-primary-foreground transition-all hover:scale-110 active:scale-95"
                     onClick={() => {
                       setIsPaused(true);
-                      setTimeout(() => setIsPaused(false), 10000);
+                      setTimeout(() => setIsPaused(false), 5000);
                       scrollCarousel('right', true);
                     }}
                     aria-label="Next product"
@@ -445,7 +485,8 @@ const Index = () => {
                 
                 {/* Carousel Progress Indicators */}
                 <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-20 flex items-center gap-1.5 bg-background/50 backdrop-blur-sm rounded-full px-2 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                  {(products.length > 0 ? Array.from({ length: products.length }) : Array.from({ length: 8 })).map((_, index) => (
+                  {newArrivalsProducts.length > 0 ? 
+                    newArrivalsProducts.map((_, index) => (
                     <button
                       key={index}
                       className={`w-1.5 h-1.5 rounded-full transition-all ${
@@ -453,12 +494,20 @@ const Index = () => {
                       }`}
                       onClick={() => {
                         setIsPaused(true);
-                        setTimeout(() => setIsPaused(false), 10000);
+                        setTimeout(() => setIsPaused(false), 5000);
                         scrollToIndex(index, true);
                       }}
                       aria-label={`Go to product ${index + 1}`}
                     />
-                  ))}
+                  )) : 
+                    Array.from({ length: 0 }).map((_, index) => (
+                      <button
+                        key={index}
+                        className="w-1.5 h-1.5 rounded-full bg-border"
+                        aria-label={`Go to product ${index + 1}`}
+                      />
+                    ))
+                  }
                 </div>
                 
                 {/* Scrollable Carousel */}
@@ -470,7 +519,9 @@ const Index = () => {
                   onMouseEnter={() => setIsPaused(true)}
                   onMouseLeave={() => setIsPaused(false)}
                 >
-                  {(products && products.length > 0 ? products : Array(8).fill(null)).map((product, index) => (
+                  {(products && products.length > 0 ? 
+                    newArrivalsProducts : 
+                    Array(8).fill(null)).map((product, index) => (
                     <AnimatedWrapper 
                       key={product?.id || index} 
                       animation="fade-in" 
@@ -745,7 +796,7 @@ const Index = () => {
                     className="h-10 w-10 md:h-12 md:w-12 rounded-full flex items-center justify-center bg-background/80 backdrop-blur-sm shadow-lg border border-border hover:bg-amber-500 hover:text-amber-50 transition-all hover:scale-110 active:scale-95"
                     onClick={() => {
                       setIsFeaturedPaused(true);
-                      setTimeout(() => setIsFeaturedPaused(false), 10000);
+                      setTimeout(() => setIsFeaturedPaused(false), 5000);
                       scrollCarousel('left', false);
                     }}
                     aria-label="Previous featured product"
@@ -758,7 +809,7 @@ const Index = () => {
                     className="h-10 w-10 md:h-12 md:w-12 rounded-full flex items-center justify-center bg-background/80 backdrop-blur-sm shadow-lg border border-border hover:bg-amber-500 hover:text-amber-50 transition-all hover:scale-110 active:scale-95"
                     onClick={() => {
                       setIsFeaturedPaused(true);
-                      setTimeout(() => setIsFeaturedPaused(false), 10000);
+                      setTimeout(() => setIsFeaturedPaused(false), 5000);
                       scrollCarousel('right', false);
                     }}
                     aria-label="Next featured product"
@@ -769,9 +820,8 @@ const Index = () => {
                 
                 {/* Carousel Progress Indicators */}
                 <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-20 flex items-center gap-1.5 bg-background/50 backdrop-blur-sm rounded-full px-2 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                  {(products.filter(p => p.featured).length > 0 ? 
-                    Array.from({ length: Math.min(products.filter(p => p.featured).length, 8) }) : 
-                    Array.from({ length: 8 })).map((_, index) => (
+                  {featuredProducts.length > 0 ? 
+                    featuredProducts.map((_, index) => (
                     <button
                       key={index}
                       className={`w-1.5 h-1.5 rounded-full transition-all ${
@@ -779,12 +829,20 @@ const Index = () => {
                       }`}
                       onClick={() => {
                         setIsFeaturedPaused(true);
-                        setTimeout(() => setIsFeaturedPaused(false), 10000);
+                        setTimeout(() => setIsFeaturedPaused(false), 5000);
                         scrollToIndex(index, false);
                       }}
                       aria-label={`Go to featured product ${index + 1}`}
                     />
-                  ))}
+                  )) : 
+                    Array.from({ length: 0 }).map((_, index) => (
+                      <button
+                        key={index}
+                        className="w-1.5 h-1.5 rounded-full bg-border"
+                        aria-label={`Go to featured product ${index + 1}`}
+                      />
+                    ))
+                  }
                 </div>
                 
                 {/* Scrollable Carousel */}
@@ -797,10 +855,10 @@ const Index = () => {
                   onMouseLeave={() => setIsFeaturedPaused(false)}
                 >
                   {(products && products.length > 0 ? 
-                    products.filter(product => product.featured || Math.random() > 0.7).slice(0, 8) : 
+                    featuredProducts : 
                     Array(8).fill(null)).map((product, index) => (
                     <AnimatedWrapper 
-                      key={product?.id || `featured-${index}`} 
+                      key={product?.id || index} 
                       animation="fade-in" 
                       delay={`${(index % 8) * 100}` as DelayType} 
                       className="group snap-start flex-shrink-0 w-[280px] sm:w-[320px] transition-all hover:-translate-y-2 duration-300"
@@ -1031,18 +1089,24 @@ const Index = () => {
           <AnimatedWrapper animation="fade-in">
             <div className="text-center mb-20">
               <div className="inline-flex items-center justify-center mb-3">
-                <div className="h-px w-5 bg-primary"></div>
+                <div className="w-10 h-[1px] bg-primary"></div>
                 <span className="mx-4 text-sm font-medium text-primary uppercase tracking-widest px-3 py-1 border border-primary/30 rounded-full">Special Partnership</span>
-                <div className="h-px w-5 bg-primary"></div>
+                <div className="w-10 h-[1px] bg-gradient-to-l from-transparent to-primary/70"></div>
               </div>
-              <h2 className="text-6xl sm:text-7xl font-black uppercase mb-6 tracking-tight">
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-white/80 drop-shadow-[0_0_8px_rgba(255,255,255,0.25)]">
-                  FEATURED COLLAB
+              
+              <h2 className="text-5xl sm:text-6xl lg:text-7xl font-black mb-6">
+                <span className="block mb-2 bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/80 dark:from-white dark:to-white/80">
+                  BUILT FOR THE STREETS.
+                </span>
+                <span className="relative inline-block">
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80 dark:from-primary dark:to-primary/90">
+                    DESIGNED FOR EXPRESSION.
+                  </span>
+                  <svg className="absolute -bottom-4 left-0 w-full h-2 text-primary/40" viewBox="0 0 100 10" preserveAspectRatio="none">
+                    <path d="M0,0 C25,8 75,8 100,0 L100,5 C75,13 25,13 0,5 Z" fill="currentColor" />
+                  </svg>
                 </span>
               </h2>
-              <p className="text-white/60 max-w-2xl mx-auto text-lg font-light leading-relaxed">
-                Exclusive collaboration with El Salam School bringing our premium hoodies to their students and community
-              </p>
             </div>
           </AnimatedWrapper>
 
@@ -1167,7 +1231,6 @@ const Index = () => {
                   >
                     <Link to="/shop">
                       EXPLORE HOODIES
-                      <ArrowRight className="ml-2 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                     </Link>
                   </Button>
                   
