@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, ArrowRight, ChevronDown } from "lucide-react";
+import { BRAND_NAME } from "@/lib/constants";
 
 const StreetHero: React.FC = () => {
   const [activeBackground, setActiveBackground] = useState(0);
@@ -295,14 +296,13 @@ const StreetHero: React.FC = () => {
             
             {/* Headline */}
             <h1 className="text-5xl sm:text-7xl md:text-[8rem] font-black mb-4 leading-none tracking-tight text-white">
-              <span className="block mb-2 md:mb-4 text-primary">STREET</span>
-              <span className="block">CULTURE</span>
+              <span className="block">{BRAND_NAME.toUpperCase()}</span>
             </h1>
             
             {/* Subheading */}
             <p className="text-lg sm:text-2xl text-white/80 mb-10 max-w-lg mx-auto font-medium">
-              Authentic urban apparel for those who define their own path. 
-              Express yourself without limits.
+              {/* Authentic urban apparel for those who define their own path. 
+              Express yourself without limits. */}
             </p>
             
             {/* CTA Button */}
