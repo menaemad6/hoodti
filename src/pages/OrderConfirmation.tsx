@@ -232,7 +232,7 @@ const OrderConfirmation = () => {
                     'text-green-600 dark:text-green-400'
                   }`} />
                 </div>
-                <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-green-600 to-blue-600 dark:from-green-400 dark:to-blue-400 bg-clip-text text-transparent">
+                <h1 className="text-3xl sm:text-4xl font-bold mb-4">
                   {orderStatus === 'pending' && "Thank You for Your Order!"}
                   {orderStatus === 'processing' && "Your Order is Being Processed"}
                   {orderStatus === 'shipped' && "Your Order is on the Way"}
@@ -240,7 +240,7 @@ const OrderConfirmation = () => {
                   {orderStatus === 'cancelled' && "Your Order has Been Cancelled"}
                   {!['pending', 'processing', 'shipped', 'delivered', 'cancelled'].includes(orderStatus) && "Order Status"}
                 </h1>
-                <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+                <p className="text-sm sm:text-lg text-muted-foreground max-w-xl mx-auto">
                   {orderStatus === 'pending' && "We've received your order and will begin processing it shortly. You'll receive updates about your order via email."}
                   {orderStatus === 'processing' && "We're currently preparing your items for shipment. We'll notify you when it's on the way."}
                   {orderStatus === 'shipped' && "Your order is on its way to you! You can track its progress here."}
@@ -251,15 +251,15 @@ const OrderConfirmation = () => {
               </div>
             </div>
 
-            <ModernCard className="overflow-hidden border-0 shadow-lg shadow-gray-100/50 dark:shadow-black/10 dark:bg-gray-950/50">
-              <div className="bg-gradient-to-r from-gray-50 to-gray-100/50 dark:from-gray-900/50 dark:to-gray-950/50 p-6 border-b border-border">
+            <ModernCard className="overflow-hidden">
+              <div className="bg-gradient-to-r from-gray-50 to-gray-100/50 dark:from-gray-900/50 dark:to-gray-950/50 p-4 sm:p-6 border-b border-border">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h2 className="text-2xl font-bold">Order #{order.id.slice(-8)}</h2>
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <h2 className="text-xl sm:text-2xl font-bold">Order #{order.id.slice(-8)}</h2>
                       <Badge 
                         variant="outline" 
-                        className={`capitalize border px-3 py-1 flex items-center gap-1.5 ${
+                        className={`capitalize border px-2 sm:px-3 py-0.5 sm:py-1 flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm ${
                           orderStatus === 'delivered' ? 'border-green-800 bg-green-950 text-green-400' :
                           orderStatus === 'processing' ? 'border-blue-800 bg-blue-950 text-blue-400' :
                           orderStatus === 'shipped' ? 'border-purple-800 bg-purple-950 text-purple-400' :
@@ -268,18 +268,18 @@ const OrderConfirmation = () => {
                           'border-gray-800 bg-gray-950 text-gray-400'
                         } dark:border-opacity-50`}
                       >
-                        <StatusIcon className="h-4 w-4" />
+                        <StatusIcon className="h-3 w-3 sm:h-4 sm:w-4" />
                         {orderStatus}
                       </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Placed on {format(new Date(order.created_at), "MMMM d, yyyy 'at' h:mm a")}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-r from-gray-50/50 to-gray-100/30 dark:from-gray-900/50 dark:to-gray-950/50 p-6 border-t border-b border-border">
+              <div className="p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                   <div className="w-full">
                     <h3 className="font-medium mb-3 flex items-center text-foreground">
@@ -295,7 +295,7 @@ const OrderConfirmation = () => {
                       {order.email && (
                         <div>
                           <span className="font-medium block">Email</span>
-                          {order.email}
+                          <span className="break-words">{order.email}</span>
                         </div>
                       )}
                       {order.phone_number && (
@@ -309,61 +309,63 @@ const OrderConfirmation = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
-                <AnimatedWrapper animation="fade-in" delay="500" className="mt-6">
-                  <div className="bg-gray-50/30 dark:bg-gray-900/30 backdrop-blur-xl rounded-xl p-4 border border-border hover:border-gray-200 dark:hover:border-gray-700 transition-colors">
-                    <h3 className="font-medium mb-2 flex items-center text-foreground">
-                      <MapPin className="h-4 w-4 mr-2 text-muted-foreground" /> Delivery Address
-                    </h3>
-                    <p className="text-sm text-muted-foreground whitespace-pre-line">
-                      {order.shipping_address || "Not provided"}
-                    </p>
-                  </div>
-                </AnimatedWrapper>
+              <div className="px-4 sm:px-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <AnimatedWrapper animation="fade-in" delay="500" className="mt-2">
+                    <div className="bg-gray-50/30 dark:bg-gray-900/30 backdrop-blur-xl rounded-xl p-4 border border-border hover:border-gray-200 dark:hover:border-gray-700 transition-colors h-full">
+                      <h3 className="font-medium mb-2 flex items-center text-foreground">
+                        <MapPin className="h-4 w-4 mr-2 text-muted-foreground" /> Delivery Address
+                      </h3>
+                      <p className="text-sm text-muted-foreground whitespace-pre-line break-words">
+                        {order.shipping_address || "Not provided"}
+                      </p>
+                    </div>
+                  </AnimatedWrapper>
 
-                <AnimatedWrapper animation="fade-in" delay="600" className="mt-6">
-                  <div className="bg-gray-50/30 dark:bg-gray-900/30 backdrop-blur-xl rounded-xl p-4 border border-border hover:border-gray-200 dark:hover:border-gray-700 transition-colors">
-                    <h3 className="font-medium mb-2 flex items-center text-foreground">
-                      <Calendar className="h-4 w-4 mr-2 text-muted-foreground" /> Delivery Date
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {order.delivery_slot && (
-                        <>
-                          {format(new Date(order.delivery_slot.date), "EEEE, MMMM d, yyyy")}
-                          <br />
-                          {order.delivery_slot.time_slot}
-                        </>
-                      )}
-                    </p>
-                  </div>
-                </AnimatedWrapper>
+                  <AnimatedWrapper animation="fade-in" delay="600" className="mt-2">
+                    <div className="bg-gray-50/30 dark:bg-gray-900/30 backdrop-blur-xl rounded-xl p-4 border border-border hover:border-gray-200 dark:hover:border-gray-700 transition-colors h-full">
+                      <h3 className="font-medium mb-2 flex items-center text-foreground">
+                        <Calendar className="h-4 w-4 mr-2 text-muted-foreground" /> Delivery Date
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {order.delivery_slot && (
+                          <>
+                            {format(new Date(order.delivery_slot.date), "EEEE, MMMM d, yyyy")}
+                            <br />
+                            {order.delivery_slot.time_slot}
+                          </>
+                        )}
+                      </p>
+                    </div>
+                  </AnimatedWrapper>
 
-                <AnimatedWrapper animation="fade-in" delay="700" className="mt-6">
-                  <div className="bg-gray-50/30 dark:bg-gray-900/30 backdrop-blur-xl rounded-xl p-4 border border-border hover:border-gray-200 dark:hover:border-gray-700 transition-colors">
-                    <h3 className="font-medium mb-2 flex items-center text-foreground">
-                      <CreditCard className="h-4 w-4 mr-2 text-muted-foreground" /> Payment Method
-                    </h3>
-                    <p className="text-sm text-muted-foreground capitalize">
-                      {order.payment_method || "Credit Card"}
-                    </p>
-                  </div>
-                </AnimatedWrapper>
+                  <AnimatedWrapper animation="fade-in" delay="700" className="mt-2">
+                    <div className="bg-gray-50/30 dark:bg-gray-900/30 backdrop-blur-xl rounded-xl p-4 border border-border hover:border-gray-200 dark:hover:border-gray-700 transition-colors h-full">
+                      <h3 className="font-medium mb-2 flex items-center text-foreground">
+                        <CreditCard className="h-4 w-4 mr-2 text-muted-foreground" /> Payment Method
+                      </h3>
+                      <p className="text-sm text-muted-foreground capitalize">
+                        {order.payment_method || "Credit Card"}
+                      </p>
+                    </div>
+                  </AnimatedWrapper>
+                </div>
               </div>
 
               <Separator className="my-2" />
 
-              <div className="p-6">
-                <h3 className="font-medium mb-6 flex items-center text-lg text-foreground">
-                  <ShoppingBag className="h-5 w-5 mr-2 text-muted-foreground" /> 
+              <div className="p-4 sm:p-6">
+                <h3 className="font-medium mb-4 sm:mb-6 flex items-center text-base sm:text-lg text-foreground">
+                  <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-muted-foreground" /> 
                   Order Items ({order.items?.length || 0})
                 </h3>
 
                 <div className="space-y-4">
                   {order.items?.map((item, index) => (
                     <AnimatedWrapper key={item.id} animation="fade-up" delay={index < 7 ? ("100" as const) : ("0" as const)}>
-                      <div className="group relative rounded-xl border border-border bg-background p-4 hover:bg-gray-50/50 dark:hover:bg-gray-900/50 transition-all duration-200">
-                        <div className="flex items-start gap-4">
-                          <div className="h-24 w-24 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800 ring-1 ring-border">
+                      <div className="group relative rounded-xl border border-border bg-background p-3 sm:p-4 hover:bg-gray-50/50 dark:hover:bg-gray-900/50 transition-all duration-200">
+                        <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
+                          <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800 ring-1 ring-border mx-auto sm:mx-0">
                             {item.product?.image ? (
                               <img
                                 src={item.product.image}
@@ -377,20 +379,20 @@ const OrderConfirmation = () => {
                             )}
                           </div>
                           
-                          <div className="flex-1 min-w-0">
+                          <div className="flex-1 min-w-0 w-full">
                             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                               <div>
-                                <h4 className="font-medium text-base truncate group-hover:text-primary transition-colors">
+                                <h4 className="font-medium text-sm sm:text-base truncate group-hover:text-primary transition-colors text-center sm:text-left">
                                   {item.product?.name || "Product unavailable"}
                                 </h4>
                                 {item.product?.unit && (
-                                  <p className="text-sm text-muted-foreground mt-0.5">
+                                  <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 text-center sm:text-left">
                                     Per {item.product.unit}
                                   </p>
                                 )}
                                 {/* Display selected color and size if available */}
                                 {(item.selected_color || item.selected_size) && (
-                                  <div className="flex flex-wrap gap-2 mt-2">
+                                  <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-2">
                                     {item.selected_size && (
                                       <Badge 
                                         variant="outline" 
@@ -418,41 +420,41 @@ const OrderConfirmation = () => {
                                   </div>
                                 )}
                               </div>
-                              <div className="flex flex-row sm:flex-col items-center sm:items-end gap-3 sm:gap-1">
+                              <div className="flex flex-row justify-center sm:flex-col items-center sm:items-end gap-3 sm:gap-1 mt-2 sm:mt-0">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-sm text-muted-foreground">Qty:</span>
+                                  <span className="text-xs sm:text-sm text-muted-foreground">Qty:</span>
                                   <Badge 
                                     variant="outline" 
-                                    className="font-mono border-border bg-background px-2 min-w-[2.5rem] text-center"
+                                    className="font-mono border-border bg-background px-2 min-w-[2.5rem] text-center text-xs sm:text-sm"
                                   >
                                     {item.quantity}
                                   </Badge>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <span className="text-sm text-muted-foreground">Price:</span>
-                                  <span className="font-medium">${item.price_at_time.toFixed(2)}</span>
+                                  <span className="text-xs sm:text-sm text-muted-foreground">Price:</span>
+                                  <span className="font-medium text-xs sm:text-sm">${item.price_at_time.toFixed(2)}</span>
                                 </div>
                               </div>
                             </div>
                             
                             <Separator className="my-3" />
                             
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
                               <div className="flex items-center gap-2">
-                                <span className="text-sm text-muted-foreground">Subtotal:</span>
-                                <span className="font-semibold text-foreground">
+                                <span className="text-xs sm:text-sm text-muted-foreground">Subtotal:</span>
+                                <span className="font-semibold text-foreground text-sm sm:text-base">
                                   ${(item.price_at_time * item.quantity).toFixed(2)}
                                 </span>
                               </div>
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
-                                className="text-muted-foreground hover:text-primary"
+                                className="text-muted-foreground hover:text-primary text-xs sm:text-sm"
                                 asChild
                               >
                                 <Link to={`/product/${item.product?.id}`}>
                                   View Product
-                                  <ArrowRight className="ml-2 h-4 w-4" />
+                                  <ArrowRight className="ml-2 h-3 w-3 sm:h-4 sm:w-4" />
                                 </Link>
                               </Button>
                             </div>
@@ -463,10 +465,10 @@ const OrderConfirmation = () => {
                   ))}
                 </div>
 
-                <div className="mt-8 rounded-xl border border-border p-6 bg-gray-50/50 dark:bg-gray-900/50">
+                <div className="mt-8 rounded-xl border border-border p-4 sm:p-6 bg-gray-50/50 dark:bg-gray-900/50">
                   <div className="space-y-3">
                     {/* Subtotal - Calculate from items */}
-                    <div className="flex justify-between items-center text-sm">
+                    <div className="flex justify-between items-center text-xs sm:text-sm">
                       <span className="text-muted-foreground">Subtotal</span>
                       <span className="font-medium">
                         ${order.items.reduce((sum, item) => sum + (item.price_at_time * item.quantity), 0).toFixed(2)}
@@ -475,7 +477,7 @@ const OrderConfirmation = () => {
                     
                     {/* Tax */}
                     {order.tax !== undefined && order.tax > 0 && (
-                      <div className="flex justify-between items-center text-sm">
+                      <div className="flex justify-between items-center text-xs sm:text-sm">
                         <span className="text-muted-foreground">Tax</span>
                         <span className="font-medium">${order.tax.toFixed(2)}</span>
                       </div>
@@ -483,12 +485,12 @@ const OrderConfirmation = () => {
                     
                     {/* Shipping */}
                     {order.shipping_amount !== undefined && (
-                      <div className="flex justify-between items-center text-sm">
+                      <div className="flex justify-between items-center text-xs sm:text-sm">
                         <div className="flex items-center gap-2">
                           <span className="text-muted-foreground">Shipping</span>
                           {order.shipping_amount === 0 && (
                             <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 dark:text-green-400 border-green-200 dark:border-green-900">
-                              Free Delivery
+                              Free
                             </Badge>
                           )}
                         </div>
@@ -500,7 +502,7 @@ const OrderConfirmation = () => {
                     
                     {/* Discount */}
                     {order.discount_amount !== undefined && order.discount_amount > 0 && (
-                      <div className="flex justify-between items-center text-sm">
+                      <div className="flex justify-between items-center text-xs sm:text-sm">
                         <span className="text-muted-foreground">Discount</span>
                         <span className="font-medium text-purple-600 dark:text-purple-400">
                           -${order.discount_amount.toFixed(2)}
@@ -512,9 +514,9 @@ const OrderConfirmation = () => {
                     
                     {/* Total */}
                     <div className="flex justify-between items-center">
-                      <span className="text-lg font-semibold">Total</span>
+                      <span className="text-base sm:text-lg font-semibold">Total</span>
                       <div className="flex flex-col items-end">
-                        <span className="text-2xl font-bold text-green-600 dark:text-green-400">
+                        <span className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">
                           ${order.total.toFixed(2)}
                         </span>
                       </div>
@@ -528,7 +530,7 @@ const OrderConfirmation = () => {
               <Button 
                 asChild 
                 variant="outline"
-                className="border-2 hover:bg-gray-50 dark:hover:bg-gray-900 dark:border-gray-800"
+                className="border-2 hover:bg-gray-50 dark:hover:bg-gray-900 dark:border-gray-800 text-sm"
               >
                 <Link to="/" className="flex items-center gap-2">
                   <ChevronRight className="h-4 w-4" />
@@ -538,7 +540,7 @@ const OrderConfirmation = () => {
 
               <Button 
                 asChild 
-                className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 dark:from-green-500 dark:to-blue-500 dark:hover:from-green-600 dark:hover:to-blue-600 text-white shadow-lg shadow-blue-600/10 dark:shadow-blue-500/10"
+                className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 dark:from-green-500 dark:to-blue-500 dark:hover:from-green-600 dark:hover:to-blue-600 text-white shadow-lg shadow-blue-600/10 dark:shadow-blue-500/10 text-sm"
               >
                 <Link to="/account/orders" className="flex items-center gap-2">
                   View All Orders

@@ -79,8 +79,14 @@ const Index = () => {
     
     console.log('Adding to cart with color:', selectedColor, 'and size:', selectedSize);
     
+    // Create a fixed product object with the original ID
+    const fixedProduct = {
+      ...product,
+      id: product.id.replace('featured-', '').replace('new-', '')
+    };
+    
     // Use the CartContext to add the item with selected color and size
-    addToCart(product, 1, selectedColor, selectedSize);
+    addToCart(fixedProduct, 1, selectedColor, selectedSize);
     
     // Reset button style after a delay
     setTimeout(() => {
@@ -529,7 +535,7 @@ const Index = () => {
                       className="group snap-start flex-shrink-0 w-[280px] sm:w-[320px] transition-all hover:-translate-y-2 duration-300"
                     >
                       <div className="block h-full relative overflow-hidden bg-card hover:bg-accent/10 transition-all duration-300 rounded-xl shadow-sm hover:shadow-xl border border-border/40">
-                        <Link to={product ? `/product/${product.id}` : "#"} className="block">
+                        <Link to={product ? `/product/${product.id.replace('new-', '')}` : "#"} className="block">
                           {/* NEW badge - on left top corner with improved styling */}
                           <div className="absolute top-3 left-3 z-20">
                             <span className="inline-flex items-center px-2 py-1 bg-primary text-primary-foreground text-xs font-bold rounded-md shadow-sm transform -rotate-2">
@@ -680,7 +686,7 @@ const Index = () => {
                               })()}
                             </div>
                           </div>
-                          <Link to={product ? `/product/${product.id}` : "#"}>
+                          <Link to={product ? `/product/${product.id.replace('new-', '')}` : "#"}>
                             <h3 className="text-lg font-bold mb-2 group-hover:text-primary transition-colors truncate">
                               {product?.name || ["Street Style Product", "Urban Hoodie", "Graffiti Tee", "Vintage Sneakers", "Classic Cap", "Chain Necklace", "Baggy Jeans", "Limited Edition Jacket"][index % 8]}
                             </h3>
@@ -864,7 +870,7 @@ const Index = () => {
                       className="group snap-start flex-shrink-0 w-[280px] sm:w-[320px] transition-all hover:-translate-y-2 duration-300"
                     >
                       <div className="block h-full relative overflow-hidden bg-card hover:bg-accent/10 transition-all duration-300 rounded-xl shadow-sm hover:shadow-xl border border-border/40">
-                        <Link to={product ? `/product/${product.id}` : "#"} className="block">
+                        <Link to={product ? `/product/${product.id.replace('featured-', '')}` : "#"} className="block">
                           {/* Featured badge - on left top corner with improved styling */}
                           <div className="absolute top-3 left-3 z-20">
                             <span className="inline-flex items-center px-2 py-1 bg-amber-500 text-white text-xs font-bold rounded-md shadow-sm transform -rotate-2">
@@ -1005,7 +1011,7 @@ const Index = () => {
                             </div>
                           </div>
                           
-                          <Link to={product ? `/product/${product.id}` : "#"} className="group-hover:text-primary">
+                          <Link to={product ? `/product/${product.id.replace('featured-', '')}` : "#"} className="group-hover:text-primary">
                             <h3 className="font-bold text-lg mb-1 line-clamp-1">{product?.name || "Premium Product"}</h3>
                           </Link>
                           
