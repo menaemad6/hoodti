@@ -569,7 +569,7 @@ const Addresses = () => {
                   Back
                 </Link>
               </Button>
-              <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary/80 to-secondary dark:from-primary/90 dark:via-primary/70 dark:to-secondary/90">
+              <h1 className="hidden md:block text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary/80 to-secondary dark:from-primary/90 dark:via-primary/70 dark:to-secondary/90">
                 My Addresses
               </h1>
             </div>
@@ -577,6 +577,13 @@ const Addresses = () => {
               <Plus className="h-4 w-4" />
               Add New Address
             </Button>
+          </div>
+
+          {/* Mobile-only centered title */}
+          <div className="md:hidden text-center mb-6">
+            <h1 className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary/80 to-secondary dark:from-primary/90 dark:via-primary/70 dark:to-secondary/90">
+              My Addresses
+            </h1>
           </div>
 
           <AnimatedWrapper animation="fade-in">

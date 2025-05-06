@@ -136,22 +136,17 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, status, withItems = false,
 
   const normalizedStatus = normalizeStatus(order.status);
   
-  // Debug log to see the order data
-
-  
-
-
   return (
     <ModernCard 
       className="overflow-hidden backdrop-blur-sm border-0 shadow-lg shadow-gray-100/50 dark:shadow-black/10 dark:bg-gray-950/50 transition-all duration-300 hover:shadow-xl hover:shadow-gray-100/70 dark:hover:shadow-black/20"
       title={
-        <div className="flex justify-between items-center w-full">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 w-full">
           <div>
-            <h3 className="font-medium text-lg">Order #{order.id.slice(0, 8)}</h3>
-            <div className="flex items-center text-sm text-muted-foreground">
+            <h3 className="font-medium text-base sm:text-lg">Order #{order.id.slice(0, 8)}</h3>
+            <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
               <span>{formattedDate}</span>
-              <span className="mx-2">•</span>
-              <span>{exactDate}</span>
+              <span className="mx-1 sm:mx-2">•</span>
+              <span className="hidden xs:inline">{exactDate}</span>
             </div>
           </div>
           <div className="flex items-center">
@@ -160,10 +155,10 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, status, withItems = false,
             ) : (
               <Badge 
                 variant="outline" 
-                className={`capitalize border px-3 py-1 flex items-center gap-1.5 ${getBadgeStyles(order.status)}`}
+                className={`capitalize border px-2 py-1 sm:px-3 sm:py-1 flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm ${getBadgeStyles(order.status)}`}
               >
                 <span 
-                  className={`h-2 w-2 rounded-full ${getStatusColor(order.status)}`}
+                  className={`h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full ${getStatusColor(order.status)}`}
                 ></span>
                 {normalizedStatus}
               </Badge>
@@ -171,35 +166,35 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, status, withItems = false,
           </div>
         </div>
       }
-      headerClassName="p-5 bg-gradient-to-r from-gray-50 to-gray-100/50 dark:from-gray-900/50 dark:to-gray-950/50"
+      headerClassName="p-3 sm:p-5 bg-gradient-to-r from-gray-50 to-gray-100/50 dark:from-gray-900/50 dark:to-gray-950/50"
       contentClassName="p-0"
-      footerClassName="p-5 bg-gray-50/50 dark:bg-gray-900/30"
+      footerClassName="p-3 sm:p-5 bg-gray-50/50 dark:bg-gray-900/30"
       footer={
-        <div className="flex justify-between items-center w-full">
+        <div className="flex flex-col xs:flex-row justify-between items-start xs:items-center w-full gap-3 xs:gap-0">
           <div>
-            <p className="text-sm font-medium text-muted-foreground">Total</p>
-            <p className="text-lg font-bold">${Number(order.total).toFixed(2)}</p>
+            <p className="text-xs sm:text-sm font-medium text-muted-foreground">Total</p>
+            <p className="text-base sm:text-lg font-bold">${Number(order.total).toFixed(2)}</p>
           </div>
           {onViewDetails ? (
             <Button 
               variant="outline" 
               size="sm" 
-              className="rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors dark:bg-gray-900 dark:border-gray-800 dark:hover:bg-gray-800/80"
+              className="w-full xs:w-auto h-8 px-3 sm:h-9 text-xs sm:text-sm rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors dark:bg-gray-900 dark:border-gray-800 dark:hover:bg-gray-800/80"
               onClick={onViewDetails}
             >
               View Details
-              <ChevronRight className="ml-1 h-4 w-4" />
+              <ChevronRight className="ml-1 h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
           ) : (
             <Button 
               asChild 
               variant="outline" 
               size="sm" 
-              className="rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors dark:bg-gray-900 dark:border-gray-800 dark:hover:bg-gray-800/80"
+              className="w-full xs:w-auto h-8 px-3 sm:h-9 text-xs sm:text-sm rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors dark:bg-gray-900 dark:border-gray-800 dark:hover:bg-gray-800/80"
             >
-              <Link to={`/account/orders/${order.id}`}>
+              <Link to={`/account/orders/${order.id}`} className="w-full flex justify-center xs:justify-start items-center">
                 View Details
-                <ChevronRight className="ml-1 h-4 w-4" />
+                <ChevronRight className="ml-1 h-3 w-3 sm:h-4 sm:w-4" />
               </Link>
             </Button>
           )}
@@ -207,16 +202,16 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, status, withItems = false,
       }
     >
       {withItems && order.order_items && order.order_items.length > 0 && (
-        <div className="p-5 space-y-4 bg-white/80 dark:bg-transparent dark:backdrop-blur-sm">
-          <div className="flex items-center gap-2 mb-2">
-            <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-            <h4 className="text-sm font-medium">Items ({order.order_items.length})</h4>
+        <div className="p-3 sm:p-5 space-y-3 sm:space-y-4 bg-white/80 dark:bg-transparent dark:backdrop-blur-sm">
+          <div className="flex items-center gap-2 mb-1 sm:mb-2">
+            <ShoppingBag className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
+            <h4 className="text-xs sm:text-sm font-medium">Items ({order.order_items.length})</h4>
           </div>
           
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {order.order_items.slice(0, 3).map((item) => (
-              <div key={item.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-gray-200 dark:border-gray-800/60 dark:hover:border-gray-700/80 transition-colors bg-gray-50/50 dark:bg-gray-900/20">
-                <div className="w-12 h-12 rounded-md overflow-hidden bg-white dark:bg-gray-800 flex-shrink-0 border border-gray-100 dark:border-gray-700">
+              <div key={item.id} className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl border border-gray-100 hover:border-gray-200 dark:border-gray-800/60 dark:hover:border-gray-700/80 transition-colors bg-gray-50/50 dark:bg-gray-900/20">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden bg-white dark:bg-gray-800 flex-shrink-0 border border-gray-100 dark:border-gray-700">
                   {item.products && item.products.image ? (
                     <img 
                       src={item.products.image} 
@@ -225,49 +220,51 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, status, withItems = false,
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <Package className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+                      <Package className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-500" />
                     </div>
                   )}
                 </div>
                 
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate">
-                    {item.products ? item.products.name : "Product unavailable"}
-                  </div>
-                  <div className="text-xs text-muted-foreground flex items-center gap-1">
-                    <span>${Number(item.price_at_time).toFixed(2)}</span>
-                    <span>×</span>
-                    <span>{item.quantity}</span>
-                    {item.products?.unit && <span>({item.products.unit})</span>}
-                  </div>
-                  
-                  {/* Product variations (size and color) */}
-                  {(item.selected_size || item.selected_color) && (
-                    <div className="mt-1 flex flex-wrap gap-2">
-                      {item.selected_size && (
-                        <div className="text-xs flex items-center rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5">
-                          <Ruler className="h-3 w-3 mr-1 text-gray-500" />
-                          <span>{formatArrayValue(item.selected_size)}</span>
-                        </div>
-                      )}
-                      {item.selected_color && (
-                        <div className="text-xs flex items-center rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5">
-                          <Paintbrush className="h-3 w-3 mr-1 text-gray-500" />
-                          <span>{formatArrayValue(item.selected_color)}</span>
-                        </div>
-                      )}
+                <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <div className="text-xs sm:text-sm font-medium truncate">
+                      {item.products ? item.products.name : "Product unavailable"}
                     </div>
-                  )}
-                </div>
-                
-                <div className="text-right font-medium">
-                  ${(Number(item.price_at_time) * item.quantity).toFixed(2)}
+                    <div className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1">
+                      <span>${Number(item.price_at_time).toFixed(2)}</span>
+                      <span>×</span>
+                      <span>{item.quantity}</span>
+                      {item.products?.unit && <span>({item.products.unit})</span>}
+                    </div>
+                    
+                    {/* Product variations (size and color) */}
+                    {(item.selected_size || item.selected_color) && (
+                      <div className="mt-1 flex flex-wrap gap-1 sm:gap-2">
+                        {item.selected_size && (
+                          <div className="text-[10px] sm:text-xs flex items-center rounded-full bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5">
+                            <Ruler className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1 text-gray-500" />
+                            <span>{formatArrayValue(item.selected_size)}</span>
+                          </div>
+                        )}
+                        {item.selected_color && (
+                          <div className="text-[10px] sm:text-xs flex items-center rounded-full bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5">
+                            <Paintbrush className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1 text-gray-500" />
+                            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full mr-0.5 sm:mr-1" style={{backgroundColor: formatArrayValue(item.selected_color)}}></span>
+                            <span>{formatArrayValue(item.selected_color)}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <div className="hidden sm:block text-right text-xs font-medium mt-1 sm:mt-0">
+                    ${(Number(item.price_at_time) * item.quantity).toFixed(2)}
+                  </div>
                 </div>
               </div>
             ))}
-            
+
             {order.order_items.length > 3 && (
-              <div className="text-sm text-muted-foreground italic pt-1 px-2">
+              <div className="text-[10px] sm:text-xs text-muted-foreground text-center mt-1">
                 +{order.order_items.length - 3} more items
               </div>
             )}
