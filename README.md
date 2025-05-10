@@ -15,8 +15,8 @@
 
 HoodTi is a full-featured e-commerce platform built with modern web technologies. It offers a seamless shopping experience with a responsive user interface, secure authentication, robust product management, intuitive shopping cart functionality, streamlined order processing, and a comprehensive admin dashboard for store management.
 
-<details>
-<summary><b>🌟 Key Features</b></summary>
+
+## 🌟 Key Features
 
 - 🔐 **User Authentication & Authorization** - Secure login, registration, and role-based access control
 - 🏬 **Product Catalog** - Browse products with filtering, sorting, and search capabilities
@@ -32,38 +32,30 @@ HoodTi is a full-featured e-commerce platform built with modern web technologies
   - 🕒 Delivery slot scheduling
 - 📱 **Responsive Design** - Optimized for all device sizes
 - 📧 **Email Notifications** - Order confirmations and status updates
-</details>
+
 
 ## 🔧 Tech Stack
 
-<details>
-<summary><b>Frontend</b></summary>
+### Frontend
+- <img src="https://img.icons8.com/color/48/000000/react-native.png" width="18" height="18"/> **React** - JavaScript library for building user interfaces
+- <img src="https://img.icons8.com/color/48/000000/typescript.png" width="18" height="18"/> **TypeScript** - Typed JavaScript for better code quality
+- <img src="https://vitejs.dev/logo.svg" width="18" height="18"/> **Vite** - Next-generation frontend build tool
+- <img src="https://tailwindcss.com/favicons/favicon-32x32.png" width="18" height="18"/> **TailwindCSS** - Utility-first CSS framework
+- <img src="https://raw.githubusercontent.com/shadcn-ui/ui/main/apps/www/public/favicon-32x32.png" width="18" height="18"/> **Shadcn UI** - Accessible component system
+- <img src="https://reactrouter.com/favicon-light.png" width="18" height="18"/> **React Router** - Declarative routing for React
+- <img src="https://tanstack.com/favicon.ico" width="18" height="18"/> **Tanstack React Query** - Data fetching and state management
+- <img src="https://www.framer.com/images/favicon.png" width="18" height="18"/> **Framer Motion** - Animation library for React
+- <img src="https://react-hook-form.com/favicon.ico" width="18" height="18"/> **React Hook Form** - Form validation with Zod schema
 
-- ⚛️ React with TypeScript
-- ⚡ Vite as build tool
-- 🎨 TailwindCSS for styling
-- 🧩 Shadcn UI components
-- 🔄 React Router for navigation
-- 📊 Tanstack React Query for data fetching
-- 💫 Framer Motion for animations
-- 📝 React Hook Form with Zod for validation
-</details>
+### Backend & Database
+- <img src="https://supabase.com/favicon/favicon-32x32.png" width="18" height="18"/> **Supabase** - Open source Firebase alternative
+- <img src="https://www.postgresql.org/media/img/about/press/elephant.png" width="18" height="18"/> **PostgreSQL** - Advanced open source database
+- <img src="https://img.icons8.com/color/48/000000/api-settings.png" width="18" height="18"/> **RESTful API** - Standard interface for service communication
 
-<details>
-<summary><b>Backend & Database</b></summary>
-
-- 🗃️ Supabase for authentication, database, and storage
-- 🔒 PostgreSQL database with RLS policies
-- 🔌 RESTful API services
-</details>
-
-<details>
-<summary><b>Additional Tools</b></summary>
-
-- 📧 EmailJS for email functionality
-- 📊 Recharts for data visualization
-- 🎞️ Swiper for carousels and sliders
-</details>
+### Additional Tools
+- <img src="https://img.icons8.com/color/48/000000/email.png" width="18" height="18"/> **EmailJS** - Client-side email sending
+- <img src="https://recharts.org/favicon.ico" width="18" height="18"/> **Recharts** - Redefined chart library built with React
+- <img src="https://swiperjs.com/images/favicon.png" width="18" height="18"/> **Swiper** - Modern touch slider
 
 ## 🚀 Getting Started
 
