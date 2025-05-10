@@ -9,7 +9,7 @@
 [![Supabase](https://img.shields.io/badge/Supabase-2.49-3ECF8E?logo=supabase)](https://supabase.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-![HoodTi Demo](https://placehold.co/800x400/6366f1/FFFFFF/png?text=HoodTi+E-Commerce+Platform&font=montserrat)
+![HoodTi Demo](https://placehold.co/800x400/74a180/FFFFFF/png?text=HoodTi+E-Commerce+Platform&font=montserrat)
 
 ## 🛍️ Overview
 
@@ -118,8 +118,7 @@ yarn build
 
 ## 🔒 Authentication
 
-<details>
-<summary><b>User Roles and Permissions</b></summary>
+<b>User Roles and Permissions</b>
 
 The application uses Supabase for authentication with the following roles:
 
@@ -128,16 +127,8 @@ The application uses Supabase for authentication with the following roles:
 - **super_admin**: Full system access with additional privileges
 
 Each role has specific permissions implemented through Supabase Row Level Security (RLS).
-</details>
 
-## 📱 Screenshots
 
-<div align="center">
-  <img src="https://placehold.co/400x225/6366f1/FFFFFF/png?text=Homepage" alt="Homepage" width="45%">
-  <img src="https://placehold.co/400x225/6366f1/FFFFFF/png?text=Product+Page" alt="Product Page" width="45%">
-  <img src="https://placehold.co/400x225/6366f1/FFFFFF/png?text=Shopping+Cart" alt="Shopping Cart" width="45%">
-  <img src="https://placehold.co/400x225/6366f1/FFFFFF/png?text=Admin+Dashboard" alt="Admin Dashboard" width="45%">
-</div>
 
 ## 🔄 Development Workflow
 
@@ -155,8 +146,7 @@ Please ensure your code follows the project's coding standards and includes appr
 
 ## 📦 Project Structure
 
-<details>
-<summary><b>Key directories and files</b></summary>
+<b>Key directories and files</b>
 
 ```
 hoodti/
@@ -177,7 +167,7 @@ hoodti/
 ├── vite.config.ts        # Vite configuration
 └── package.json          # Project dependencies
 ```
-</details>
+
 
 ## 📄 License
 
