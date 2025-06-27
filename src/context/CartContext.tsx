@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Product } from "@/types";
 import { Product as SupabaseProduct } from "@/integrations/supabase/types.service";
@@ -35,6 +36,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [items, setItems] = useState<CartItem[]>([]);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const cartItemsCount = items.reduce((total, item) => total + item.quantity, 0);
 
@@ -146,6 +148,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         toast({
           title: "Cart updated",
           description: `${normalizedProduct.name} quantity increased to ${updatedItems[existingItemIndex].quantity}`,
+          action: (
+            <button
+              onClick={() => navigate('/cart')}
+              className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-8 px-3"
+            >
+              Go to Cart
+            </button>
+          ),
         });
         
         return updatedItems;
@@ -153,6 +163,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         toast({
           title: "Item added to cart",
           description: `${normalizedProduct.name} added to your cart`,
+          action: (
+            <button
+              onClick={() => navigate('/cart')}
+              className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-8 px-3"
+            >
+              Go to Cart
+            </button>
+          ),
         });
         
         return [...prevItems, { 
