@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Product } from "@/types";
 import { Product as SupabaseProduct } from "@/integrations/supabase/types.service";
 import { ensureProductTypeCompatibility, mapSupabaseProductToAppProduct } from "@/types/supabase-types";
+import { Button } from "@/components/ui/button";
 
 export interface CartItem {
   product: Product | SupabaseProduct;
@@ -30,6 +31,12 @@ export interface CartContextProps {
 const CART_STORAGE_KEY = 'glassgrocer_cart_v2';
 
 const CartContext = createContext<CartContextProps | undefined>(undefined);
+
+// Utility function to truncate long product names
+const truncateProductName = (name: string, maxLength: number = 30) => {
+  if (name.length <= maxLength) return name;
+  return name.substring(0, maxLength) + '...';
+};
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -147,14 +154,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         
         toast({
           title: "Cart updated",
-          description: `${normalizedProduct.name} quantity increased to ${updatedItems[existingItemIndex].quantity}`,
+          description: `${truncateProductName(normalizedProduct.name)} quantity increased to ${updatedItems[existingItemIndex].quantity}`,
           action: (
-            <button
-              onClick={() => navigate('/cart')}
-              className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-8 px-3"
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={() => navigate('/cart')} 
+              className="rounded-full border-primary/30 hover:border-primary hover:bg-primary/10 shrink-0"
             >
               Go to Cart
-            </button>
+            </Button>
           ),
         });
         
@@ -162,14 +171,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       } else {
         toast({
           title: "Item added to cart",
-          description: `${normalizedProduct.name} added to your cart`,
+          description: `${truncateProductName(normalizedProduct.name)} added to your cart`,
           action: (
-            <button
-              onClick={() => navigate('/cart')}
-              className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-8 px-3"
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={() => navigate('/cart')} 
+              className="rounded-full border-primary/30 hover:border-primary hover:bg-primary/10 shrink-0"
             >
               Go to Cart
-            </button>
+            </Button>
           ),
         });
         
@@ -197,7 +208,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       if (itemToRemoveIndex >= 0) {
         toast({
           title: "Item removed",
-          description: `${prevItems[itemToRemoveIndex].product.name} removed from your cart`,
+          description: `${truncateProductName(prevItems[itemToRemoveIndex].product.name)} removed from your cart`,
         });
         
         // Create a new array without the specific item variant
