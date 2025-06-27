@@ -1,9 +1,15 @@
 import { supabase } from "./client";
 
+export interface GovernmentShippingFee {
+  name: string;
+  shipping_fee: number;
+}
+
 export interface SiteSettings {
   id: string;
   shipping_fee: number;
   tax_rate: number;
+  government_shipping_fees?: GovernmentShippingFee[];
   created_at?: string;
   updated_at?: string;
 }
@@ -108,6 +114,47 @@ export async function updateTaxRate(taxRate: number): Promise<boolean> {
     return true;
   } catch (error) {
     console.error("Error updating tax rate:", error);
+    return false;
+  }
+}
+
+/**
+ * Updates government shipping fees
+ */
+export async function updateGovernmentShippingFees(governmentFees: GovernmentShippingFee[]): Promise<boolean> {
+  try {
+    // Get current settings
+    const settings = await getSettings();
+    
+    if (settings) {
+      // Update existing settings
+      const { error } = await supabase
+        .from('settings')
+        .update({
+          government_shipping_fees: governmentFees,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', settings.id);
+      
+      if (error) throw error;
+    } else {
+      // Create new settings if none exist
+      const { error } = await supabase
+        .from('settings')
+        .insert({
+          shipping_fee: 5.99, // Default shipping fee
+          tax_rate: 0.08, // Default tax rate
+          government_shipping_fees: governmentFees,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+      
+      if (error) throw error;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error updating government shipping fees:", error);
     return false;
   }
 }
@@ -226,5 +273,60 @@ export async function getTaxRate(): Promise<number> {
   } catch (error) {
     console.error("Error in getTaxRate:", error);
     return 0.08; // Default if anything goes wrong
+  }
+}
+
+/**
+ * Gets government shipping fees
+ */
+export async function getGovernmentShippingFees(): Promise<GovernmentShippingFee[]> {
+  try {
+    const settings = await getSettings();
+    
+    if (settings && settings.government_shipping_fees) {
+      return settings.government_shipping_fees;
+    }
+    
+    // If no settings exist, fetch directly from the table
+    const { data, error } = await supabase
+      .from('settings')
+      .select('government_shipping_fees')
+      .limit(1)
+      .single();
+    
+    if (error) {
+      console.error("Error fetching government shipping fees directly:", error);
+      return []; // Return empty array as default
+    }
+    
+    if (data && data.government_shipping_fees) {
+      return data.government_shipping_fees;
+    }
+    
+    // Default fallback - return empty array
+    return [];
+  } catch (error) {
+    console.error("Error in getGovernmentShippingFees:", error);
+    return []; // Return empty array if anything goes wrong
+  }
+}
+
+/**
+ * Gets shipping fee for a specific government
+ */
+export async function getShippingFeeForGovernment(governmentName: string): Promise<number> {
+  try {
+    const governmentFees = await getGovernmentShippingFees();
+    const government = governmentFees.find(g => g.name === governmentName);
+    
+    if (government) {
+      return government.shipping_fee;
+    }
+    
+    // If government not found, return default shipping fee
+    return await getShippingFee();
+  } catch (error) {
+    console.error("Error getting shipping fee for government:", error);
+    return 5.99; // Default fallback
   }
 } 

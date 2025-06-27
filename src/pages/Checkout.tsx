@@ -16,8 +16,8 @@ import GlassCard from "@/components/ui/glass-card";
 import { Address } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { createOrder } from "@/integrations/supabase/orders.service";
-import { getUserAddresses } from "@/integrations/supabase/address.service";
-import { getShippingFee, getTaxRate } from "@/integrations/supabase/settings.service";
+import { getUserAddresses, addAddress } from "@/integrations/supabase/address.service";
+import { getShippingFee, getTaxRate, getShippingFeeForGovernment } from "@/integrations/supabase/settings.service";
 import Spinner from "@/components/ui/spinner";
 import { getAvailableDeliverySlots } from "@/integrations/supabase/delivery.service";
 import { incrementDiscountUsage } from "@/integrations/supabase/discounts.service";
@@ -85,6 +85,7 @@ const Checkout = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [shippingFee, setShippingFee] = useState<number>(5.99);
+  const [cityShippingFee, setCityShippingFee] = useState<number>(5.99);
   const [taxRate, setTaxRate] = useState<number>(0.08);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [availableSlots, setAvailableSlots] = useState<DeliverySlot[]>([]);
@@ -164,6 +165,7 @@ const Checkout = () => {
         const fee = await getShippingFee();
         console.log("Fetched shipping fee:", fee);
         setShippingFee(fee);
+        setCityShippingFee(fee); // Initialize with default fee
         
         // Fetch tax rate
         const rate = await getTaxRate();
@@ -202,6 +204,30 @@ const Checkout = () => {
       fetchAddresses();
     }
   }, [user]);
+  
+  // Update shipping fee when selected address changes
+  useEffect(() => {
+    const updateShippingFeeForAddress = async () => {
+      if (selectedAddressId) {
+        const selectedAddress = addresses.find(addr => addr.id === selectedAddressId);
+        if (selectedAddress && selectedAddress.city) {
+          try {
+            const fee = await getShippingFeeForGovernment(selectedAddress.city);
+            setCityShippingFee(fee);
+          } catch (error) {
+            console.error("Error getting shipping fee for city:", error);
+            setCityShippingFee(shippingFee); // Fallback to default
+          }
+        } else {
+          setCityShippingFee(shippingFee); // Use default if no city
+        }
+      } else {
+        setCityShippingFee(shippingFee); // Use default if no address selected
+      }
+    };
+
+    updateShippingFeeForAddress();
+  }, [selectedAddressId, addresses, shippingFee]);
   
   useEffect(() => {
     if (cart.length === 0 && !createdOrderId) {
@@ -282,32 +308,52 @@ const Checkout = () => {
   };
   
   const handleContinueToPayment = () => {
-    if (!selectedAddressId || !selectedSlotId) {
+    if (!selectedAddressId) {
       toast({
-        title: "Missing information",
-        description: "Please select both a delivery address and time slot.",
+        title: "Address required",
+        description: "Please select a shipping address",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!selectedSlotId) {
+      toast({
+        title: "Delivery slot required",
+        description: "Please select a delivery time slot",
         variant: "destructive"
       });
       return;
     }
     
     setCurrentStep('payment');
-    
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    e.stopPropagation();
     
-    // Get the active email based on tab selection
-    const emailToUse = useProfileEmail ? formData.email : customEmail;
-    
-    if (!formData.firstName || !formData.lastName || !emailToUse || !formData.phone || 
-        !selectedAddressId || !selectedSlotId || !user) {
+    if (!user) {
       toast({
-        title: "Missing information",
-        description: "Please fill in all required fields",
+        title: "Authentication required",
+        description: "You must be logged in to place an order",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!selectedAddressId) {
+      toast({
+        title: "Address required",
+        description: "Please select a shipping address",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!selectedSlotId) {
+      toast({
+        title: "Delivery slot required",
+        description: "Please select a delivery time slot",
         variant: "destructive"
       });
       return;
@@ -316,14 +362,17 @@ const Checkout = () => {
     setIsSubmitting(true);
     
     try {
+      // Get the active email based on tab selection
+      const emailToUse = useProfileEmail ? formData.email : customEmail;
+      
       const subtotal = cartTotal;
       // Use the same shipping calculation as the one used in the UI
       const isFreeShipping = subtotal >= 50;
-      const shipping = isFreeShipping ? 0 : shippingFee;
+      const shipping = isFreeShipping ? 0 : cityShippingFee;
       const tax = calculateTax();
       
       // Calculate the total with the shipping fee
-      const total = subtotal + shippingFee + tax - discount;
+      const total = subtotal + cityShippingFee + tax - discount;
       
       const selectedAddress = addresses.find(addr => addr.id === selectedAddressId);
       const shippingAddressText = selectedAddress ? 
@@ -353,7 +402,7 @@ const Checkout = () => {
         order_notes: formData.notes,
         tax: parseFloat(tax.toFixed(2)),
         discount_amount: parseFloat(discount.toFixed(2)),
-        shipping_amount: parseFloat(shippingFee.toFixed(2)), // Always use the actual shipping fee from settings
+        shipping_amount: parseFloat(cityShippingFee.toFixed(2)), // Use city-specific shipping fee
         items: orderItems,
         // Add the new fields to save to the database
         email: emailToUse,
@@ -438,7 +487,7 @@ const Checkout = () => {
           deliverySlot: deliverySlotText,
           // Include financial details
           subtotal: `$${subtotal.toFixed(2)}`,
-          shippingCost: `$${shippingFee.toFixed(2)}`,
+          shippingCost: `$${cityShippingFee.toFixed(2)}`,
           taxAmount: `$${tax.toFixed(2)}`,
           discountAmount: discount > 0 ? `-$${discount.toFixed(2)}` : '$0.00',
           customerPhone: formData.phone, // Add the customer's phone number
@@ -473,7 +522,7 @@ const Checkout = () => {
   
   const calculateShipping = () => {
     // Free shipping for orders over $50 or if shipping fee is set to 0
-    return (subtotal > 50 || shippingFee === 0) ? 0 : shippingFee;
+    return (subtotal > 50 || cityShippingFee === 0) ? 0 : cityShippingFee;
   };
   
   const calculateTax = () => {
@@ -492,9 +541,9 @@ const Checkout = () => {
   // Calculate order totals
   const subtotal = cartTotal;
   const isFreeShipping = subtotal >= 50;
-  const shipping = isFreeShipping ? 0 : shippingFee;
+  const shipping = isFreeShipping ? 0 : cityShippingFee;
   const tax = calculateTax();
-  const total = subtotal + shipping + tax - discount;
+  const total = subtotal + cityShippingFee + tax - discount;
   
   if (cart.length === 0 && !isSubmitting && !createdOrderId) {
     return (
@@ -776,7 +825,7 @@ const Checkout = () => {
                       items={cart}
                       subtotal={subtotal}
                       shipping={shipping}
-                      shipping_fee={shippingFee}
+                      shipping_fee={cityShippingFee}
                       tax={tax}
                       discount={discount}
                       total={total}

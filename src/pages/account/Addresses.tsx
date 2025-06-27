@@ -51,6 +51,14 @@ import { ChevronLeft, Plus, Home, Building2, MapPin, Check, Edit, Trash2 } from 
 import AnimatedWrapper from "@/components/ui/animated-wrapper";
 import SEOHead from "@/components/seo/SEOHead";
 import { getSEOConfig } from "@/lib/seo-config";
+import { getGovernmentShippingFees, GovernmentShippingFee } from "@/integrations/supabase/settings.service";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const addressSchema = z.object({
   name: z.string().min(3, {
@@ -83,6 +91,8 @@ interface AddressFormProps {
 const AddressForm: React.FC<AddressFormProps> = ({ address, onSuccess, onCancel }) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [governmentFees, setGovernmentFees] = useState<GovernmentShippingFee[]>([]);
+  const [isLoadingGovernments, setIsLoadingGovernments] = useState(true);
   const navigate = useNavigate();
 
   const form = useForm<AddressFormValues>({
@@ -97,6 +107,28 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onSuccess, onCancel 
       isDefault: address?.isDefault || false,
     },
   });
+
+  const selectedCity = form.watch('city');
+
+  useEffect(() => {
+    const loadGovernmentFees = async () => {
+      try {
+        const fees = await getGovernmentShippingFees();
+        setGovernmentFees(fees);
+      } catch (error) {
+        console.error("Error loading government fees:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load available cities."
+        });
+      } finally {
+        setIsLoadingGovernments(false);
+      }
+    };
+    
+    loadGovernmentFees();
+  }, [toast]);
 
   async function onSubmit(values: AddressFormValues) {
     setIsSubmitting(true);
@@ -213,11 +245,36 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onSuccess, onCancel 
             name="city"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>City</FormLabel>
+                <FormLabel>City/Government</FormLabel>
                 <FormControl>
-                  <Input placeholder="New York" {...field} />
+                  {isLoadingGovernments ? (
+                    <div className="h-10 bg-muted animate-pulse rounded-md flex items-center justify-center">
+                      <span className="text-sm text-muted-foreground">Loading cities...</span>
+                    </div>
+                  ) : (
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a city/government" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {governmentFees.map((government) => (
+                          <SelectItem key={government.name} value={government.name}>
+                            {government.name} {government.shipping_fee === 0 && '(Free Shipping)'}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </FormControl>
                 <FormMessage />
+                {selectedCity && (
+                  <p className="text-sm text-muted-foreground">
+                    Shipping fee: ${governmentFees.find(g => g.name === selectedCity)?.shipping_fee.toFixed(2) || '0.00'}
+                  </p>
+                )}
               </FormItem>
             )}
           />

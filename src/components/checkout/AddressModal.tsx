@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,14 @@ import { useToast } from "@/hooks/use-toast";
 import { addAddress } from "@/integrations/supabase/address.service";
 import { useAuth } from "@/context/AuthContext";
 import Spinner from "@/components/ui/spinner";
+import { getGovernmentShippingFees, GovernmentShippingFee } from "@/integrations/supabase/settings.service";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface AddressModalProps {
   open: boolean;
@@ -26,8 +34,10 @@ const AddressModal: React.FC<AddressModalProps> = ({
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [saveAddress, setSaveAddress] = useState(true);
+  const [governmentFees, setGovernmentFees] = useState<GovernmentShippingFee[]>([]);
+  const [isLoadingGovernments, setIsLoadingGovernments] = useState(true);
   
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<Omit<Address, 'id'>>({
+  const { register, handleSubmit, formState: { errors }, reset, setValue, watch } = useForm<Omit<Address, 'id'>>({
     defaultValues: {
       name: '',
       line1: '',
@@ -38,6 +48,30 @@ const AddressModal: React.FC<AddressModalProps> = ({
       isDefault: false
     }
   });
+  
+  const selectedCity = watch('city');
+  
+  useEffect(() => {
+    if (open) {
+      loadGovernmentFees();
+    }
+  }, [open]);
+  
+  const loadGovernmentFees = async () => {
+    try {
+      const fees = await getGovernmentShippingFees();
+      setGovernmentFees(fees);
+    } catch (error) {
+      console.error("Error loading government fees:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load available cities."
+      });
+    } finally {
+      setIsLoadingGovernments(false);
+    }
+  };
   
   const onSubmit = async (data: Omit<Address, 'id'>, e?: React.BaseSyntheticEvent) => {
     // Prevent form submission from propagating to parent form
@@ -90,167 +124,156 @@ const AddressModal: React.FC<AddressModalProps> = ({
     }
   };
   
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    handleSubmit(onSubmit)(e);
-  };
-
-  // Function to handle closing the modal
-  const handleClose = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onOpenChange(false);
-  };
-  
   return (
-    <Dialog open={open} onOpenChange={(newOpenState) => {
-      // If we're closing, ensure we prevent any form submission
-      if (open && !newOpenState) {
-        // This timeout ensures the event has time to propagate first
-        setTimeout(() => onOpenChange(false), 0);
-        return;
-      }
-      onOpenChange(newOpenState);
-    }}>
-      <DialogContent className="sm:max-w-[600px]" onPointerDownOutside={(e) => e.preventDefault()}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Address</DialogTitle>
         </DialogHeader>
         
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Address Name *</Label>
-              <Input
-                id="name"
-                placeholder="Home, Work, etc."
-                {...register('name', { required: "Address name is required" })}
-                className={errors.name ? "border-destructive" : ""}
-              />
-              {errors.name && (
-                <p className="text-sm text-destructive">{errors.name.message}</p>
-              )}
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Address Name *</Label>
+                <Input
+                  id="name"
+                  placeholder="Home, Work, etc."
+                  {...register('name', { required: "Address name is required" })}
+                  className={errors.name ? "border-destructive" : ""}
+                />
+                {errors.name && (
+                  <p className="text-sm text-destructive">{errors.name.message}</p>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="line1">Address Line 1 *</Label>
+                <Input
+                  id="line1"
+                  placeholder="Street address"
+                  {...register('line1', { required: "Address is required" })}
+                  className={errors.line1 ? "border-destructive" : ""}
+                />
+                {errors.line1 && (
+                  <p className="text-sm text-destructive">{errors.line1.message}</p>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="line2">Address Line 2 (Optional)</Label>
+                <Input
+                  id="line2"
+                  placeholder="Apartment, suite, unit, etc."
+                  {...register('line2')}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="city">City/Government *</Label>
+                {isLoadingGovernments ? (
+                  <div className="h-10 bg-muted animate-pulse rounded-md flex items-center justify-center">
+                    <span className="text-sm text-muted-foreground">Loading cities...</span>
+                  </div>
+                ) : (
+                  <Select
+                    value={selectedCity}
+                    onValueChange={(value) => setValue('city', value)}
+                  >
+                    <SelectTrigger className={errors.city ? "border-destructive" : ""}>
+                      <SelectValue placeholder="Select a city/government" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {governmentFees.map((government) => (
+                        <SelectItem key={government.name} value={government.name}>
+                          {government.name} {government.shipping_fee === 0 && '(Free Shipping)'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                {errors.city && (
+                  <p className="text-sm text-destructive">{errors.city.message}</p>
+                )}
+                {selectedCity && !errors.city && (
+                  <p className="text-sm text-muted-foreground">
+                    Shipping fee: ${governmentFees.find(g => g.name === selectedCity)?.shipping_fee.toFixed(2) || '0.00'}
+                  </p>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="state">State *</Label>
+                <Input
+                  id="state"
+                  placeholder="State"
+                  {...register('state', { required: "State is required" })}
+                  className={errors.state ? "border-destructive" : ""}
+                />
+                {errors.state && (
+                  <p className="text-sm text-destructive">{errors.state.message}</p>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="postalCode">Postal Code *</Label>
+                <Input
+                  id="postalCode"
+                  placeholder="Postal code"
+                  {...register('postalCode', { required: "Postal code is required" })}
+                  className={errors.postalCode ? "border-destructive" : ""}
+                />
+                {errors.postalCode && (
+                  <p className="text-sm text-destructive">{errors.postalCode.message}</p>
+                )}
+              </div>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="line1">Address Line 1 *</Label>
-              <Input
-                id="line1"
-                placeholder="Street address"
-                {...register('line1', { required: "Address is required" })}
-                className={errors.line1 ? "border-destructive" : ""}
+            <div className="flex items-center space-x-2 mt-2">
+              <Checkbox
+                id="isDefault"
+                {...register('isDefault')}
+                onCheckedChange={() => {}} // Prevent propagation with empty handler
               />
-              {errors.line1 && (
-                <p className="text-sm text-destructive">{errors.line1.message}</p>
-              )}
+              <Label 
+                htmlFor="isDefault" 
+                className="cursor-pointer text-sm font-normal"
+              >
+                Set as default address
+              </Label>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="line2">Address Line 2 (Optional)</Label>
-              <Input
-                id="line2"
-                placeholder="Apartment, suite, unit, etc."
-                {...register('line2')}
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="saveAddress"
+                checked={saveAddress}
+                onCheckedChange={(checked) => setSaveAddress(!!checked)}
               />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="city">City *</Label>
-              <Input
-                id="city"
-                placeholder="City"
-                {...register('city', { required: "City is required" })}
-                className={errors.city ? "border-destructive" : ""}
-              />
-              {errors.city && (
-                <p className="text-sm text-destructive">{errors.city.message}</p>
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="state">State *</Label>
-              <Input
-                id="state"
-                placeholder="State"
-                {...register('state', { required: "State is required" })}
-                className={errors.state ? "border-destructive" : ""}
-              />
-              {errors.state && (
-                <p className="text-sm text-destructive">{errors.state.message}</p>
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="postalCode">Postal Code *</Label>
-              <Input
-                id="postalCode"
-                placeholder="Postal code"
-                {...register('postalCode', { required: "Postal code is required" })}
-                className={errors.postalCode ? "border-destructive" : ""}
-              />
-              {errors.postalCode && (
-                <p className="text-sm text-destructive">{errors.postalCode.message}</p>
-              )}
+              <Label 
+                htmlFor="saveAddress" 
+                className="cursor-pointer text-sm font-normal"
+              >
+                Save this address for future use
+              </Label>
             </div>
           </div>
           
-          <div className="flex items-center space-x-2 mt-2">
-            <Checkbox
-              id="isDefault"
-              {...register('isDefault')}
-              onCheckedChange={() => {}} // Prevent propagation with empty handler
-            />
-            <Label 
-              htmlFor="isDefault" 
-              className="cursor-pointer text-sm font-normal"
-            >
-              Set as default address
-            </Label>
-          </div>
-          
-          <div className="flex items-center space-x-2 mt-2 border-t pt-3">
-            <Checkbox
-              id="saveForLater"
-              checked={saveAddress}
-              onCheckedChange={(checked) => {
-                setSaveAddress(!!checked);
-              }}
-            />
-            <Label 
-              htmlFor="saveForLater" 
-              className="cursor-pointer text-sm font-normal"
-            >
-              Save this address for future orders
-            </Label>
-          </div>
-        </div>
-        
-        <DialogFooter>
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={handleClose}
-          >
-            Cancel
-          </Button>
-          <Button 
-            type="button" 
-            disabled={isLoading}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleSubmit(onSubmit)(e);
-            }}
-          >
-            {isLoading ? (
-              <>
-                <Spinner size="sm" className="mr-2" />
-                Saving...
-              </>
-            ) : "Add Address"}
-          </Button>
-        </DialogFooter>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Spinner className="mr-2" size="sm" />
+                  Adding...
+                </>
+              ) : (
+                'Add Address'
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

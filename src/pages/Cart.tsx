@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Minus, Plus, ShoppingCart, Trash2, ArrowRight, DollarSign, Truck, BadgePercent } from "lucide-react";
 import { useCart } from "@/context/CartContext";
-import { getShippingFee, getTaxRate } from '../integrations/supabase/settings.service';
+import { getShippingFee, getTaxRate, getShippingFeeForGovernment } from '../integrations/supabase/settings.service';
 import OrderSummary from '@/components/checkout/OrderSummary';
 
 // Custom styles for animations and effects
@@ -20,6 +20,8 @@ const Cart = () => {
   const [discountId, setDiscountId] = useState<string | null>(null);
   const [discountCode, setDiscountCode] = useState<string | null>(null);
   const [discountPercent, setDiscountPercent] = useState<number>(0);
+  const [selectedCity, setSelectedCity] = useState<string>('');
+  const [cityShippingFee, setCityShippingFee] = useState<number>(0);
   const navigate = useNavigate();
   
   const handleApplyPromo = (code: string, percent: number, id: string) => {
@@ -39,10 +41,37 @@ const Cart = () => {
       amount: discountAmount
     }));
   };
+
+  // Load selected city from session storage or localStorage
+  useEffect(() => {
+    const savedCity = sessionStorage.getItem('selectedCity') || localStorage.getItem('selectedCity');
+    if (savedCity) {
+      setSelectedCity(savedCity);
+    }
+  }, []);
+  
+  // Update shipping fee when city changes
+  useEffect(() => {
+    const updateCityShippingFee = async () => {
+      if (selectedCity) {
+        try {
+          const fee = await getShippingFeeForGovernment(selectedCity);
+          setCityShippingFee(fee);
+        } catch (error) {
+          console.error("Error getting city shipping fee:", error);
+          setCityShippingFee(shippingFee); // Fallback to default
+        }
+      } else {
+        setCityShippingFee(shippingFee); // Use default if no city selected
+      }
+    };
+
+    updateCityShippingFee();
+  }, [selectedCity, shippingFee]);
   
   const subtotal = cartTotal;
   const isFreeShipping = subtotal >= 50;
-  const shipping = isFreeShipping ? 0 : shippingFee;
+  const shipping = isFreeShipping ? 0 : cityShippingFee;
   const tax = subtotal * taxRate;
   const total = subtotal + shipping + tax - discount;
   
@@ -409,7 +438,7 @@ const Cart = () => {
                   items={cart}
                   subtotal={subtotal}
                   shipping={shipping}
-                  shipping_fee={shippingFee}
+                  shipping_fee={cityShippingFee}
                   tax={tax}
                   discount={discount}
                   total={total}
