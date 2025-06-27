@@ -37,6 +37,8 @@ import { useToast } from "@/hooks/use-toast";
 import { getSettings, updateSettings } from "@/integrations/supabase/settings.service";
 import Spinner from "@/components/ui/spinner";
 import DiscountsTab from "@/components/admin/DiscountsTab";
+import SEOHead from "@/components/seo/SEOHead";
+import { getSEOConfig } from "@/lib/seo-config";
 
 const SettingsPage = () => {
   const { toast } = useToast();
@@ -165,8 +167,11 @@ const SettingsPage = () => {
     }
   };
   
+  const seoConfig = getSEOConfig('adminDashboard');
+  
   return (
     <ProtectedRoute requiredRole={["admin", "super_admin"]}>
+      <SEOHead {...seoConfig} />
       <AdminLayout>
         <div className="flex flex-col gap-6">
           <div className="flex justify-between items-center">

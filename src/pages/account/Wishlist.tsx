@@ -15,6 +15,8 @@ import { ensureProductTypeCompatibility } from "@/lib/utils";
 import { ChevronLeft, Heart, ShoppingBag, ShoppingCart, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
+import SEOHead from "@/components/seo/SEOHead";
+import { getSEOConfig } from "@/lib/seo-config";
 
 const Wishlist = () => {
   const { user } = useAuth();
@@ -22,6 +24,7 @@ const Wishlist = () => {
   const [wishlistItems, setWishlistItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isClearingAll, setIsClearingAll] = useState(false);
+  const seoConfig = getSEOConfig('accountWishlist');
 
   useEffect(() => {
     const fetchWishlistedProducts = async () => {
@@ -104,6 +107,7 @@ const Wishlist = () => {
 
   return (
     <Layout>
+      <SEOHead {...seoConfig} />
       <div className="min-h-screen">
         <div className="container mx-auto px-4 py-12">
           <motion.div

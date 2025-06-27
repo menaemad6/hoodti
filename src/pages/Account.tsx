@@ -15,6 +15,8 @@ import { Progress } from "@/components/ui/progress";
 import { getOrCreateProfile } from "@/integrations/supabase/profiles.service";
 import { repairUserAccount } from "@/integrations/supabase/repair.service";
 import { useToast } from "@/hooks/use-toast";
+import SEOHead from "@/components/seo/SEOHead";
+import { getSEOConfig } from "@/lib/seo-config";
 
 const Account = () => {
   const { user, signOut } = useAuth();
@@ -125,9 +127,12 @@ const Account = () => {
     fetchUserProfile();
   }, [user]);
 
+  const seoConfig = getSEOConfig('account');
+
   if (!user) {
     return (
       <Layout>
+        <SEOHead {...seoConfig} />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">
             <h1 className="text-2xl font-bold mb-2">You are not signed in</h1>
@@ -145,6 +150,7 @@ const Account = () => {
   
   return (
     <Layout>
+      <SEOHead {...seoConfig} />
       {/* Hero Section */}
       <div className="relative bg-gradient-to-r from-primary/10 via-primary/5 to-secondary/10 dark:from-primary/5 dark:via-background dark:to-secondary/5 mt-6">
         <div className="container mx-auto px-4 py-8 md:py-12">

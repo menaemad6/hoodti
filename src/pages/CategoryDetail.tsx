@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import Spinner from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
+import SEOHead from "@/components/seo/SEOHead";
+import { getCategorySEO } from "@/lib/seo-config";
 
 const CategoryDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -23,6 +25,14 @@ const CategoryDetail = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
+  // Get SEO configuration for category page
+  const seoConfig = category ? getCategorySEO({
+    id: category.id,
+    name: category.name,
+    description: category.description,
+    image: category.image
+  }) : getCategorySEO(null);
+
   useEffect(() => {
     const fetchCategoryData = async () => {
       if (!id) {
@@ -108,6 +118,7 @@ const CategoryDetail = () => {
   
   return (
     <Layout>
+      <SEOHead {...seoConfig} />
       <div className="container mx-auto px-4 py-8 mb-12 ">
         {/* Navigation */}
         <motion.div

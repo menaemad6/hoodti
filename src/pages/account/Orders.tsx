@@ -9,12 +9,15 @@ import OrderCard from "@/components/account/OrderCard";
 import { ChevronLeft, PackageSearch } from "lucide-react";
 import AnimatedWrapper from "@/components/ui/animated-wrapper";
 import { useToast } from "@/hooks/use-toast";
+import SEOHead from "@/components/seo/SEOHead";
+import { getSEOConfig } from "@/lib/seo-config";
 
 const Orders = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [orders, setOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const seoConfig = getSEOConfig('accountOrders');
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -48,6 +51,7 @@ const Orders = () => {
 
   return (
     <Layout>
+      <SEOHead {...seoConfig} />
       <div className="min-h-screen bg-gradient-to-b from-background to-background/50 dark:from-background dark:to-background/80">
         <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4 sm:mb-6 lg:mb-8">

@@ -55,6 +55,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import SEOHead from "@/components/seo/SEOHead";
+import { getSEOConfig } from "@/lib/seo-config";
 
 interface DataColumn {
   id: string;
@@ -106,6 +108,7 @@ const ProductsPage = () => {
     color: "",
     gender: ""
   });
+  const seoConfig = getSEOConfig('adminProducts');
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -497,6 +500,7 @@ const ProductsPage = () => {
   return (
     <ProtectedRoute requiredRole={["admin", "super_admin"]}>
       <AdminLayout>
+        <SEOHead {...seoConfig} />
         <div className="flex flex-col gap-6">
           <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-emerald-500/10 p-6 backdrop-blur-sm border border-white/10 dark:border-gray-800/40 shadow-lg">
             <div className="absolute inset-0 bg-grid-black/5 dark:bg-grid-white/5 bg-[size:var(--grid-size)_var(--grid-size)] [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"></div>

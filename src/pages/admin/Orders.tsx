@@ -35,6 +35,8 @@ import { supabase } from "@/integrations/supabase/client";
 import StatusBadge from "@/components/ui/status-badge";
 import { useRoleAccess } from "@/hooks/use-role-access";
 import { sendOrderStatusEmail } from "@/integrations/email.service";
+import SEOHead from "@/components/seo/SEOHead";
+import { getSEOConfig } from "@/lib/seo-config";
 
 // Add function to calculate relative time
 const getRelativeTimeString = (date: Date): string => {
@@ -72,6 +74,7 @@ const OrdersPage = () => {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [customerDetails, setCustomerDetails] = useState<Record<string, any>>({});
+  const seoConfig = getSEOConfig('adminOrders');
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -367,6 +370,7 @@ const OrdersPage = () => {
   return (
     <ProtectedRoute requiredRole={["admin", "super_admin"]}>
       <AdminLayout>
+        <SEOHead {...seoConfig} />
         <div className="flex flex-col gap-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>

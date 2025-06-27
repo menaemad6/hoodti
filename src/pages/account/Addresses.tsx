@@ -49,6 +49,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, Plus, Home, Building2, MapPin, Check, Edit, Trash2 } from "lucide-react";
 import AnimatedWrapper from "@/components/ui/animated-wrapper";
+import SEOHead from "@/components/seo/SEOHead";
+import { getSEOConfig } from "@/lib/seo-config";
 
 const addressSchema = z.object({
   name: z.string().min(3, {
@@ -417,6 +419,7 @@ const Addresses = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState<AddressType | null>(null);
   const { toast } = useToast();
+  const seoConfig = getSEOConfig('accountAddresses');
 
   useEffect(() => {
     fetchAddresses();
@@ -555,6 +558,7 @@ const Addresses = () => {
 
   return (
     <Layout>
+      <SEOHead {...seoConfig} />
       <div className="min-h-screen bg-gradient-to-b from-background to-background/50 dark:from-background dark:to-background/80">
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">

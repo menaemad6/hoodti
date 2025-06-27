@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
+import SEOHead from "@/components/seo/SEOHead";
+import { getSEOConfig } from "@/lib/seo-config";
 import ProductGrid from "@/components/shop/ProductGrid";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -82,6 +84,9 @@ const Shop = () => {
   const [availableGenders, setAvailableGenders] = useState<string[]>(["Men", "Female", "Unisex", "Kids"]);
   
   const toggleFilters = () => setShowFilters(!showFilters);
+
+  // Get SEO configuration for shop page
+  const seoConfig = getSEOConfig('shop');
 
   // Helper functions to extract unique values from products
   const extractUniqueValues = (products: SupabaseProduct[], property: keyof SupabaseProduct): string[] => {
@@ -768,6 +773,11 @@ const Shop = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title={seoConfig.title}
+        description={seoConfig.description}
+        image={seoConfig.image}
+      />
       {/* Ultra-modern hero section */}
       <section className="relative overflow-hidden bg-gradient-to-r from-primary/5 via-background to-primary/10 pt-16 pb-20 mt-8 rounded-xl mx-4">
         {/* Remove all background elements */}

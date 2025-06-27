@@ -1,5 +1,6 @@
 import React, { Suspense, lazy } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "@/components/ui/toaster";
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
@@ -50,71 +51,73 @@ const LoadingFallback = () => (
 
 function App() {
   return (
-    <ThemeProvider>
-      <Router>
-        <ScrollToTop />
-        <AuthProvider>
-          <CartProvider>
-            <Suspense fallback={<LoadingFallback />}>
-              <Routes>
-                {/* Public routes */}
-                <Route path="/" element={<Index />} />
-                <Route path="/shop" element={<Shop />} />
-                <Route path="/product/:id" element={<ProductDetail />} />
-                <Route path="/category/:id" element={<CategoryDetail />} />
-                <Route path="/categories/:id" element={<CategoryDetail />} />
-                <Route path="/categories" element={<Categories />} />
-                <Route path="/deals" element={<Deals />} />
-                <Route path="/cart" element={<Cart />} />
-                
-                {/* Auth routes */}
-                <Route element={<AuthRoute />}>
-                  <Route path="/signin" element={<Signin />} />
-                  <Route path="/auth/signin" element={<Signin />} />
-                  <Route path="/signup" element={<Signup />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
-                  <Route path="/auth/reset-password" element={<ResetPassword />} />
-                  <Route path="/auth/callback" element={<Callback />} />
-                  <Route path="/reset-password" element={<ResetPassword />} />
-                  <Route path="/callback" element={<Callback />} />
-                </Route>
-                
-                {/* Protected user routes */}
-                <Route element={<ProtectedRoute requiredRole="user" />}>
-                  <Route path="/checkout" element={<Checkout />} />
-                  <Route path="/order-confirmation" element={<OrderConfirmation />} />
-                  <Route path="/account" element={<Account />} />
-                  <Route path="/account/addresses" element={<Addresses />} />
-                  <Route path="/account/orders" element={<Orders />} />
-                  <Route path="/account/orders/:id" element={<OrderDetail />} />
-                  <Route path="/account/wishlist" element={<Wishlist />} />
-                </Route>
-                
-                {/* Admin routes */}
-                <Route element={<ProtectedRoute requiredRole={["admin", "super_admin"]} />}>
-                  <Route path="/admin" element={<Navigate to="/admin/dashboard" />} />
-                  <Route path="/admin/dashboard" element={<Dashboard />} />
-                  <Route path="/admin/products" element={<Products />} />
-                  <Route path="/admin/products/new" element={<ProductEdit />} />
-                  <Route path="/admin/products/edit/:id" element={<ProductEdit />} />
-                  <Route path="/admin/customers" element={<Customers />} />
-                  <Route path="/admin/orders" element={<AdminOrders />} />
-                  <Route path="/admin/settings" element={<Settings />} />
-                  <Route path="/admin/reports" element={<Reports />} />
-                  <Route path="/admin/content" element={<Content />} />
-                  <Route path="/admin/users" element={<Users />} />
-                  <Route path="/admin/delivery-slots" element={<DeliverySlots />} />
-                </Route>
-                
-                {/* Catch-all/404 route */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
-            <Toaster />
-          </CartProvider>
-        </AuthProvider>
-      </Router>
-    </ThemeProvider>
+    <HelmetProvider>
+      <ThemeProvider>
+        <Router>
+          <ScrollToTop />
+          <AuthProvider>
+            <CartProvider>
+              <Suspense fallback={<LoadingFallback />}>
+                <Routes>
+                  {/* Public routes */}
+                  <Route path="/" element={<Index />} />
+                  <Route path="/shop" element={<Shop />} />
+                  <Route path="/product/:id" element={<ProductDetail />} />
+                  <Route path="/category/:id" element={<CategoryDetail />} />
+                  <Route path="/categories/:id" element={<CategoryDetail />} />
+                  <Route path="/categories" element={<Categories />} />
+                  <Route path="/deals" element={<Deals />} />
+                  <Route path="/cart" element={<Cart />} />
+                  
+                  {/* Auth routes */}
+                  <Route element={<AuthRoute />}>
+                    <Route path="/signin" element={<Signin />} />
+                    <Route path="/auth/signin" element={<Signin />} />
+                    <Route path="/signup" element={<Signup />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/auth/reset-password" element={<ResetPassword />} />
+                    <Route path="/auth/callback" element={<Callback />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/callback" element={<Callback />} />
+                  </Route>
+                  
+                  {/* Protected user routes */}
+                  <Route element={<ProtectedRoute requiredRole="user" />}>
+                    <Route path="/checkout" element={<Checkout />} />
+                    <Route path="/order-confirmation" element={<OrderConfirmation />} />
+                    <Route path="/account" element={<Account />} />
+                    <Route path="/account/addresses" element={<Addresses />} />
+                    <Route path="/account/orders" element={<Orders />} />
+                    <Route path="/account/orders/:id" element={<OrderDetail />} />
+                    <Route path="/account/wishlist" element={<Wishlist />} />
+                  </Route>
+                  
+                  {/* Admin routes */}
+                  <Route element={<ProtectedRoute requiredRole={["admin", "super_admin"]} />}>
+                    <Route path="/admin" element={<Navigate to="/admin/dashboard" />} />
+                    <Route path="/admin/dashboard" element={<Dashboard />} />
+                    <Route path="/admin/products" element={<Products />} />
+                    <Route path="/admin/products/new" element={<ProductEdit />} />
+                    <Route path="/admin/products/edit/:id" element={<ProductEdit />} />
+                    <Route path="/admin/customers" element={<Customers />} />
+                    <Route path="/admin/orders" element={<AdminOrders />} />
+                    <Route path="/admin/settings" element={<Settings />} />
+                    <Route path="/admin/reports" element={<Reports />} />
+                    <Route path="/admin/content" element={<Content />} />
+                    <Route path="/admin/users" element={<Users />} />
+                    <Route path="/admin/delivery-slots" element={<DeliverySlots />} />
+                  </Route>
+                  
+                  {/* Catch-all/404 route */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+              <Toaster />
+            </CartProvider>
+          </AuthProvider>
+        </Router>
+      </ThemeProvider>
+    </HelmetProvider>
   );
 }
 

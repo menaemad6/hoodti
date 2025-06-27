@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
+import SEOHead from "@/components/seo/SEOHead";
+import { getProductSEO } from "@/lib/seo-config";
 import ModernCard from "@/components/ui/modern-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -63,6 +65,16 @@ const ProductDetail = () => {
   // Add state for image modal
   const [imageModalOpen, setImageModalOpen] = useState(false);
   
+  // Get SEO configuration for product page
+  const seoConfig = product ? getProductSEO({
+    id: product.id,
+    name: product.name,
+    description: product.description,
+    image: Array.isArray(product.image) ? product.image[0] : product.image,
+    price: product.price,
+    category_name: typeof product.category === 'object' ? product.category.name : undefined
+  }) : getProductSEO(null);
+  
   // Add utility function to parse array fields (handle either JSON strings or actual arrays)
   const parseArrayField = (field: string | string[] | null | undefined): string[] => {
     if (!field) return [];
@@ -82,17 +94,28 @@ const ProductDetail = () => {
   const availableSizes = product ? parseArrayField(product.size) : [];
   
   // Utility to get images array from product
-  const getImagesArray = (images: any): string[] => {
-    if (!images) return [];
-    if (Array.isArray(images)) return images;
-    try {
-      const parsed = JSON.parse(images);
-      return Array.isArray(parsed) ? parsed : [images];
-    } catch {
-      return [images];
+  const getGalleryImages = (product: Product | null): string[] => {
+    if (!product) return [];
+    // Prefer images array if available and non-empty
+    if (Array.isArray(product.images) && product.images.length > 0) {
+      return product.images.filter(Boolean);
     }
+    // If images is a string (bad data), try to parse as JSON
+    if (typeof (product as any).images === 'string') {
+      try {
+        const parsed = JSON.parse((product as any).images);
+        if (Array.isArray(parsed)) return parsed.filter(Boolean);
+      } catch {}
+    }
+    // Fallback to single image string
+    if (typeof product.image === 'string' && product.image) {
+      return [product.image];
+    }
+    // Fallback to placeholder
+    return ["/placeholder.svg"];
   };
-  const galleryImages = product ? getImagesArray(product.images) : [];
+
+  const galleryImages = getGalleryImages(product);
   
   useEffect(() => {
     const fetchProduct = async () => {
@@ -108,7 +131,9 @@ const ProductDetail = () => {
         }
         
         setProduct(productData);
-        setActiveImage(productData.image);
+        // Set the first image as active by default
+        const imgs = getGalleryImages(productData);
+        setActiveImage(imgs[0] || "/placeholder.svg");
         
         const related = await getProductsByCategory(productData.category_id);
         setRelatedProducts(related.filter(p => p.id !== id).slice(0, 4));
@@ -303,6 +328,7 @@ const ProductDetail = () => {
   
   return (
     <Layout>
+      <SEOHead {...seoConfig} />
       <div className="min-h-screen bg-gradient-to-b from-background to-background/90 relative overflow-hidden">
         <div className="absolute inset-0 bg-grid-small-black/[0.02] -z-10"></div>
         <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-12">

@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Layout from "@/components/layout/Layout";
+import SEOHead from "@/components/seo/SEOHead";
+import { getSEOConfig } from "@/lib/seo-config";
 import ProductGrid from "@/components/shop/ProductGrid";
 import GlassCard from "@/components/ui/glass-card";
 import { getDiscountedProducts } from "@/integrations/supabase/products.service";
@@ -10,6 +12,9 @@ import { PercentIcon, Tag, ShoppingBag, BadgePercent } from "lucide-react";
 const Deals = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Get SEO configuration for deals page
+  const seoConfig = getSEOConfig('deals');
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -29,6 +34,7 @@ const Deals = () => {
 
   return (
     <Layout>
+      <SEOHead {...seoConfig} />
       {/* Modern hero section */}
       <section className="relative overflow-hidden bg-gradient-to-r from-red-500/10 via-background to-primary/10 pt-16 pb-20 mt-8 rounded-xl mx-4">
         <div className="container mx-auto px-4 relative z-10">

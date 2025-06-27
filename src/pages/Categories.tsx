@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
+import SEOHead from "@/components/seo/SEOHead";
+import { getSEOConfig } from "@/lib/seo-config";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import AnimatedWrapper from "@/components/ui/animated-wrapper";
@@ -8,13 +10,16 @@ import { Category } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import Spinner from "@/components/ui/spinner";
 import GlassCard from "@/components/ui/glass-card";
-import { Layers, Grid3X3, ArrowRight, ShoppingBag, Package } from "lucide-react";
+import { Layers, Grid3X3, ArrowRight, ShoppingBag, Package, Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 const Categories = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Get SEO configuration for categories page
+  const seoConfig = getSEOConfig('categories');
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -59,6 +64,7 @@ const Categories = () => {
 
   return (
     <Layout>
+      <SEOHead {...seoConfig} />
       {/* Modern hero section */}
       <section className="relative overflow-hidden bg-gradient-to-r from-primary/5 via-background to-primary/10 pt-16 pb-20 mt-8 rounded-xl mx-4">
         <div className="container mx-auto px-4 relative z-10">

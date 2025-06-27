@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import HomeLayout from "@/components/layout/HomeLayout";
+import SEOHead from "@/components/seo/SEOHead";
+import { getSEOConfig } from "@/lib/seo-config";
 import { getProducts } from "@/integrations/supabase/products.service";
 import { getCategories } from "@/integrations/supabase/categories.service";
 import { Product, CategoryRow } from "@/integrations/supabase/types.service";
@@ -25,6 +27,9 @@ const Index = () => {
   const featuredCarouselRef = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
   const { addToCart } = useCart();
+
+  // Get SEO configuration for home page
+  const seoConfig = getSEOConfig('home');
 
   // Function to handle adding item to cart
   const handleAddToCart = useCallback((product: Product | null, e: React.MouseEvent<HTMLButtonElement>) => {
@@ -269,7 +274,9 @@ const Index = () => {
 
   return (
     <HomeLayout>
-      {/* Modern Hero Section with GIF Backgrounds */}
+      <SEOHead {...seoConfig} />
+      
+      {/* Hero Section */}
       <StreetHero />
 
       {/* Category Section */}

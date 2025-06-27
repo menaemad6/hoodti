@@ -34,7 +34,22 @@ export type Category = {
   created_at: string;
 };
 
-export type Product = Omit<ProductRow, 'category_id'> & {
+export type Product = {
+  id: string;
+  name: string;
+  price: number;
+  images?: string[];
+  image?: string;
+  unit?: string;
+  discount?: number;
+  is_new?: boolean;
+  original_price?: number;
+  description?: string;
+  size?: string;
+  color?: string;
+  material?: string;
+  brand?: string;
+  gender?: string;
   category: Category | string;
   category_id?: string; // Adding this to ensure compatibility
 };
