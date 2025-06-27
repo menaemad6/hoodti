@@ -549,21 +549,10 @@ const SettingsPage = () => {
                           </div>
                           
                           <div className="flex items-end">
-                            {editingGovernment ? (
-                              <div className="flex gap-2 w-full">
-                                <Button onClick={handleSaveEdit} className="flex-1">
-                                  Save Edit
-                                </Button>
-                                <Button variant="outline" onClick={handleCancelEdit}>
-                                  Cancel
-                                </Button>
-                              </div>
-                            ) : (
-                              <Button onClick={handleAddGovernment} className="w-full">
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add Government
-                              </Button>
-                            )}
+                            <Button onClick={handleAddGovernment} className="w-full">
+                              <Plus className="h-4 w-4 mr-2" />
+                              Add Government
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -582,29 +571,83 @@ const SettingsPage = () => {
                                 key={government.name}
                                 className="flex items-center justify-between p-3 border rounded-lg bg-background/50"
                               >
-                                <div className="flex items-center gap-3">
-                                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                                  <span className="font-medium">{government.name}</span>
-                                  <Badge variant={government.shipping_fee === 0 ? "default" : "secondary"}>
-                                    ${government.shipping_fee.toFixed(2)}
-                                  </Badge>
+                                <div className="flex items-center gap-3 flex-1">
+                                  <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                  
+                                  {editingGovernment === government.name ? (
+                                    // Edit mode - show inputs
+                                    <div className="flex items-center gap-3 flex-1">
+                                      <div className="flex-1">
+                                        <Input
+                                          value={newGovernmentName}
+                                          onChange={(e) => setNewGovernmentName(e.target.value)}
+                                          className="h-8 text-sm"
+                                        />
+                                      </div>
+                                      <div className="relative w-24">
+                                        <DollarSign className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                                        <Input
+                                          type="text"
+                                          className="pl-6 h-8 text-sm"
+                                          placeholder="0.00"
+                                          value={newGovernmentFee}
+                                          onChange={handleGovernmentFeeChange}
+                                        />
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    // View mode - show text
+                                    <>
+                                      <span className="font-medium">{government.name}</span>
+                                      <Badge variant={government.shipping_fee === 0 ? "default" : "secondary"}>
+                                        ${government.shipping_fee.toFixed(2)}
+                                      </Badge>
+                                    </>
+                                  )}
                                 </div>
                                 
                                 <div className="flex gap-2">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleEditGovernment(government)}
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleDeleteGovernment(government.name)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
+                                  {editingGovernment === government.name ? (
+                                    // Edit mode - show save/cancel buttons
+                                    <>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={handleSaveEdit}
+                                        className="h-8 px-3 text-xs"
+                                      >
+                                        Save
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={handleCancelEdit}
+                                        className="h-8 px-3 text-xs"
+                                      >
+                                        Cancel
+                                      </Button>
+                                    </>
+                                  ) : (
+                                    // View mode - show edit/delete buttons
+                                    <>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleEditGovernment(government)}
+                                        className="h-8 w-8 p-0"
+                                      >
+                                        <Edit className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleDeleteGovernment(government.name)}
+                                        className="h-8 w-8 p-0"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </>
+                                  )}
                                 </div>
                               </div>
                             ))}
