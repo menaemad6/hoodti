@@ -77,7 +77,7 @@ const HomeLayout: React.FC<HomeLayoutProps> = ({ children }) => {
           showNavbar 
             ? "translate-y-0 opacity-100" 
             : "translate-y-[-100%] opacity-0 pointer-events-none"
-        } ${showNavbar ? "bg-black/80 backdrop-blur-md shadow-md" : ""}`}
+        } ${showNavbar ? "bg-background/80 backdrop-blur-md" : ""}`}
       >
         <Navbar />
       </div>
@@ -86,9 +86,7 @@ const HomeLayout: React.FC<HomeLayoutProps> = ({ children }) => {
       <MobileNavbar isVisible={showNavbar} />
       
       {/* Main content with dynamic padding adjustment for mobile */}
-      <main className={`flex-1 w-full p-0 m-0 transition-all duration-300 relative z-10 ${
-        showNavbar ? "pt-0 pb-24 md:pb-0" : "pt-0 pb-0"
-      }`}>
+      <main className="flex-1 w-full p-0 m-0 transition-all duration-300 relative z-10">
         {children}
       </main>
       
