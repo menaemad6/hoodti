@@ -102,7 +102,7 @@ const ModernProductCard: React.FC<ModernProductCardProps> = ({
         
         <div className="aspect-square overflow-hidden bg-muted">
           <img
-            src={normalizedProduct.image || "/placeholder.svg"}
+            src={Array.isArray(normalizedProduct.images) && normalizedProduct.images.length > 0 ? normalizedProduct.images[0] : "/placeholder.svg"}
             alt={normalizedProduct.name}
             className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-110"
             onError={(e) => {

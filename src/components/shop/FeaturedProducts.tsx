@@ -107,7 +107,14 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({ products }) => {
                     delay={`${((index % 4) + 1) * 100}` as DelayType}
                   >
                     <div className="h-full p-1">
-                      <ModernProductCard product={product} />
+                      <img
+                        src={Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : "/placeholder.svg"}
+                        alt={product.name}
+                        className="h-full w-full object-cover object-center"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "/placeholder.svg";
+                        }}
+                      />
                     </div>
                   </AnimatedWrapper>
                 </SwiperSlide>

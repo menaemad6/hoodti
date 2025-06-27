@@ -252,7 +252,7 @@ const AdminDashboard = () => {
                   percentChange: Math.random() > 0.5 ? 
                     Math.round(Math.random() * 15 * 10) / 10 : 
                     -Math.round(Math.random() * 10 * 10) / 10,
-                  image: product.image,
+                  image: Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : "/placeholder.svg",
                   price: product.price,
                   category: product.categories?.name || 'Uncategorized'
                 }))

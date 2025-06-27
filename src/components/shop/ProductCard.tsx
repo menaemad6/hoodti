@@ -1,4 +1,3 @@
-
 import React from "react";
 import { cn } from "@/lib/utils";
 import { Product } from "@/types";
@@ -23,7 +22,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className }) => {
     )}>
       <div className="aspect-square overflow-hidden rounded-md bg-gray-100 dark:bg-gray-900/50 relative">
         <img
-          src={normalizedProduct.image || "/placeholder.svg"}
+          src={Array.isArray(normalizedProduct.images) && normalizedProduct.images.length > 0 ? normalizedProduct.images[0] : "/placeholder.svg"}
           alt={normalizedProduct.name}
           className="h-full w-full object-cover object-center transition-transform group-hover:scale-105"
           onError={(e) => {

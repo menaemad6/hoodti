@@ -1,4 +1,3 @@
-
 import React from "react";
 import ModernProductCard from "./ModernProductCard";
 import { Product } from "@/types";
@@ -51,7 +50,16 @@ const ProductGrid: React.FC<ProductGridProps> = ({
           <ModernProductCard 
             product={product}
             small={small}
-          />
+          >
+            <img
+              src={Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : "/placeholder.svg"}
+              alt={product.name}
+              className="h-full w-full object-cover object-center"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "/placeholder.svg";
+              }}
+            />
+          </ModernProductCard>
         </AnimatedWrapper>
       ))}
     </div>

@@ -1,4 +1,3 @@
-
 import { supabase } from "./client";
 import { Product, ProductRow, CategoryRow } from "./types.service";
 

@@ -13,7 +13,7 @@ export type ProductDetail = {
   id: string;
   name: string;
   price: number;
-  image?: string;
+  images?: string[];
   unit?: string;
   discount?: number;
   is_new?: boolean;

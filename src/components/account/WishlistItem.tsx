@@ -89,7 +89,7 @@ const WishlistItem: React.FC<WishlistItemProps> = ({ wishlistItem, product, onRe
           {/* Product image */}
           <div className="aspect-square">
             <img
-              src={normalizedProduct.image}
+              src={Array.isArray(normalizedProduct.images) && normalizedProduct.images.length > 0 ? normalizedProduct.images[0] : "/placeholder.svg"}
               alt={normalizedProduct.name}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             />

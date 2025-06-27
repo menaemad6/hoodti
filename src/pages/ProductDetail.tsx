@@ -81,6 +81,19 @@ const ProductDetail = () => {
   const availableColors = product ? parseArrayField(product.color) : [];
   const availableSizes = product ? parseArrayField(product.size) : [];
   
+  // Utility to get images array from product
+  const getImagesArray = (images: any): string[] => {
+    if (!images) return [];
+    if (Array.isArray(images)) return images;
+    try {
+      const parsed = JSON.parse(images);
+      return Array.isArray(parsed) ? parsed : [images];
+    } catch {
+      return [images];
+    }
+  };
+  const galleryImages = product ? getImagesArray(product.images) : [];
+  
   useEffect(() => {
     const fetchProduct = async () => {
       if (!id) return;
@@ -232,8 +245,6 @@ const ProductDetail = () => {
     return product.category.name || "Uncategorized";
   };
   
-  const galleryImages = [product.image];
-  
   const features = [
     {
       icon: <Check className="w-5 h-5" />,
@@ -341,7 +352,7 @@ const ProductDetail = () => {
                   className="relative aspect-square group"
                 >
                   <img 
-                    src={activeImage || product.image} 
+                    src={activeImage || (galleryImages[0] || "/placeholder.svg")} 
                     alt={product.name} 
                     className={cn(
                       "w-full h-full object-contain p-4 sm:p-6",
@@ -398,7 +409,7 @@ const ProductDetail = () => {
                 <DialogContent className="w-[90%] sm:w-[80%] h-[70vh] p-0 bg-background border-border/30 dark:border-border/10">
                   <div className="flex items-center justify-center h-full w-full">
                     <img 
-                      src={activeImage || product.image} 
+                      src={activeImage || (galleryImages[0] || "/placeholder.svg")} 
                       alt={product.name} 
                       className="max-h-[95%] max-w-[95%] object-contain"
                     />

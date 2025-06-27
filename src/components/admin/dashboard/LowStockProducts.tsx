@@ -5,7 +5,7 @@ interface Product {
   id: string;
   name: string;
   stock: number;
-  image_url?: string;
+  images?: string[];
 }
 
 interface LowStockProductsProps {
@@ -20,9 +20,20 @@ export const LowStockProducts: React.FC<LowStockProductsProps> = ({ products }) 
           {products.map((product) => (
             <div key={product.id} className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0 flex-1">
-                {product.image_url && (
+                {Array.isArray(product.images) && product.images.length > 0 ? (
                   <div className="h-8 w-8 rounded overflow-hidden border flex-shrink-0">
-                    <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
+                    <img
+                      src={product.images[0]}
+                      alt={product.name}
+                      className="h-full w-full object-cover object-center"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "/placeholder.svg";
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="h-8 w-8 rounded overflow-hidden border flex-shrink-0">
+                    <img src="/placeholder.svg" alt={product.name} className="h-full w-full object-cover" />
                   </div>
                 )}
                 <span className="font-medium truncate">{product.name}</span>

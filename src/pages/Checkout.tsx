@@ -334,7 +334,8 @@ const Checkout = () => {
         quantity: item.quantity,
         price_at_time: item.product.price,
         selected_color: item.selectedColor,
-        selected_size: item.selectedSize
+        selected_size: item.selectedSize,
+        image: Array.isArray(item.product.images) && item.product.images.length > 0 ? item.product.images[0] : "/placeholder.svg"
       }));
       
       // Create the full name from first and last name
@@ -413,7 +414,7 @@ const Checkout = () => {
           products: {  // Change from 'product' to 'products' to match the structure expected by the email service
             name: item.product.name,
             price: item.product.price,
-            image: item.product.image
+            image: Array.isArray(item.product.images) && item.product.images.length > 0 ? item.product.images[0] : "/placeholder.svg"
           }
         }));
         

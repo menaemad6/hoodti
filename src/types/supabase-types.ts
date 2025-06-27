@@ -37,7 +37,7 @@ export function mapSupabaseProductToAppProduct(supabaseProduct: any): AppProduct
     description: supabaseProduct.description || "",
     price: typeof supabaseProduct.price === 'number' ? supabaseProduct.price : 0,
     discount: supabaseProduct.discount || 0,
-    image: supabaseProduct.image || "",
+    images: Array.isArray(supabaseProduct.images) ? supabaseProduct.images : (supabaseProduct.images ? JSON.parse(supabaseProduct.images) : []),
     unit: supabaseProduct.unit || '',
     stock: typeof supabaseProduct.stock === 'number' ? supabaseProduct.stock : 0,
     featured: supabaseProduct.featured || false,

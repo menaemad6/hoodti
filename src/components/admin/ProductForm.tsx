@@ -55,6 +55,7 @@ interface ProductFormData {
   material?: string;
   brand?: string;
   gender?: string;
+  images?: string[] | null;
 }
 
 // Predefined options for sizes and colors
@@ -179,13 +180,18 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
     color: [],
     material: "",
     brand: "",
-    gender: ""
+    gender: "",
+    images: []
   });
   
   const { toast } = useToast();
   const navigate = useNavigate();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const uploadInProgressRef = React.useRef<boolean>(false);
+  
+  // Add state for new images (not yet saved)
+  const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
+  const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
   
   // Parse string arrays from Supabase
   const parseArrayField = (field: string | string[] | null | undefined): string[] => {
@@ -295,24 +301,30 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
   };
   
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    setImageFile(file);
-    
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    setNewImageFiles((prev) => [...prev, ...files]);
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewImagePreviews((prev) => [...prev, reader.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+    // Reset file input so the same file can be selected again if needed
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
   
-  const clearImage = () => {
-    setImageFile(null);
-    setImagePreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+  const removeNewImage = (index: number) => {
+    setNewImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setNewImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+  
+  const removeExistingImage = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index),
+    }));
   };
   
   const uploadImage = async (): Promise<string | null> => {
@@ -406,7 +418,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!formData.name || !formData.description || !formData.category_id) {
       toast({
         variant: "destructive",
@@ -415,104 +426,81 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
       });
       return;
     }
-    
     setIsSaving(true);
-    
     try {
-      // Upload image if selected
-      let imageUrl = formData.image;
-      if (imageFile) {
+      // Upload new images and collect URLs
+      let uploadedUrls: string[] = [];
+      for (const file of newImageFiles) {
         try {
-          imageUrl = await uploadImage();
-          console.log("Image uploaded successfully with URL:", imageUrl);
+          const url = await uploadProductImage(file);
+          uploadedUrls.push(url);
         } catch (uploadError) {
-          console.error("Image upload failed:", uploadError);
           toast({
             variant: "destructive",
             title: "Image Upload Failed",
-            description: "Failed to upload product image, but you can continue without an image.",
+            description: "Failed to upload one or more product images.",
           });
-          // Continue without image - will use default instead
         }
       }
-      
-      // Default placeholder image if no image is uploaded
-      const defaultImageUrl = "/placeholder.svg";
-      
-      // Ensure the image URL is properly formatted
-      // Fix the bucket not found issue by ensuring URLs use object/public format
-      if (imageUrl && imageUrl.includes("/render/image/")) {
-        imageUrl = imageUrl.replace("/render/image/", "/object/public/");
-        console.log("Fixed image URL format:", imageUrl);
+      // Merge with existing images
+      let allImages = (formData.images || []).concat(uploadedUrls);
+      if (allImages.length === 0) {
+        allImages = ["/placeholder.svg"];
       }
-      
       // Save selected sizes and colors as JSON strings
       const sizesJson = selectedSizes.length ? JSON.stringify(selectedSizes) : null;
       const colorsJson = selectedColors.length ? JSON.stringify(selectedColors) : null;
-      
-      // Create the product data object with required fields
+      // Prepare productData for insert/update
       const productData = {
         ...formData,
-        // Ensure all required fields have values
+        images: allImages,
         name: formData.name,
         description: formData.description,
         price: formData.price,
         stock: formData.stock,
         category_id: formData.category_id,
         unit: formData.unit || "item",
-        image: imageUrl || defaultImageUrl, // Use default placeholder if no image
-        // Optional fields with proper default values
         featured: formData.featured || false,
         is_new: formData.is_new || false,
         discount: formData.discount,
         original_price: formData.original_price,
-        // Clothing-specific fields with multi-select values
         size: sizesJson,
         color: colorsJson,
         material: formData.material,
         brand: formData.brand,
         gender: formData.gender
       };
-      
-      console.log("Saving product data:", productData);
-      console.log("Final image URL to be saved:", productData.image);
-      
+      // Save to DB
       if (productId) {
-        // Update existing product
         const { error } = await supabase
           .from("products")
           .update(productData)
           .eq("id", productId);
-        
         if (error) {
           console.error("Supabase update error:", error);
           throw new Error(error.message);
         }
-        
         toast({
           title: "Product Updated",
           description: "The product has been updated successfully.",
         });
       } else {
-        // Create new product
         const { data, error } = await supabase
           .from("products")
           .insert(productData)
           .select();
-        
         if (error) {
           console.error("Supabase insert error:", error);
           throw new Error(error.message);
         }
-        
-        console.log("Created product with data:", data);
-        
         toast({
           title: "Product Created",
           description: "The product has been created successfully.",
         });
       }
-      
+      // Reset new images after save
+      setNewImageFiles([]);
+      setNewImagePreviews([]);
       if (onSuccess) {
         onSuccess();
       } else {
@@ -774,21 +762,51 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
           
           <div className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="image">Product Image</Label>
+              <Label htmlFor="image">Product Images</Label>
               <div className="border-2 border-dashed rounded-lg p-6 text-center hover:bg-gray-50 transition-colors">
-                {imagePreview ? (
-                  <div className="relative">
-                    <img
-                      src={imagePreview}
-                      alt="Product preview"
-                      className="mx-auto max-h-64 rounded-lg object-contain"
-                    />
+                {(formData.images && formData.images.length > 0) || newImagePreviews.length > 0 ? (
+                  <div className="flex flex-wrap gap-4 justify-center">
+                    {/* Existing images (already saved) */}
+                    {formData.images && formData.images.map((img, idx) => (
+                      <div key={"existing-" + idx} className="relative">
+                        <img
+                          src={img}
+                          alt={`Product preview ${idx + 1}`}
+                          className="mx-auto max-h-32 rounded-lg object-contain"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeExistingImage(idx)}
+                          className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1 transition-colors"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ))}
+                    {/* New images (not yet saved) */}
+                    {newImagePreviews.map((preview, idx) => (
+                      <div key={"new-" + idx} className="relative">
+                        <img
+                          src={preview}
+                          alt={`New product preview ${idx + 1}`}
+                          className="mx-auto max-h-32 rounded-lg object-contain"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeNewImage(idx)}
+                          className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1 transition-colors"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ))}
                     <button
                       type="button"
-                      onClick={clearImage}
-                      className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1 transition-colors"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex flex-col items-center justify-center w-24 h-24 border-2 border-dashed border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
                     >
-                      <X size={16} />
+                      <ImageIcon className="h-8 w-8 text-gray-400" />
+                      <span className="text-xs text-gray-500 mt-1">Add Photo</span>
                     </button>
                   </div>
                 ) : (
@@ -798,10 +816,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
                   >
                     <ImageIcon className="h-16 w-16 text-gray-400" />
                     <p className="mt-2 text-sm text-gray-500">
-                      Click to upload an image
+                      Click to upload images
                     </p>
                     <p className="text-xs text-gray-400 mt-1">
-                      PNG, JPG, GIF up to 2MB
+                      PNG, JPG, GIF up to 2MB each
                     </p>
                   </div>
                 )}
@@ -811,6 +829,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
                   id="image"
                   name="image"
                   accept="image/*"
+                  multiple
                   onChange={handleImageChange}
                   className="hidden"
                 />

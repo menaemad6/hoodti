@@ -67,7 +67,7 @@ export async function getOrdersWithItems(userId?: string, forAdminView: boolean 
             // Fetch all products in a single query
             const { data: productsData } = await supabase
               .from('products')
-              .select('id, name, price, image, unit')
+              .select('id, name, price, images, unit')
               .in('id', productIds);
             
             // Create a map of product data by id for quick lookup
@@ -87,7 +87,7 @@ export async function getOrdersWithItems(userId?: string, forAdminView: boolean 
                 price: typeof productsMap[item.product_id]?.price === 'number' 
                   ? productsMap[item.product_id]?.price 
                   : 0,
-                image: productsMap[item.product_id]?.image || '',
+                images: Array.isArray(productsMap[item.product_id]?.images) ? productsMap[item.product_id].images : [],
                 unit: productsMap[item.product_id]?.unit
               } : null
             }));
@@ -158,7 +158,7 @@ export async function getOrderItemsWithProducts(orderId: string) {
     // Fetch all products in a single query for better performance
     const { data: productsData, error: productsError } = await supabase
       .from('products')
-      .select('id, name, price, image, unit')
+      .select('id, name, price, images, unit')
       .in('id', productIds);
       
     if (productsError) {
@@ -173,7 +173,7 @@ export async function getOrderItemsWithProducts(orderId: string) {
           id: product.id,
           name: product.name,
           price: typeof product.price === 'number' ? product.price : 0,
-          image: product.image || '',
+          images: Array.isArray(product.images) ? product.images : [],
           unit: product.unit
         };
       });

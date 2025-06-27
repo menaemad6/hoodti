@@ -212,9 +212,9 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, status, withItems = false,
             {order.order_items.slice(0, 3).map((item) => (
               <div key={item.id} className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl border border-gray-100 hover:border-gray-200 dark:border-gray-800/60 dark:hover:border-gray-700/80 transition-colors bg-gray-50/50 dark:bg-gray-900/20">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden bg-white dark:bg-gray-800 flex-shrink-0 border border-gray-100 dark:border-gray-700">
-                  {item.products && item.products.image ? (
+                  {item.products && Array.isArray(item.products.images) && item.products.images.length > 0 ? (
                     <img 
-                      src={item.products.image} 
+                      src={item.products.images[0]} 
                       alt={item.products.name} 
                       className="w-full h-full object-cover"
                     />

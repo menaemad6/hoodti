@@ -588,7 +588,7 @@ const Index = () => {
                             </div>
                             
                             <img
-                              src={product?.image || `/collab-collection.jpg`}
+                              src={Array.isArray(product?.images) && product.images.length > 0 ? product.images[0] : `/collab-collection.jpg`}
                               alt={product?.name || "Product"}
                               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                               onError={(e) => {
@@ -914,7 +914,7 @@ const Index = () => {
                             </div>
                             
                             <img
-                              src={product?.image || `/collab-collection.jpg`}
+                              src={Array.isArray(product?.images) && product.images.length > 0 ? product.images[0] : `/collab-collection.jpg`}
                               alt={product?.name || "Product"}
                               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                               onError={(e) => {

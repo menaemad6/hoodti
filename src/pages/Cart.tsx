@@ -308,7 +308,7 @@ const Cart = () => {
                       >
                         <div className="flex-shrink-0 w-16 h-16 sm:w-24 sm:h-24 rounded-xl overflow-hidden shadow-md">
                           <img
-                            src={item.product.image}
+                            src={Array.isArray(item.product.images) && item.product.images.length > 0 ? item.product.images[0] : "/placeholder.svg"}
                             alt={item.product.name}
                             className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                           />

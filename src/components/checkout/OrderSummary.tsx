@@ -143,7 +143,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
             >
               <div className="h-10 w-10 sm:h-12 sm:w-12 rounded overflow-hidden flex-shrink-0 mr-2 sm:mr-3">
                 <img 
-                  src={item.product.image} 
+                  src={Array.isArray(item.product.images) && item.product.images.length > 0 ? item.product.images[0] : "/placeholder.svg"}
                   alt={item.product.name} 
                   className="h-full w-full object-cover" 
                 />

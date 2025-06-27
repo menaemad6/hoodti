@@ -131,7 +131,7 @@ const OrderConfirmation = () => {
               id: item.products.id || '',
               name: item.products.name || '',
               price: typeof item.products.price === 'number' ? item.products.price : 0,
-              image: item.products.image || '',
+              image: Array.isArray(item.products.images) && item.products.images.length > 0 ? item.products.images[0] : "/placeholder.svg",
               unit: item.products.unit
             } : null,
             price_at_time: item.price_at_time,

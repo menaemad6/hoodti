@@ -1,4 +1,3 @@
-
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { Product } from "@/types";
@@ -68,7 +67,7 @@ export function convertSupabaseProductToAppProduct(product: any): Product {
     description: product.description,
     price: product.price,
     discount: product.discount || 0,
-    image: product.image,
+    images: Array.isArray(product.images) ? product.images : (product.images ? JSON.parse(product.images) : []),
     unit: product.unit,
     stock: product.stock,
     featured: product.featured || false,

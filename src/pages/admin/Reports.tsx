@@ -1006,9 +1006,9 @@ const ReportsPage = () => {
                               <div key={product.uniqueId} className="space-y-2">
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-start gap-3">
-                                    {product.image ? (
+                                    {Array.isArray(product.images) && product.images.length > 0 ? (
                                       <div className="h-10 w-10 rounded-md overflow-hidden border flex-shrink-0 bg-muted">
-                                        <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+                                        <img src={product.images[0]} alt={product.name} className="h-full w-full object-cover" />
                                       </div>
                                     ) : (
                                       <div className="h-10 w-10 rounded-md flex-shrink-0 bg-primary/10 flex items-center justify-center">
@@ -1071,9 +1071,9 @@ const ReportsPage = () => {
                                 <div key={product.uniqueId} className="space-y-2">
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-start gap-3">
-                                      {product.image ? (
+                                      {Array.isArray(product.images) && product.images.length > 0 ? (
                                         <div className="h-10 w-10 rounded-md overflow-hidden border flex-shrink-0 bg-muted">
-                                          <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+                                          <img src={product.images[0]} alt={product.name} className="h-full w-full object-cover" />
                                         </div>
                                       ) : (
                                         <div className="h-10 w-10 rounded-md flex-shrink-0 bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">

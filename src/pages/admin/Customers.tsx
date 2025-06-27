@@ -853,7 +853,7 @@ const CustomersPage = () => {
                                   <div className="flex items-center gap-3">
                                     <div className="h-12 w-12 rounded-lg border overflow-hidden">
                                       <img
-                                        src={item.product.image}
+                                        src={(Array.isArray(item.product.images) && item.product.images.length > 0 ? item.product.images[0] : "/placeholder.svg")}
                                         alt={item.product.name}
                                         className="h-full w-full object-cover"
                                       />

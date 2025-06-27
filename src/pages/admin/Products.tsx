@@ -292,7 +292,7 @@ const ProductsPage = () => {
         <div className="flex items-center gap-3">
           <div className="h-12 w-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 shadow-sm">
             <img
-              src={row.original.image}
+              src={Array.isArray(row.original.images) && row.original.images.length > 0 ? row.original.images[0] : "/placeholder.svg"}
               alt={row.original.name}
               className="h-full w-full object-cover transition-all duration-300 hover:scale-110"
               onError={(e) => {

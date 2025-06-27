@@ -17,6 +17,7 @@ interface Product {
   size?: string;
   brand?: string;
   gender?: string;
+  images?: string[];
 }
 
 interface TopSellingProductsProps {
@@ -39,9 +40,16 @@ export const TopSellingProducts: React.FC<TopSellingProductsProps> = ({ products
           <div key={product.id} className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-start gap-3">
-                {product.image ? (
+                {Array.isArray(product.images) && product.images.length > 0 ? (
                   <div className="h-10 w-10 rounded-md overflow-hidden border flex-shrink-0 bg-muted">
-                    <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+                    <img
+                      src={product.images[0]}
+                      alt={product.name}
+                      className="h-full w-full object-cover object-center"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "/placeholder.svg";
+                      }}
+                    />
                   </div>
                 ) : (
                   <div className="h-10 w-10 rounded-md flex-shrink-0 bg-primary/10 flex items-center justify-center">

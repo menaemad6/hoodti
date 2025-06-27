@@ -102,7 +102,7 @@ export async function getUserWishlist(userId: string): Promise<Wishlist[]> {
         price: typeof productsMap[item.product_id]?.price === 'number' 
           ? productsMap[item.product_id]?.price 
           : 0,
-        image: productsMap[item.product_id]?.image || '',
+        images: Array.isArray(productsMap[item.product_id]?.images) ? productsMap[item.product_id].images : [],
         unit: productsMap[item.product_id]?.unit
       } : null
     })) as Wishlist[];

@@ -374,9 +374,9 @@ const OrderDetail = () => {
                                 <TableRow key={item.id}>
                                   <TableCell className="p-2 sm:p-4">
                                     <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-lg overflow-hidden bg-primary/[0.03] dark:bg-primary/[0.02]">
-                                      {item.products && item.products.image ? (
+                                      {item.products && Array.isArray(item.products.images) && item.products.images.length > 0 ? (
                                         <img 
-                                          src={item.products.image} 
+                                          src={item.products.images[0]} 
                                           alt={item.products.name} 
                                           className="h-full w-full object-cover"
                                         />

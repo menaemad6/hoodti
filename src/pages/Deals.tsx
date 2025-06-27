@@ -87,7 +87,7 @@ const Deals = () => {
                       
                       <div className="aspect-video overflow-hidden bg-muted">
                         <img
-                          src={product.image || "https://placehold.co/600x400/f5f5f5/cccccc?text=Product"}
+                          src={Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : "https://placehold.co/600x400/f5f5f5/cccccc?text=Product"}
                           alt={product.name}
                           className="h-full w-full object-cover"
                         />
