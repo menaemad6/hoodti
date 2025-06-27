@@ -1,5 +1,6 @@
 import { supabase } from "./client";
 import { addDays, format, startOfToday } from "date-fns";
+import { getDeliveryDelay } from "./settings.service";
 
 export interface DeliveryTimeSlot {
   id: string;
@@ -39,10 +40,17 @@ export async function generateWeeklySlots(): Promise<WeeklySlot[]> {
     const timeSlots = await getBaseTimeSlots();
     const slots: WeeklySlot[] = [];
     const today = startOfToday();
+    
+    // Get the delivery delay from settings
+    const deliveryDelay = await getDeliveryDelay();
+    console.log("Using delivery delay:", deliveryDelay, "days");
 
-    // Generate slots for the next 7 days
+    // Generate slots starting from the delay date (e.g., if delay is 2, start from day 2)
+    const startDate = addDays(today, deliveryDelay);
+    
+    // Generate slots for the next 7 days starting from the delay date
     for (let i = 0; i < 7; i++) {
-      const date = addDays(today, i);
+      const date = addDays(startDate, i);
       const dateStr = format(date, "yyyy-MM-dd");
       
       // Add all available time slots for this day
@@ -99,4 +107,16 @@ export async function getAvailableDeliverySlots(): Promise<WeeklySlot[]> {
 export function getDeliveryDate(slotId: string): string | null {
   const [dateStr] = slotId.split('_');
   return dateStr || null;
+}
+
+// Helper function to get the minimum delivery date based on current delay setting
+export async function getMinimumDeliveryDate(): Promise<Date> {
+  try {
+    const deliveryDelay = await getDeliveryDelay();
+    const today = startOfToday();
+    return addDays(today, deliveryDelay);
+  } catch (error) {
+    console.error("Error getting minimum delivery date:", error);
+    return startOfToday(); // Fallback to today
+  }
 }

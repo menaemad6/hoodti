@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { format, addDays, startOfToday } from "date-fns";
-import { Clock } from "lucide-react";
+import { Clock, Info } from "lucide-react";
 import GlassCard from "@/components/ui/glass-card";
 import { supabase } from "@/integrations/supabase/client";
+import { getDeliveryDelay } from "@/integrations/supabase/settings.service";
 import Spinner from "@/components/ui/spinner";
+import { Badge } from "@/components/ui/badge";
 
 interface DeliveryTimeSlot {
   id: string;
@@ -33,6 +35,7 @@ const DeliverySlotSelector: React.FC<DeliverySlotSelectorProps> = ({
 }) => {
   const [loading, setLoading] = useState(true);
   const [weeklySlots, setWeeklySlots] = useState<DaySlots[]>([]);
+  const [deliveryDelay, setDeliveryDelay] = useState<number>(0);
 
   useEffect(() => {
     fetchAndGenerateSlots();
@@ -40,6 +43,10 @@ const DeliverySlotSelector: React.FC<DeliverySlotSelectorProps> = ({
 
   const fetchAndGenerateSlots = async () => {
     try {
+      // Get delivery delay from settings
+      const delay = await getDeliveryDelay();
+      setDeliveryDelay(delay);
+      
       // Fetch base time slots from the database
       const { data: timeSlots, error } = await supabase
         .from("delivery_slots")
@@ -49,12 +56,13 @@ const DeliverySlotSelector: React.FC<DeliverySlotSelectorProps> = ({
 
       if (error) throw error;
 
-      // Generate the next 7 days of slots
+      // Generate the next 7 days of slots starting from the delay date
       const slots: DaySlots[] = [];
       const today = startOfToday();
+      const startDate = addDays(today, delay); // Start from delay days from today
 
       for (let i = 0; i < 7; i++) {
-        const date = addDays(today, i);
+        const date = addDays(startDate, i);
         const dateStr = format(date, "yyyy-MM-dd");
         const formattedDate = format(date, "EEEE, MMMM d");
 
@@ -108,7 +116,26 @@ const DeliverySlotSelector: React.FC<DeliverySlotSelectorProps> = ({
 
   return (
     <div className="space-y-4 animate-fade-in">
-      <h3 className="text-lg font-semibold mb-2">Delivery Time</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold">Delivery Time</h3>
+        {deliveryDelay > 0 && (
+          <div className="flex items-center gap-2">
+            <Info className="h-4 w-4 text-muted-foreground" />
+            <Badge variant="outline" className="text-xs">
+              {deliveryDelay === 1 ? '1 day' : `${deliveryDelay} days`} processing time
+            </Badge>
+          </div>
+        )}
+      </div>
+      
+      {deliveryDelay > 0 && (
+        <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+          <p className="text-sm text-blue-700 dark:text-blue-300">
+            <strong>Note:</strong> Orders require {deliveryDelay === 1 ? '1 day' : `${deliveryDelay} days`} processing time. 
+            The earliest available delivery date is {format(addDays(startOfToday(), deliveryDelay), "EEEE, MMMM d")}.
+          </p>
+        </div>
+      )}
       
       {weeklySlots.length === 0 ? (
         <GlassCard className="p-4 text-center">
@@ -119,6 +146,7 @@ const DeliverySlotSelector: React.FC<DeliverySlotSelectorProps> = ({
           {weeklySlots.map((day) => (
             <div key={day.formattedDate} className="space-y-2">
               <h4 className="font-medium">{day.formattedDate}</h4>
+              
               <div className="grid gap-2">
                 {day.slots.map((slot) => {
                   const isSelected = selectedSlotId === slot.id;

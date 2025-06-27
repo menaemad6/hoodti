@@ -10,6 +10,7 @@ export interface SiteSettings {
   shipping_fee: number;
   tax_rate: number;
   government_shipping_fees?: GovernmentShippingFee[];
+  delivery_delay?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -328,5 +329,83 @@ export async function getShippingFeeForGovernment(governmentName: string): Promi
   } catch (error) {
     console.error("Error getting shipping fee for government:", error);
     return 5.99; // Default fallback
+  }
+}
+
+/**
+ * Updates the delivery delay setting
+ */
+export async function updateDeliveryDelay(delay: number): Promise<boolean> {
+  try {
+    // Get current settings
+    const settings = await getSettings();
+    
+    if (settings) {
+      // Update existing settings
+      const { error } = await supabase
+        .from('settings')
+        .update({
+          delivery_delay: delay,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', settings.id);
+      
+      if (error) throw error;
+    } else {
+      // Create new settings if none exist
+      const { error } = await supabase
+        .from('settings')
+        .insert({
+          shipping_fee: 5.99, // Default shipping fee
+          tax_rate: 0.08, // Default tax rate
+          delivery_delay: delay,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+      
+      if (error) throw error;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error updating delivery delay:", error);
+    return false;
+  }
+}
+
+/**
+ * Gets the current delivery delay or returns a default value
+ */
+export async function getDeliveryDelay(): Promise<number> {
+  try {
+    const settings = await getSettings();
+    
+    if (settings && typeof settings.delivery_delay === 'number') {
+      console.log("Retrieved delivery delay from settings:", settings.delivery_delay);
+      return settings.delivery_delay;
+    }
+    
+    // If no settings exist or delivery_delay is not set, fetch directly from the table
+    const { data, error } = await supabase
+      .from('settings')
+      .select('delivery_delay')
+      .limit(1)
+      .single();
+    
+    if (error) {
+      console.error("Error fetching delivery delay directly:", error);
+      return 0; // Default value
+    }
+    
+    if (data && typeof data.delivery_delay === 'number') {
+      console.log("Retrieved delivery delay directly:", data.delivery_delay);
+      return data.delivery_delay;
+    }
+    
+    // Default fallback
+    return 0;
+  } catch (error) {
+    console.error("Error in getDeliveryDelay:", error);
+    return 0; // Default if anything goes wrong
   }
 } 

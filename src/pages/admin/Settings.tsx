@@ -43,6 +43,8 @@ import {
   updateSettings, 
   getGovernmentShippingFees, 
   updateGovernmentShippingFees,
+  getDeliveryDelay,
+  updateDeliveryDelay,
   GovernmentShippingFee 
 } from "@/integrations/supabase/settings.service";
 import Spinner from "@/components/ui/spinner";
@@ -56,10 +58,12 @@ const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState("discounts");
   const [shippingFee, setShippingFee] = useState<string>('');
   const [taxRate, setTaxRate] = useState<string>('');
+  const [deliveryDelay, setDeliveryDelay] = useState<string>('');
   const [governmentFees, setGovernmentFees] = useState<GovernmentShippingFee[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSavingGovernmentFees, setIsSavingGovernmentFees] = useState(false);
+  const [isSavingDeliveryDelay, setIsSavingDeliveryDelay] = useState(false);
   const [editingGovernment, setEditingGovernment] = useState<string | null>(null);
   const [newGovernmentName, setNewGovernmentName] = useState<string>('');
   const [newGovernmentFee, setNewGovernmentFee] = useState<string>('');
@@ -88,9 +92,11 @@ const SettingsPage = () => {
       if (settings) {
         setShippingFee(settings.shipping_fee.toString());
         setTaxRate(settings.tax_rate.toString());
+        setDeliveryDelay(settings.delivery_delay?.toString() || '0');
       } else {
         setShippingFee('5.99'); // Default value
         setTaxRate('0.08'); // Default value (8%)
+        setDeliveryDelay('0'); // Default value
       }
     } catch (error) {
       console.error("Error loading settings:", error);
@@ -333,6 +339,58 @@ const SettingsPage = () => {
     }
   };
   
+  const handleSaveDeliveryDelay = async () => {
+    // Validate delivery delay
+    if (deliveryDelay === '' || deliveryDelay === '.') {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please enter a valid delivery delay."
+      });
+      return;
+    }
+    
+    setIsSavingDeliveryDelay(true);
+    try {
+      // Parse the string to number before saving
+      const delayNumber = parseInt(deliveryDelay);
+      
+      // Validate the parsed number
+      if (isNaN(delayNumber) || delayNumber < 0) {
+        throw new Error("Invalid number format or negative value");
+      }
+      
+      const success = await updateDeliveryDelay(delayNumber);
+      if (success) {
+        toast({
+          title: "Delivery delay updated",
+          description: "Delivery delay has been updated successfully."
+        });
+      } else {
+        throw new Error("Failed to update delivery delay");
+      }
+    } catch (error) {
+      console.error("Error saving delivery delay:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save delivery delay."
+      });
+    } finally {
+      setIsSavingDeliveryDelay(false);
+    }
+  };
+
+  // Handle delivery delay change with input validation
+  const handleDeliveryDelayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    
+    // Accept only non-negative integers
+    if (value === '' || /^\d+$/.test(value)) {
+      setDeliveryDelay(value);
+    }
+  };
+  
   const seoConfig = getSEOConfig('adminDashboard');
   
   return (
@@ -500,7 +558,39 @@ const SettingsPage = () => {
                           
                           <Separator />
                           
-                          <div className="flex justify-end">
+                          <div className="space-y-4">
+                            <h3 className="text-lg font-medium">Delivery Settings</h3>
+                            
+                            <div className="grid gap-4 max-w-md">
+                              <div className="grid gap-2">
+                                <Label htmlFor="deliveryDelay">
+                                  Delivery Delay (days)
+                                </Label>
+                                <div className="relative">
+                                  <Input 
+                                    id="deliveryDelay" 
+                                    type="text"
+                                    className="pl-3"
+                                    placeholder="0"
+                                    value={deliveryDelay}
+                                    onChange={handleDeliveryDelayChange}
+                                  />
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                  Number of days to add before delivery slots become available. 
+                                  For example, if set to 2, customers can only select delivery dates starting from 2 days from today.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <Separator />
+                          
+                          <div className="flex justify-end gap-2">
+                            <Button onClick={handleSaveDeliveryDelay} disabled={isSavingDeliveryDelay}>
+                              {isSavingDeliveryDelay ? <Spinner className="mr-2" size="sm" /> : null}
+                              Save Delivery Delay
+                            </Button>
                             <Button onClick={handleSaveShippingSettings} disabled={isSaving}>
                               {isSaving ? <Spinner className="mr-2" size="sm" /> : null}
                               Save Settings
