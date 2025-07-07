@@ -6,6 +6,7 @@ import { formatDistanceToNow, format } from "date-fns";
 import { Link } from "react-router-dom";
 import { ChevronRight, Package, ShoppingBag, Paintbrush, Ruler } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { formatPrice } from "../../lib/utils";
 
 interface OrderItem {
   id: string;
@@ -174,7 +175,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, status, withItems = false,
         <div className="flex flex-col xs:flex-row justify-between items-start xs:items-center w-full gap-3 xs:gap-0">
           <div>
             <p className="text-xs sm:text-sm font-medium text-muted-foreground">Total</p>
-            <p className="text-base sm:text-lg font-bold">${Number(order.total).toFixed(2)}</p>
+            <p className="text-base sm:text-lg font-bold">{formatPrice(order.total)}</p>
           </div>
           {onViewDetails ? (
             <Button 
@@ -232,7 +233,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, status, withItems = false,
                       {item.products ? item.products.name : "Product unavailable"}
                     </div>
                     <div className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1">
-                      <span>${Number(item.price_at_time).toFixed(2)}</span>
+                      <span>{formatPrice(item.price_at_time)}</span>
                       <span>×</span>
                       <span>{item.quantity}</span>
                       {item.products?.unit && <span>({item.products.unit})</span>}
@@ -264,7 +265,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, status, withItems = false,
                     )}
                   </div>
                   <div className="hidden sm:block text-right text-xs font-medium mt-1 sm:mt-0">
-                    ${(Number(item.price_at_time) * item.quantity).toFixed(2)}
+                    {formatPrice(item.price_at_time * item.quantity)}
                   </div>
                 </div>
               </div>

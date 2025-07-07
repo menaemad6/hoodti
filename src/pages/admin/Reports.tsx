@@ -80,6 +80,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { TopProduct } from "@/components/admin/dashboard/TopProductsList";
+import { formatPrice } from "../../lib/utils";
 
 interface TopProduct {
   id: number;
@@ -305,7 +306,7 @@ const ReportsPage = () => {
           y={ey}
           textAnchor={textAnchor}
           fill="#333"
-        >{`Value: $${value}`}</text>
+        >{`Value: ${formatPrice(value)}`}</text>
         <text
           x={ex + (cos >= 0 ? 1 : -1) * 12}
           y={ey}
@@ -423,7 +424,7 @@ const ReportsPage = () => {
                       </CardDescription>
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-2xl font-bold">
-                          ${salesSummary.totalSales.toLocaleString()}
+                          {formatPrice(salesSummary.totalSales)}
                         </CardTitle>
                         <div className="p-2 rounded-full bg-primary/10 text-primary">
                           <DollarSign size={18} />
@@ -452,7 +453,7 @@ const ReportsPage = () => {
                       </CardDescription>
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-2xl font-bold">
-                          ${salesSummary.averageOrderValue.toLocaleString()}
+                          {formatPrice(salesSummary.averageOrderValue)}
                         </CardTitle>
                         <div className="p-2 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
                           <BarChartIcon size={18} />
@@ -737,7 +738,7 @@ const ReportsPage = () => {
                         <p className="text-sm font-medium text-muted-foreground mb-1">Projected Next Month</p>
                         <div className="flex justify-between items-center">
                           <p className="text-lg font-bold">
-                            ${Math.round(salesData[salesData.length - 1]?.sales * 1.05).toLocaleString() || "0"}
+                            {formatPrice(Math.round(salesData[salesData.length - 1]?.sales * 1.05))}
                           </p>
                           <div className="bg-primary/10 text-primary px-2 py-1 rounded-full text-xs font-medium">
                             +5%
@@ -749,7 +750,7 @@ const ReportsPage = () => {
                         <p className="text-sm font-medium text-muted-foreground mb-1">Quarterly Outlook</p>
                         <div className="flex justify-between items-center">
                           <p className="text-lg font-bold">
-                            ${Math.round(salesData[salesData.length - 1]?.sales * 3.3).toLocaleString() || "0"}
+                            {formatPrice(Math.round(salesData[salesData.length - 1]?.sales * 3.3))}
                           </p>
                           <div className="bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-2 py-1 rounded-full text-xs font-medium">
                             +10%
@@ -761,7 +762,7 @@ const ReportsPage = () => {
                         <p className="text-sm font-medium text-muted-foreground mb-1">Year-End Estimate</p>
                         <div className="flex justify-between items-center">
                           <p className="text-lg font-bold">
-                            ${Math.round(salesData.reduce((sum, month) => sum + month.sales, 0) * 1.15).toLocaleString() || "0"}
+                            {formatPrice(Math.round(salesData.reduce((sum, month) => sum + month.sales, 0) * 1.15))}
                           </p>
                           <div className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-full text-xs font-medium">
                             +15%
@@ -807,7 +808,7 @@ const ReportsPage = () => {
                       </CardDescription>
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-2xl font-bold">
-                          ${salesSummary.totalSales.toLocaleString()}
+                          {formatPrice(salesSummary.totalSales)}
                         </CardTitle>
                         <div className="p-2 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
                           <DollarSign size={18} />
@@ -867,7 +868,7 @@ const ReportsPage = () => {
                       </CardDescription>
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-2xl font-bold">
-                          ${salesSummary.averageOrderValue.toLocaleString()}
+                          {formatPrice(salesSummary.averageOrderValue)}
                         </CardTitle>
                         <div className="p-2 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
                           <BarChartIcon size={18} />
@@ -1023,7 +1024,7 @@ const ReportsPage = () => {
                                     </div>
                                   </div>
                                   <div className="text-right">
-                                    <div className="font-medium">${((product.price || 0) * product.sales).toLocaleString()}</div>
+                                    <div className="font-medium">{formatPrice((product.price || 0) * product.sales)}</div>
                                     <div className="text-xs text-muted-foreground">{product.sales} units</div>
                                   </div>
                                 </div>
@@ -1088,7 +1089,7 @@ const ReportsPage = () => {
                                       </div>
                                     </div>
                                     <div className="text-right">
-                                      <div className="font-medium">${((product.price || 0) * product.sales).toLocaleString()}</div>
+                                      <div className="font-medium">{formatPrice((product.price || 0) * product.sales)}</div>
                                       <div className="text-xs text-muted-foreground">{product.sales} units</div>
                                     </div>
                                   </div>
@@ -1192,7 +1193,7 @@ const ReportsPage = () => {
                           <div key={index} className="space-y-2">
                             <div className="flex justify-between items-center">
                               <span className="font-medium text-sm">{category.name}</span>
-                              <span className="text-sm text-muted-foreground">${category.value.toLocaleString()}</span>
+                              <span className="text-sm text-muted-foreground">{formatPrice(category.value)}</span>
                             </div>
                             <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                               <div 
@@ -1226,7 +1227,7 @@ const ReportsPage = () => {
                             <p className="text-lg font-bold">{categoryData[0]?.name || "N/A"}</p>
                           </div>
                           <div className="text-green-500 flex items-center">
-                            <span>${categoryData[0]?.value.toLocaleString() || "0"}</span>
+                            <span>{formatPrice(categoryData[0]?.value)}</span>
                           </div>
                         </div>
                         
@@ -1264,9 +1265,7 @@ const ReportsPage = () => {
                               Average per Category
                             </p>
                             <p className="text-lg font-bold">
-                              ${categoryData.length > 0 
-                                ? Math.round(categoryData.reduce((sum, cat) => sum + cat.value, 0) / categoryData.length).toLocaleString()
-                                : "0"}
+                              {formatPrice(Math.round(categoryData.reduce((sum, cat) => sum + cat.value, 0) / categoryData.length))}
                             </p>
                           </div>
                           <div className="text-blue-500">

@@ -14,6 +14,7 @@ import AnimatedWrapper from "@/components/ui/animated-wrapper";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Order, OrderItem } from "@/integrations/supabase/types.service";
+import { formatPrice } from "../../lib/utils";
 
 interface DeliverySlot {
   date: string;
@@ -439,13 +440,13 @@ const OrderDetail = () => {
                                     )}
                                   </TableCell>
                                   <TableCell className="text-right text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground/90 p-2 sm:p-4">
-                                    ${Number(item.price_at_time).toFixed(2)}
+                                    {formatPrice(item.price_at_time)}
                                   </TableCell>
                                   <TableCell className="text-right text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground/90 p-2 sm:p-4">
                                     {item.quantity}
                                   </TableCell>
                                   <TableCell className="text-right font-medium text-xs sm:text-sm p-2 sm:p-4">
-                                    ${(Number(item.price_at_time) * item.quantity).toFixed(2)}
+                                    {formatPrice(item.price_at_time * item.quantity)}
                                   </TableCell>
                                 </TableRow>
                               ))}
@@ -457,20 +458,20 @@ const OrderDetail = () => {
                       <div className="mt-4 sm:mt-6 bg-gray-50/30 dark:bg-gray-900/30 rounded-xl p-3 sm:p-4 border border-border">
                         <div className="flex justify-between items-center mb-2">
                           <span className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground/90">Subtotal</span>
-                          <span className="text-xs sm:text-sm">${orderItems.reduce((total, item) => total + (Number(item.price_at_time) * item.quantity), 0).toFixed(2)}</span>
+                          <span className="text-xs sm:text-sm">{formatPrice(orderItems.reduce((total, item) => total + (Number(item.price_at_time) * item.quantity), 0))}</span>
                         </div>
 
                         {order.tax !== undefined && order.tax !== null && (
                           <div className="flex justify-between items-center mb-2">
                             <span className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground/90">Tax</span>
-                            <span className="text-xs sm:text-sm">${Number(order.tax).toFixed(2)}</span>
+                            <span className="text-xs sm:text-sm">{formatPrice(order.tax)}</span>
                           </div>
                         )}
 
                         {order.shipping_amount !== undefined && order.shipping_amount !== null && (
                           <div className="flex justify-between items-center mb-2">
                             <span className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground/90">Shipping</span>
-                            <span className="text-xs sm:text-sm">{Number(order.shipping_amount) === 0 ? 'Free' : `$${Number(order.shipping_amount).toFixed(2)}`}</span>
+                            <span className="text-xs sm:text-sm">{Number(order.shipping_amount) === 0 ? 'Free' : formatPrice(order.shipping_amount)}</span>
                           </div>
                         )}
 
@@ -484,7 +485,7 @@ const OrderDetail = () => {
                         <Separator className="my-2 bg-border" />
                         <div className="flex justify-between items-center font-bold text-sm sm:text-base text-foreground/90 dark:text-foreground/80">
                           <span>Total</span>
-                          <span>${Number(order.total).toFixed(2)}</span>
+                          <span>${formatPrice(Number(order.total))}</span>
                         </div>
                       </div>
                     </div>

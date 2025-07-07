@@ -8,6 +8,7 @@ import { Minus, Plus, ShoppingCart, Trash2, ArrowRight, DollarSign, Truck, Badge
 import { useCart } from "@/context/CartContext";
 import { getShippingFee, getTaxRate, getShippingFeeForGovernment } from '../integrations/supabase/settings.service';
 import OrderSummary from '@/components/checkout/OrderSummary';
+import { formatPrice } from "../lib/utils";
 
 // Custom styles for animations and effects
 import "./cart.css";
@@ -281,7 +282,7 @@ const Cart = () => {
                   
                   <div className="flex flex-col items-center">
                     <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500">
-                      ${cartTotal.toFixed(2)}
+                      {formatPrice(cartTotal)}
                     </span>
                     <span className="text-muted-foreground text-xs uppercase tracking-wide mt-1">
                       Subtotal
@@ -353,7 +354,7 @@ const Cart = () => {
                                 </Link>
                               </h3>
                               <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
-                                <span className="text-primary/80">${item.product.price.toFixed(2)}</span> per item
+                                <span className="text-primary/80">{formatPrice(item.product.price)}</span> per item
                               </p>
                               {/* Display selected color, size, and type if available */}
                               {(item.selected_type  || item.selectedSize || item.selectedColor) && (
@@ -397,7 +398,7 @@ const Cart = () => {
                               )}
                             </div>
                             <p className="text-base sm:text-lg font-medium mt-1 sm:mt-0">
-                              ${(item.product.price * item.quantity).toFixed(2)}
+                              {formatPrice(item.product.price * item.quantity)}
                             </p>
                           </div>
                           
@@ -427,7 +428,7 @@ const Cart = () => {
                             <Button 
                               variant="ghost" 
                               size="sm" 
-                              onClick={() => removeFromCart(item.product.id, item.selectedColor, item.selectedSize)}
+                              onClick={() => removeFromCart(item.product.id, item.selectedColor, item.selectedSize, item.selected_type)}
                               className="text-muted-foreground hover:text-destructive text-xs sm:text-sm px-2 sm:px-3"
                             >
                               <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />

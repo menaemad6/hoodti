@@ -20,13 +20,18 @@ export function formatDate(input: string | number): string {
 export function formatPrice(
   price: number | string,
   options: {
-    currency?: "USD" | "EUR" | "GBP" | "BDT";
+    currency?: "EGP" | "USD" | "EUR" | "GBP" | "BDT";
     notation?: Intl.NumberFormatOptions["notation"];
   } = {}
 ) {
-  const { currency = "USD", notation = "compact" } = options;
+  const { currency = "EGP", notation = "compact" } = options;
 
   const numericPrice = typeof price === "string" ? parseFloat(price) : price;
+
+  if (currency === "EGP") {
+    // Show as '654 EGP'
+    return `${numericPrice.toLocaleString("en-US", { maximumFractionDigits: 2 })} EGP`;
+  }
 
   return new Intl.NumberFormat("en-US", {
     style: "currency",

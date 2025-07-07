@@ -2,6 +2,7 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import { Product } from "@/types";
 import { mapSupabaseProductToAppProduct } from "@/types/supabase-types";
+import { formatPrice } from "../../lib/utils";
 
 interface ProductCardProps {
   product: Product | any;
@@ -40,10 +41,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className }) => {
         <h3 className="text-sm font-medium text-foreground">{normalizedProduct.name}</h3>
         <div className="mt-1 flex items-center justify-between">
           <div>
-            <span className="text-primary font-bold">${normalizedProduct.price.toFixed(2)}</span>
+            <span className="text-primary font-bold">{formatPrice(normalizedProduct.price)}</span>
             {normalizedProduct.discount > 0 && (
               <span className="text-xs text-muted-foreground line-through ml-2">
-                ${(normalizedProduct.price * (1 + normalizedProduct.discount / 100)).toFixed(2)}
+                {formatPrice(normalizedProduct.price * (1 + normalizedProduct.discount / 100))}
               </span>
             )}
           </div>

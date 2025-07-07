@@ -13,6 +13,7 @@ import StreetHero from "@/components/home/StreetHero";
 import ModernCategoryCard from "@/components/home/ModernCategoryCard";
 import { useTheme } from "@/context/ThemeContext";
 import { useCart } from "@/context/CartContext";
+import { formatPrice } from "../lib/utils";
 
 const Index = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -700,15 +701,15 @@ const Index = () => {
                           </Link>
                           <div className="flex justify-between items-center">
                             <div className="flex flex-col">
-                              <span className="text-xl font-black">${product ? Number(product.price).toFixed(2) : (49.99 + index * 10).toFixed(2)}</span>
+                              <span className="text-xl font-black">{formatPrice(product ? product.price : 49.99 + index * 10)}</span>
                               {product?.original_price && (
                                 <span className="text-xs text-muted-foreground line-through">
-                                  ${Number(product.original_price).toFixed(2)}
+                                  {formatPrice(product?.original_price)}
                                 </span>
                               )}
                               {!product?.original_price && index % 3 === 0 && (
                                 <span className="text-xs text-muted-foreground line-through">
-                                  ${((49.99 + index * 10) * 1.25).toFixed(2)}
+                                  {formatPrice((49.99 + index * 10) * 1.25)}
                                 </span>
                               )}
                             </div>
@@ -1024,15 +1025,15 @@ const Index = () => {
                           
                           <div className="flex justify-between items-center">
                             <div className="flex flex-col">
-                              <span className="text-xl font-black">${product?.price?.toFixed(2) || (59.99 + index * 10).toFixed(2)}</span>
+                              <span className="text-xl font-black">{formatPrice(product?.price || 59.99 + index * 10)}</span>
                               {product?.original_price && (
                                 <span className="text-xs text-muted-foreground line-through">
-                                  ${Number(product.original_price).toFixed(2)}
+                                  {formatPrice(product?.original_price)}
                                 </span>
                               )}
                               {!product?.original_price && index % 3 === 0 && (
                                 <span className="text-xs text-muted-foreground line-through">
-                                  ${((59.99 + index * 10) * 1.25).toFixed(2)}
+                                  {formatPrice((59.99 + index * 10) * 1.25)}
                                 </span>
                               )}
                             </div>

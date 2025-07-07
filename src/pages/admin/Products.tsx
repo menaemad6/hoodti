@@ -57,6 +57,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import SEOHead from "@/components/seo/SEOHead";
 import { getSEOConfig } from "@/lib/seo-config";
+import { formatPrice } from "../../lib/utils";
 
 interface DataColumn {
   id: string;
@@ -317,10 +318,10 @@ const ProductsPage = () => {
       header: "Price",
       cell: ({ row }) => (
         <div className="text-right">
-          <div className="font-medium text-gray-900 dark:text-gray-100">${row.original.price.toFixed(2)}</div>
+          <div className="font-medium text-gray-900 dark:text-gray-100">{formatPrice(row.original.price)}</div>
           {row.original.original_price && (
             <span className="text-xs text-red-500 dark:text-red-400 line-through">
-              ${row.original.original_price.toFixed(2)}
+              {formatPrice(row.original.original_price)}
             </span>
           )}
         </div>

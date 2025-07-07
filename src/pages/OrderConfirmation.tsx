@@ -15,6 +15,7 @@ import { getDeliverySlotByDateAndTime } from "@/integrations/supabase/delivery.s
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { OrderItem as SupabaseOrderItem } from "@/integrations/supabase/types.service";
+import { formatPrice } from "../lib/utils";
 
 interface LocalOrderItem {
   id: string;
@@ -441,7 +442,7 @@ const OrderConfirmation = () => {
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <span className="text-xs sm:text-sm text-muted-foreground">Price:</span>
-                                  <span className="font-medium text-xs sm:text-sm">${item.price_at_time.toFixed(2)}</span>
+                                  <span className="font-medium text-xs sm:text-sm">{formatPrice(item.price_at_time)}</span>
                                 </div>
                               </div>
                             </div>
@@ -452,7 +453,7 @@ const OrderConfirmation = () => {
                               <div className="flex items-center gap-2">
                                 <span className="text-xs sm:text-sm text-muted-foreground">Subtotal:</span>
                                 <span className="font-semibold text-foreground text-sm sm:text-base">
-                                  ${(item.price_at_time * item.quantity).toFixed(2)}
+                                  {formatPrice(item.price_at_time * item.quantity)}
                                 </span>
                               </div>
                               <Button 
@@ -480,7 +481,7 @@ const OrderConfirmation = () => {
                     <div className="flex justify-between items-center text-xs sm:text-sm">
                       <span className="text-muted-foreground">Subtotal</span>
                       <span className="font-medium">
-                        ${order.items.reduce((sum, item) => sum + (item.price_at_time * item.quantity), 0).toFixed(2)}
+                        {formatPrice(order.items.reduce((sum, item) => sum + (item.price_at_time * item.quantity), 0))}
                       </span>
                     </div>
                     
@@ -488,7 +489,7 @@ const OrderConfirmation = () => {
                     {order.tax !== undefined && order.tax > 0 && (
                       <div className="flex justify-between items-center text-xs sm:text-sm">
                         <span className="text-muted-foreground">Tax</span>
-                        <span className="font-medium">${order.tax.toFixed(2)}</span>
+                        <span className="font-medium">{formatPrice(order.tax)}</span>
                       </div>
                     )}
                     
@@ -504,7 +505,7 @@ const OrderConfirmation = () => {
                           )}
                         </div>
                         <span className={`font-medium ${order.shipping_amount === 0 ? 'text-green-600 dark:text-green-400' : ''}`}>
-                          ${order.shipping_amount.toFixed(2)}
+                          {formatPrice(order.shipping_amount)}
                         </span>
                       </div>
                     )}
@@ -513,9 +514,7 @@ const OrderConfirmation = () => {
                     {order.discount_amount !== undefined && order.discount_amount > 0 && (
                       <div className="flex justify-between items-center text-xs sm:text-sm">
                         <span className="text-muted-foreground">Discount</span>
-                        <span className="font-medium text-purple-600 dark:text-purple-400">
-                          -${order.discount_amount.toFixed(2)}
-                        </span>
+                        <span className="font-medium text-green-600">-{formatPrice(order.discount_amount)}</span>
                       </div>
                     )}
                     
@@ -526,7 +525,7 @@ const OrderConfirmation = () => {
                       <span className="text-base sm:text-lg font-semibold">Total</span>
                       <div className="flex flex-col items-end">
                         <span className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">
-                          ${order.total.toFixed(2)}
+                          {formatPrice(order.total)}
                         </span>
                       </div>
                     </div>

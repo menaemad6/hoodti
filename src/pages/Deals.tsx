@@ -8,6 +8,7 @@ import { getDiscountedProducts } from "@/integrations/supabase/products.service"
 import { Product } from "@/integrations/supabase/types.service";
 import AnimatedWrapper from "@/components/ui/animated-wrapper";
 import { PercentIcon, Tag, ShoppingBag, BadgePercent } from "lucide-react";
+import { formatPrice } from "../lib/utils";
 
 const Deals = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -111,11 +112,11 @@ const Deals = () => {
                         <div className="mt-2 flex items-center justify-between">
                           <div className="flex items-center">
                             <span className="font-bold text-foreground">
-                              ${Number(product.price).toFixed(2)}
+                              {formatPrice(product.price)}
                             </span>
                             
                             <span className="text-xs text-muted-foreground line-through ml-2">
-                              ${Number(product.price * (1 + product.discount / 100)).toFixed(2)}
+                              {formatPrice(product.price * (1 + product.discount / 100))}
                             </span>
                           </div>
                         </div>

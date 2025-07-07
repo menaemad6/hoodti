@@ -34,6 +34,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { formatPrice } from "../../lib/utils";
 
 interface Customer {
   id: string;
@@ -910,8 +911,8 @@ const CustomersPage = () => {
                                   </div>
                                 </TableCell>
                                 <TableCell className="text-right">{item.quantity}</TableCell>
-                                <TableCell className="text-right">${item.price.toFixed(2)}</TableCell>
-                                <TableCell className="text-right">${(item.quantity * item.price).toFixed(2)}</TableCell>
+                                <TableCell className="text-right">{formatPrice(item.price)}</TableCell>
+                                <TableCell className="text-right">{formatPrice(item.quantity * item.price)}</TableCell>
                               </TableRow>
                             ))}
                           </TableBody>

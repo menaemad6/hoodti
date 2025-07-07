@@ -37,6 +37,7 @@ import { useRoleAccess } from "@/hooks/use-role-access";
 import { sendOrderStatusEmail } from "@/integrations/email.service";
 import SEOHead from "@/components/seo/SEOHead";
 import { getSEOConfig } from "@/lib/seo-config";
+import { formatPrice } from "../../lib/utils";
 
 // Add function to calculate relative time
 const getRelativeTimeString = (date: Date): string => {
@@ -720,7 +721,7 @@ const OrdersPage = () => {
                                 <p className="font-medium">{item.products?.name || 'Unknown Product'}</p>
                                 <div className="flex items-center gap-3 mt-1">
                                   <p className="text-xs px-2 py-0.5 bg-amber-100/50 dark:bg-amber-900/30 rounded-full">Qty: {item.quantity}</p>
-                                  <p className="text-xs text-muted-foreground">${parseFloat(item.price_at_time).toFixed(2)} each</p>
+                                  <p className="text-xs text-muted-foreground">{formatPrice(item.price_at_time)} each</p>
                                 </div>
                                 
                                 {/* Display selected type, color and size if available */}
@@ -755,7 +756,7 @@ const OrdersPage = () => {
                                 )}
                               </div>
                             </div>
-                            <p className="font-semibold text-amber-900 dark:text-amber-200">${(parseFloat(item.price_at_time) * item.quantity).toFixed(2)}</p>
+                            <p className="font-semibold text-amber-900 dark:text-amber-200">{formatPrice(parseFloat(item.price_at_time) * item.quantity)}</p>
                           </div>
                         ))}
                       </div>
@@ -785,26 +786,26 @@ const OrdersPage = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between py-1">
                         <span className="text-muted-foreground">Subtotal:</span>
-                        <span className="font-medium">${selectedOrderItems.reduce((total, item) => total + (Number(item.price_at_time) * item.quantity), 0).toFixed(2)}</span>
+                        <span className="font-medium">{formatPrice(selectedOrderItems.reduce((total, item) => total + (Number(item.price_at_time) * item.quantity), 0))}</span>
                       </div>
                       <div className="flex justify-between py-1">
                         <span className="text-muted-foreground">Tax:</span>
-                        <span className="font-medium">${Number(selectedOrder.tax || 0).toFixed(2)}</span>
+                        <span className="font-medium">{formatPrice(Number(selectedOrder.tax || 0))}</span>
                       </div>
                       <div className="flex justify-between py-1">
                         <span className="text-muted-foreground">Shipping:</span>
-                        <span className="font-medium">${(selectedOrder.shipping_amount || 0).toFixed(2)}</span>
+                        <span className="font-medium">{formatPrice(selectedOrder.shipping_amount || 0)}</span>
                       </div>
                       {selectedOrder.discount_amount > 0 && (
                         <div className="flex justify-between py-1">
                           <span className="text-muted-foreground">Discount:</span>
-                          <span className="font-medium text-green-600">-${Number(selectedOrder.discount_amount || 0).toFixed(2)}</span>
+                          <span className="font-medium text-green-600">-{formatPrice(Number(selectedOrder.discount_amount || 0))}</span>
                         </div>
                       )}
                       <div className="h-px w-full bg-gradient-to-r from-transparent via-blue-200/50 dark:via-blue-800/30 to-transparent my-2"></div>
                       <div className="flex justify-between pt-1">
                         <span className="font-semibold">Total:</span>
-                        <span className="text-lg font-bold text-blue-600 dark:text-blue-400">${parseFloat(selectedOrder.total).toFixed(2)}</span>
+                        <span className="text-lg font-bold text-blue-600 dark:text-blue-400">{formatPrice(parseFloat(selectedOrder.total))}</span>
                       </div>
                     </div>
                   </CardContent>

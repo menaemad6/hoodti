@@ -7,6 +7,7 @@ import { validateDiscount } from "@/integrations/supabase/discounts.service";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
+import { formatPrice } from "../../lib/utils";
 
 interface OrderSummaryProps {
   items: CartItem[];
@@ -151,8 +152,8 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
               <div className="flex-1 min-w-0">
                 <p className="text-sm sm:text-base font-medium truncate">{item.product.name}</p>
                 <div className="flex justify-between text-xs sm:text-sm text-muted-foreground">
-                  <span>{item.quantity} × ${Number(item.product.price).toFixed(2)}</span>
-                  <span>${(item.product.price * item.quantity).toFixed(2)}</span>
+                  <span>{item.quantity} × {formatPrice(item.product.price)}</span>
+                  <span>{formatPrice(item.product.price * item.quantity)}</span>
                 </div>
                 {/* Display selected type, size, and color if available */}
                 {(item.selected_type || item.selectedSize || item.selectedColor) && (
@@ -241,7 +242,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
               <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-muted-foreground" />
               Subtotal
             </span>
-            <span>${subtotal.toFixed(2)}</span>
+            <span>{formatPrice(subtotal)}</span>
           </div>
           
           {/* Only show shipping if it's not zero */}
@@ -251,7 +252,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
               Shipping
             </span>
             <span>
-              ${shipping_fee ? shipping_fee.toFixed(2) : shipping.toFixed(2)}
+              {formatPrice(shipping_fee ? shipping_fee : shipping)}
             </span>
           </div>
           
@@ -261,7 +262,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
               <Calculator className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-muted-foreground" />
               Tax
             </span>
-            <span>${tax.toFixed(2)}</span>
+            <span>{formatPrice(tax)}</span>
           </div>
           
           {discount > 0 && (
@@ -270,13 +271,13 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                 <BadgePercent className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                 Discount
               </span>
-              <span>-${discount.toFixed(2)}</span>
+              <span>-{formatPrice(discount)}</span>
             </div>
           )}
           
           <div className="border-t border-border pt-2 sm:pt-3 flex justify-between font-semibold">
             <span>Total</span>
-            <span>${(subtotal + (shipping_fee || shipping) + tax - discount).toFixed(2)}</span>
+            <span>{formatPrice(subtotal + (shipping_fee || shipping) + tax - discount)}</span>
           </div>
         </div>
       </div>

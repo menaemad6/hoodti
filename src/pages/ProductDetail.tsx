@@ -19,7 +19,7 @@ import { getProduct, getProductsByCategory } from "@/integrations/supabase/produ
 import { Product } from "@/integrations/supabase/types.service";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 import WishlistButton from "@/components/product/WishlistButton";
 import { BRAND_NAME, PRODUCT_TYPE_OPTIONS, SIZING_OPTIONS } from "@/lib/constants";
 import {
@@ -117,10 +117,32 @@ const ProductDetail = () => {
     return [];
   };
   
+  // Custom fallback: get first available size from product if fallback is needed
   const getFallbackSizes = () => {
+    if (product && product.size) {
+      // Try to parse all sizes from product.size
+      if (typeof product.size === 'string') {
+        try {
+          const parsed = JSON.parse(product.size);
+          if (Array.isArray(parsed)) return parsed;
+          if (typeof parsed === 'object') {
+            // Flatten all values
+            return Object.values(parsed).flat();
+          }
+        } catch {
+          return [product.size];
+        }
+      }
+      if (Array.isArray(product.size)) return product.size;
+      if (typeof product.size === 'object') {
+        return Object.values(product.size).flat();
+      }
+    }
+    // fallback to static SIZING_OPTIONS if product.size is not available
     const otherSizing = SIZING_OPTIONS.find(opt => opt.type === 'Other');
     return otherSizing ? otherSizing.sizes.map(s => s.size) : [];
   };
+  
   const availableSizes = product ? (parseNestedSizes(product.size, selectedType).length > 0
     ? parseNestedSizes(product.size, selectedType)
     : getFallbackSizes()) : [];
@@ -546,7 +568,7 @@ const ProductDetail = () => {
                           <div className="flex flex-col">
                             <div className="flex items-center gap-2">
                               <span className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">
-                                ${Number(product.price).toFixed(2)}
+                                {formatPrice(product.price)}
                               </span>
                               <div className="flex items-center">
                                 <Badge 
@@ -558,17 +580,17 @@ const ProductDetail = () => {
                             </div>
                             <div className="flex items-center gap-2 mt-1">
                               <span className="text-base text-muted-foreground line-through decoration-1">
-                                ${Number(product.original_price).toFixed(2)}
+                                {formatPrice(product.original_price)}
                               </span>
                               <span className="text-sm text-green-600 dark:text-green-400 font-medium">
-                                Save ${(Number(product.original_price) - Number(product.price)).toFixed(2)}
+                                Save {formatPrice(Number(product.original_price) - Number(product.price))}
                               </span>
                             </div>
                           </div>
                         </>
                       ) : (
                         <span className="text-3xl font-bold text-foreground">
-                          ${Number(product.price).toFixed(2)}
+                          {formatPrice(product.price)}
                         </span>
                       )}
                     </div>
@@ -576,7 +598,7 @@ const ProductDetail = () => {
                     {product.original_price && product.original_price > product.price && (
                       <div className="bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/30 rounded-lg p-2 flex items-center text-green-700 dark:text-green-400">
                         <Check className="h-4 w-4 mr-2" />
-                        <span className="text-sm">Limited time offer! Original price: ${Number(product.original_price).toFixed(2)}</span>
+                        <span className="text-sm">Limited time offer! Original price: {formatPrice(product.original_price)}</span>
                       </div>
                     )}
                   </div>

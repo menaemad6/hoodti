@@ -7,6 +7,7 @@ import { useCart } from "@/context/CartContext";
 import { Product } from "@/types";
 import { Product as SupabaseProduct } from "@/integrations/supabase/types.service";
 import { ensureProductTypeCompatibility, getCategoryName as getProductCategory } from "@/integrations/supabase/types.service";
+import { formatPrice } from "../../lib/utils";
 
 interface ModernProductCardProps {
   product: Product | SupabaseProduct;
@@ -213,12 +214,12 @@ const ModernProductCard: React.FC<ModernProductCardProps> = ({
               "font-bold text-foreground",
               small ? "text-base" : "text-lg"
             )}>
-              ${Number(normalizedProduct.price).toFixed(2)}
+              {formatPrice(normalizedProduct.price)}
             </span>
             
             {originalPrice && (
               <span className="text-xs text-muted-foreground line-through ml-2">
-                ${originalPrice}
+                {formatPrice(originalPrice)}
               </span>
             )}
           </div>

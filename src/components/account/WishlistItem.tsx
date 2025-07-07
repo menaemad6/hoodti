@@ -9,7 +9,7 @@ import { motion } from "framer-motion";
 import { Product as SupabaseProduct } from "@/integrations/supabase/types.service";
 import { ensureProductTypeCompatibility } from "@/types/supabase-types";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 
 interface WishlistItemProps {
   wishlistItem: any;
@@ -126,11 +126,11 @@ const WishlistItem: React.FC<WishlistItemProps> = ({ wishlistItem, product, onRe
           <div className="mt-auto">
             <div className="flex items-baseline gap-2 mb-3">
               <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">
-                ${Number(normalizedProduct.price).toFixed(2)}
+                {formatPrice(normalizedProduct.price)}
               </span>
               {normalizedProduct.discount > 0 && normalizedProduct.original_price > 0 && (
                 <span className="text-sm text-muted-foreground line-through">
-                  ${Number(normalizedProduct.original_price).toFixed(2)}
+                  {formatPrice(normalizedProduct.original_price)}
                 </span>
               )}
               <span className="ml-auto text-xs text-muted-foreground">
