@@ -21,7 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import WishlistButton from "@/components/product/WishlistButton";
-import { BRAND_NAME } from "@/lib/constants";
+import { BRAND_NAME, PRODUCT_TYPE_OPTIONS, SIZING_OPTIONS } from "@/lib/constants";
 import {
   Dialog,
   DialogContent,
@@ -65,6 +65,9 @@ const ProductDetail = () => {
   // Add state for image modal
   const [imageModalOpen, setImageModalOpen] = useState(false);
   
+  // Add state for selected type
+  const [selectedType, setSelectedType] = useState<string | null>(null);
+  
   // Get SEO configuration for product page
   const seoConfig = product ? getProductSEO({
     id: product.id,
@@ -91,7 +94,39 @@ const ProductDetail = () => {
 
   // Parse available colors and sizes
   const availableColors = product ? parseArrayField(product.color) : [];
-  const availableSizes = product ? parseArrayField(product.size) : [];
+  
+  // Parse available sizes for the selected type from nested size object
+  const parseNestedSizes = (sizeField: any, selectedType: string | null): string[] => {
+    if (!sizeField || !selectedType) return [];
+    if (typeof sizeField === 'string') {
+      try {
+        const parsed = JSON.parse(sizeField);
+        if (parsed && typeof parsed === 'object' && parsed[selectedType]) {
+          return parsed[selectedType];
+        }
+        // fallback: if it's a flat array
+        if (Array.isArray(parsed)) return parsed;
+      } catch {
+        // fallback: treat as comma-separated or single value
+        return [sizeField];
+      }
+    }
+    if (typeof sizeField === 'object' && sizeField[selectedType]) {
+      return sizeField[selectedType];
+    }
+    return [];
+  };
+  
+  const getFallbackSizes = () => {
+    const otherSizing = SIZING_OPTIONS.find(opt => opt.type === 'Other');
+    return otherSizing ? otherSizing.sizes.map(s => s.size) : [];
+  };
+  const availableSizes = product ? (parseNestedSizes(product.size, selectedType).length > 0
+    ? parseNestedSizes(product.size, selectedType)
+    : getFallbackSizes()) : [];
+  
+  // Parse available types
+  const availableTypes = product ? parseArrayField(product.type) : [];
   
   // Utility to get images array from product
   const getGalleryImages = (product: Product | null): string[] => {
@@ -154,9 +189,12 @@ const ProductDetail = () => {
     window.scrollTo(0, 0);
   }, [id, toast]);
   
-  // Set initial selected color and size when product loads
+  // Set initial selected color, size, and type when product loads
   useEffect(() => {
     if (product) {
+      if (availableTypes.length > 0 && !selectedType) {
+        setSelectedType(availableTypes[0]);
+      }
       if (availableColors.length > 0 && !selectedColor) {
         setSelectedColor(availableColors[0]);
       }
@@ -164,7 +202,7 @@ const ProductDetail = () => {
         setSelectedSize(availableSizes[0]);
       }
     }
-  }, [product, availableColors, availableSizes, selectedColor, selectedSize]);
+  }, [product, availableTypes, availableColors, availableSizes, selectedColor, selectedSize]);
   
   if (isLoading) {
     return (
@@ -239,18 +277,19 @@ const ProductDetail = () => {
   };
   
   const handleAddToCart = () => {
-    // Include selected color and size in the cart item if available
+    // Include selected color, size, and type in the cart item if available
     const productToAdd = {
       ...product,
       selectedColor: selectedColor || undefined,
-      selectedSize: selectedSize || undefined
+      selectedSize: selectedSize || undefined,
+      selected_type: selectedType || undefined,
     };
     
-    addToCart(productToAdd, quantity, selectedColor || undefined, selectedSize || undefined);
+    addToCart(productToAdd, quantity, selectedColor || undefined, selectedSize || undefined, selectedType || undefined);
     setLastAddedTimestamp(Date.now());
     toast({
       title: "Added to cart",
-      description: `${quantity} × ${product.name}${selectedSize ? ` (${selectedSize})` : ''}${selectedColor ? ` in ${selectedColor}` : ''} added to your cart`,
+      description: `${quantity} × ${product.name}${selectedSize ? ` (${selectedSize})` : ''}${selectedColor ? ` in ${selectedColor}` : ''}${selectedType ? `, Type: ${selectedType}` : ''} added to your cart`,
       action: (
         <Button size="sm" variant="outline" onClick={() => navigate('/cart')} 
           className="rounded-full border-primary/30 hover:border-primary hover:bg-primary/10">
@@ -555,6 +594,7 @@ const ProductDetail = () => {
                 
               {/* Product variants section - Available Colors and Sizes */}
               <div className="space-y-5">
+                
                 {/* Material Type */}
                 {product.material && (
                   <div className="space-y-2">
@@ -614,6 +654,31 @@ const ProductDetail = () => {
                     </div>
                   </div>
                 )}
+
+                {/* Product Type Selector */}
+                {availableTypes.length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-muted-foreground">Fit</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {availableTypes.map((type) => (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => setSelectedType(type)}
+                          className={cn(
+                            "h-9 min-w-[2.5rem] rounded-full px-3 py-1.5 text-sm transition-all duration-200",
+                            "border focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-1",
+                            selectedType === type
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-background/80 border-border/40 dark:border-border/20 hover:border-primary/60 text-foreground"
+                          )}
+                        >
+                          {type}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 
                 {/* Available Sizes - Now with selection */}
                 {availableSizes.length > 0 && (
@@ -638,64 +703,64 @@ const ProductDetail = () => {
                       ))}
                     </div>
                     
-                    {/* Size Measurement Table */}
-                    {availableSizes.length > 0 && (
-                      <div className="mt-5 rounded-xl overflow-hidden border border-border/30 dark:border-border/20 bg-background/60 backdrop-blur-sm shadow-sm">
-                        <div className="p-3 bg-gradient-to-r from-muted/50 to-muted/30 dark:from-muted/30 dark:to-muted/10 border-b border-border/30 dark:border-border/10">
-                          <h4 className="font-medium text-sm flex items-center">
-                            <span className="inline-block w-4 h-4 mr-2 rounded-full bg-primary/10 flex items-center justify-center">
-                              <span className="text-primary text-xs">i</span>
-                            </span>
-                            Product Measurement
-                          </h4>
-                        </div>
-                        <div className="p-4">
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead className="w-[100px]">Size</TableHead>
-                                <TableHead>Shoulder</TableHead>
-                                <TableHead>Length</TableHead>
-                                <TableHead>Sleeve Length</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {availableSizes.map((size) => (
-                                <TableRow key={size}>
-                                  <TableCell className="font-medium">{size}</TableCell>
-                                  <TableCell>
-                                    {size === 'XS' && '34 cm'}
-                                    {size === 'S' && '36 cm'}
-                                    {size === 'M' && '38 cm'}
-                                    {size === 'L' && '40 cm'}
-                                    {size === 'XL' && '42 cm'}
-                                    {size === 'XXL' && '44 cm'}
-                                  </TableCell>
-                                  <TableCell>
-                                    {size === 'XS' && '41 cm'}
-                                    {size === 'S' && '43 cm'}
-                                    {size === 'M' && '45 cm'}
-                                    {size === 'L' && '47 cm'}
-                                    {size === 'XL' && '49 cm'}
-                                    {size === 'XXL' && '51 cm'}
-                                  </TableCell>
-                                  <TableCell>
-                                    {size === 'XS' && '14.5 cm'}
-                                    {size === 'S' && '15.5 cm'}
-                                    {size === 'M' && '16.5 cm'}
-                                    {size === 'L' && '17.5 cm'}
-                                    {size === 'XL' && '18.5 cm'}
-                                    {size === 'XXL' && '19.5 cm'}
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                          <p className="mt-3 text-xs text-muted-foreground">
-                            All measurements are in centimeters. Please allow a 1-2 cm difference due to manual measurement.
-                          </p>
-                        </div>
-                      </div>
+                    {/* Sizing Table for selectedType */}
+                    {selectedType && (
+                      (() => {
+                        const sizing = SIZING_OPTIONS.find(opt => opt.type === selectedType) || SIZING_OPTIONS.find(opt => opt.type === 'Other');
+                        if (!sizing) {
+                          return <div className="text-xs text-muted-foreground mt-2">No sizing chart available for this type.</div>;
+                        }
+                        // Only show sizes that are in availableSizes
+                        const filteredSizes = sizing.sizes.filter(s => availableSizes.includes(s.size));
+                        if (filteredSizes.length === 0) {
+                          return <div className="text-xs text-muted-foreground mt-2">No matching sizes for this product.</div>;
+                        }
+                        return (
+                          <div className="mt-5 rounded-xl overflow-hidden border border-border/30 dark:border-border/20 bg-background/60 backdrop-blur-sm shadow-sm">
+                            <div className="p-3 bg-gradient-to-r from-muted/50 to-muted/30 dark:from-muted/30 dark:to-muted/10 border-b border-border/30 dark:border-border/10">
+                              <h4 className="font-medium text-sm flex items-center">
+                                <span className="inline-block w-4 h-4 mr-2 rounded-full bg-primary/10 flex items-center justify-center">
+                                  <span className="text-primary text-xs">i</span>
+                                </span>
+                                {selectedType} Size Chart
+                              </h4>
+                            </div>
+                            <div className="p-4">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead className="w-[100px]">Size</TableHead>
+                                    {Object.keys(filteredSizes[0]).filter(k => k !== 'size').map((k) => (
+                                      <TableHead key={k}>{k.charAt(0).toUpperCase() + k.slice(1)}</TableHead>
+                                    ))}
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {filteredSizes.map((row) => (
+                                    <TableRow key={row.size}
+                                      className={cn(
+                                        'cursor-pointer transition-all group',
+                                        selectedSize === row.size
+                                          ? 'bg-primary/10 border-l-4 border-primary/70 ring-2 ring-primary/30 shadow-sm'
+                                          : 'hover:bg-muted/30'
+                                      )}
+                                      onClick={() => setSelectedSize(row.size)}
+                                    >
+                                      <TableCell className={cn('font-medium', selectedSize === row.size ? 'text-primary font-extrabold text-lg' : '')}>{row.size}</TableCell>
+                                      {Object.keys(row).filter(k => k !== 'size').map((k) => (
+                                        <TableCell key={k}>{row[k]}</TableCell>
+                                      ))}
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                              <p className="mt-3 text-xs text-muted-foreground">
+                                All measurements are in centimeters. Please allow a 1-2 cm difference due to manual measurement.
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })()
                     )}
                   </div>
                 )}

@@ -355,9 +355,19 @@ const Cart = () => {
                               <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
                                 <span className="text-primary/80">${item.product.price.toFixed(2)}</span> per item
                               </p>
-                              {/* Display selected color and size if available */}
-                              {(item.selectedColor || item.selectedSize) && (
+                              {/* Display selected color, size, and type if available */}
+                              {(item.selected_type  || item.selectedSize || item.selectedColor) && (
                                 <div className="mt-1 flex flex-wrap gap-2">
+                                  {(item.selected_type ) && (
+                                    <span className="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium bg-background/70 border border-primary/10 backdrop-blur-sm shadow-sm">
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="mr-1 text-primary/70">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                                        <path d="M8 10h8" />
+                                        <path d="M8 14h4" />
+                                      </svg>
+                                      {item.selected_type}
+                                    </span>
+                                  )}
                                   {item.selectedSize && (
                                     <span className="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium bg-background/70 border border-primary/10 backdrop-blur-sm shadow-sm">
                                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="mr-1 text-primary/70">

@@ -32,6 +32,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { PRODUCT_TYPE_OPTIONS, SIZING_OPTIONS } from "@/lib/constants";
 
 interface ProductFormProps {
   productId?: string;
@@ -56,6 +57,7 @@ interface ProductFormData {
   brand?: string;
   gender?: string;
   images?: string[] | null;
+  type?: string;
 }
 
 // Predefined options for sizes and colors
@@ -76,15 +78,31 @@ const MultiSelect = ({
   selectedValues, 
   onChange, 
   placeholder,
-  label
+  label,
+  sizingOptions
 }: { 
   options: string[], 
   selectedValues: string[], 
   onChange: (values: string[]) => void,
   placeholder: string,
-  label: string
+  label: string,
+  sizingOptions?: { type: string }[]
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
   
   const toggleOption = (option: string) => {
     const newValues = selectedValues.includes(option)
@@ -94,7 +112,7 @@ const MultiSelect = ({
   };
   
   return (
-    <div className="relative">
+    <div className="relative" ref={ref}>
       <div 
         className={cn(
           "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
@@ -106,20 +124,26 @@ const MultiSelect = ({
           {selectedValues.length === 0 ? (
             <span className="text-muted-foreground">{placeholder}</span>
           ) : (
-            selectedValues.map(value => (
-              <Badge 
-                key={value} 
-                variant="secondary" 
-                className="px-2 py-0.5 text-xs"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleOption(value);
-                }}
-              >
-                {value}
-                <X className="ml-1 h-3 w-3" />
-              </Badge>
-            ))
+            selectedValues.map(value => {
+              const hasSizing = sizingOptions && sizingOptions.some(opt => opt.type === value);
+              return (
+                <Badge 
+                  key={value} 
+                  variant="secondary" 
+                  className="px-2 py-0.5 text-xs flex items-center gap-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleOption(value);
+                  }}
+                >
+                  {value}
+                  {sizingOptions && !hasSizing && (
+                    <AlertCircle className="h-3 w-3 text-orange-500" title="No sizing settings for this type" />
+                  )}
+                  <X className="ml-1 h-3 w-3" />
+                </Badge>
+              );
+            })
           )}
         </div>
         <ChevronDown className="h-4 w-4 opacity-50" />
@@ -128,23 +152,32 @@ const MultiSelect = ({
       {isOpen && (
         <div className="absolute z-10 w-full mt-1 rounded-md border border-input bg-background shadow-md max-h-[200px] overflow-auto">
           <div className="p-2 space-y-1">
-            {options.map(option => (
-              <div 
-                key={option} 
-                className={cn(
-                  "flex items-center space-x-2 text-sm rounded-md px-2 py-1.5 cursor-pointer hover:bg-accent",
-                  selectedValues.includes(option) ? "bg-accent/50" : ""
-                )}
-                onClick={() => toggleOption(option)}
-              >
-                <div className="flex-shrink-0 w-4 h-4 border rounded-sm flex items-center justify-center border-primary">
-                  {selectedValues.includes(option) && (
-                    <Check className="h-3 w-3 text-primary" />
+            {options.map(option => {
+              const hasSizing = sizingOptions && sizingOptions.some(opt => opt.type === option);
+              return (
+                <div 
+                  key={option} 
+                  className={cn(
+                    "flex items-center space-x-2 text-sm rounded-md px-2 py-1.5 cursor-pointer hover:bg-accent",
+                    selectedValues.includes(option) ? "bg-accent/50" : ""
+                  )}
+                  onClick={() => toggleOption(option)}
+                >
+                  <div className="flex-shrink-0 w-4 h-4 border rounded-sm flex items-center justify-center border-primary">
+                    {selectedValues.includes(option) && (
+                      <Check className="h-3 w-3 text-primary" />
+                    )}
+                  </div>
+                  <span>{option}</span>
+                  {sizingOptions && !hasSizing && (
+                    <span className="ml-2 text-xs text-orange-500 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      No settings
+                    </span>
                   )}
                 </div>
-                <span>{option}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -165,6 +198,12 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   
+  // Add MultiSelect for product type
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  
+  // Add state for sizes per type
+  const [selectedSizesByType, setSelectedSizesByType] = useState<Record<string, string[]>>({});
+  
   const [formData, setFormData] = useState<ProductFormData>({
     name: "",
     description: "",
@@ -181,7 +220,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
     material: "",
     brand: "",
     gender: "",
-    images: []
+    images: [],
+    type: ""
   });
   
   const { toast } = useToast();
@@ -198,12 +238,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
     if (!field) return [];
     if (Array.isArray(field)) return field;
     try {
-      // If it's a JSON string, parse it
-      const parsed = JSON.parse(field as string);
-      return Array.isArray(parsed) ? parsed : [field as string];
+      const parsed = JSON.parse(field);
+      return Array.isArray(parsed) ? parsed : [field];
     } catch (e) {
-      // If it can't be parsed as JSON, treat it as a single value
-      return [field as string];
+      return [field];
     }
   };
   
@@ -256,6 +294,32 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
           if (data.image) {
             setImagePreview(data.image);
           }
+          
+          // When fetching product, parse types and sizes
+          if (data.type) {
+            const types = parseArrayField(data.type);
+            setSelectedTypes(types);
+          }
+          if (data.size) {
+            try {
+              const parsed = typeof data.size === 'string' ? JSON.parse(data.size) : data.size;
+              if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                setSelectedSizesByType(parsed);
+              } else if (Array.isArray(parsed)) {
+                // fallback: flat array, assign to all types
+                const sizesByType: Record<string, string[]> = {};
+                (selectedTypes || []).forEach(type => { sizesByType[type] = parsed; });
+                setSelectedSizesByType(sizesByType);
+              }
+            } catch {
+              // fallback: treat as single value
+              if (typeof data.size === 'string') {
+                const sizesByType: Record<string, string[]> = {};
+                (selectedTypes || []).forEach(type => { sizesByType[type] = [data.size]; });
+                setSelectedSizesByType(sizesByType);
+              }
+            }
+          }
         }
       } catch (error: unknown) {
         const err = error as Error;
@@ -294,10 +358,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
   };
   
   const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev: ProductFormData) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
   
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -448,8 +509,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
         allImages = ["/placeholder.svg"];
       }
       // Save selected sizes and colors as JSON strings
-      const sizesJson = selectedSizes.length ? JSON.stringify(selectedSizes) : null;
       const colorsJson = selectedColors.length ? JSON.stringify(selectedColors) : null;
+      // Save selected types as JSON string
+      const typesJson = selectedTypes.length ? JSON.stringify(selectedTypes) : null;
+      // Build the nested sizes object
+      const sizesJson = JSON.stringify(selectedSizesByType);
       // Prepare productData for insert/update
       const productData = {
         ...formData,
@@ -468,7 +532,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
         color: colorsJson,
         material: formData.material,
         brand: formData.brand,
-        gender: formData.gender
+        gender: formData.gender,
+        type: typesJson
       };
       // Save to DB
       if (productId) {
@@ -687,21 +752,60 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
               />
             </div>
 
+
+
             {/* Clothing-specific fields */}
             <div className="pt-4">
               <h3 className="text-sm font-medium mb-2">Product Details</h3>
               <Separator className="mb-4" />
               
+
+              {/* Product Type MultiSelect */}
+            <div className="space-y-2 mb-4">
+              <Label htmlFor="type">Product Type Sizing Options</Label>
+              <MultiSelect
+                options={PRODUCT_TYPE_OPTIONS}
+                selectedValues={selectedTypes}
+                onChange={setSelectedTypes}
+                placeholder="Select product types"
+                label="Product Types"
+                sizingOptions={SIZING_OPTIONS}
+              />
+            </div>
+
+
               <div className="grid gap-4 grid-cols-2">
-                <div className="space-y-2">
+
+                
+                {/* Sizes MultiSelect grouped by type */}
+                <div className="space-y-2 mb-4">
                   <Label htmlFor="size">Available Sizes</Label>
-                  <MultiSelect
-                    options={SIZE_OPTIONS}
-                    selectedValues={selectedSizes}
-                    onChange={setSelectedSizes}
-                    placeholder="Select sizes"
-                    label="Sizes"
-                  />
+                  {selectedTypes.length === 0 ? (
+                    <div className="text-muted-foreground text-xs">Select product types to see size options.</div>
+                  ) : (
+                    selectedTypes.map((type) => {
+                      const sizing = SIZING_OPTIONS.find(opt => opt.type === type) || SIZING_OPTIONS.find(opt => opt.type === 'Other');
+                      if (!sizing) return null;
+                      const isDefault = sizing.type === 'Other';
+                      return (
+                        <div key={type} className="mb-2">
+                          <div className="font-semibold text-xs mb-1 text-primary flex items-center gap-2">
+                            {type}
+                            {isDefault && (
+                              <span className="text-xs text-orange-500 bg-orange-50 rounded px-2 py-0.5 ml-2">Default Sizing</span>
+                            )}
+                          </div>
+                          <MultiSelect
+                            options={sizing.sizes.map(s => s.size)}
+                            selectedValues={selectedSizesByType[type] || []}
+                            onChange={(values) => setSelectedSizesByType(prev => ({ ...prev, [type]: values }))}
+                            placeholder={`Select sizes for ${type}`}
+                            label={`Sizes for ${type}`}
+                          />
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
                 
                 <div className="space-y-2">

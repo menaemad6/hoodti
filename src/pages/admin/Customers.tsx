@@ -63,10 +63,11 @@ interface OrderItemDB {
   price_at_time: number;
   selected_color?: string | null;
   selected_size?: string | null;
+  selected_type?: string | null;
   product: {
     id: string;
     name: string;
-    image: string;
+    images: string[];
   };
 }
 
@@ -85,10 +86,11 @@ interface OrderItem {
   price: number;
   selected_color?: string | null;
   selected_size?: string | null;
+  selected_type?: string | null;
   product: {
     id: string;
     name: string;
-    image: string;
+    images: string[];
   };
 }
 
@@ -269,10 +271,11 @@ const CustomersPage = () => {
           price_at_time: number;
           selected_color?: string | null;
           selected_size?: string | null;
+          selected_type?: string | null;
           product: {
             id: string;
             name: string;
-            image: string;
+            images: string[];
           };
         }[];
       };
@@ -301,10 +304,11 @@ const CustomersPage = () => {
             price_at_time,
             selected_color,
             selected_size,
+            selected_type,
             product:products!order_items_product_id_fkey(
               id,
               name,
-              image
+              images
             )
           )
         `)
@@ -326,6 +330,7 @@ const CustomersPage = () => {
         price: item.price_at_time,
         selected_color: item.selected_color,
         selected_size: item.selected_size,
+        selected_type: item.selected_type,
         product: item.product
       }));
 
@@ -338,7 +343,8 @@ const CustomersPage = () => {
         item.product && 
         typeof item.product.id === 'string' && 
         typeof item.product.name === 'string' && 
-        typeof item.product.image === 'string'
+        typeof item.product.images === 'object' && 
+        Array.isArray(item.product.images)
       )) {
         throw new Error('Invalid order item data structure');
       }
@@ -853,7 +859,7 @@ const CustomersPage = () => {
                                   <div className="flex items-center gap-3">
                                     <div className="h-12 w-12 rounded-lg border overflow-hidden">
                                       <img
-                                        src={(Array.isArray(item.product.images) && item.product.images.length > 0 ? item.product.images[0] : "/placeholder.svg")}
+                                        src={Array.isArray(item.product.images) ? (item.product.images[0] || "/placeholder.svg") : (item.product.images || "/placeholder.svg")}
                                         alt={item.product.name}
                                         className="h-full w-full object-cover"
                                       />
@@ -894,6 +900,12 @@ const CustomersPage = () => {
                                       </>
                                     ) : (
                                       <span className="text-xs text-muted-foreground">No variants</span>
+                                    )}
+                                    {item.selected_type && (
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="text-xs text-muted-foreground">Type:</span>
+                                        <span className="text-xs font-medium">{item.selected_type}</span>
+                                      </div>
                                     )}
                                   </div>
                                 </TableCell>

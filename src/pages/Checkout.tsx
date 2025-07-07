@@ -53,6 +53,7 @@ interface OrderData {
     price_at_time: number;
     selected_color?: string;
     selected_size?: string;
+    selected_type?: string;
   }>;
   email: string;
   phone_number: string;
@@ -384,6 +385,7 @@ const Checkout = () => {
         price_at_time: item.product.price,
         selected_color: item.selectedColor,
         selected_size: item.selectedSize,
+        selected_type: item.selected_type,
         image: Array.isArray(item.product.images) && item.product.images.length > 0 ? item.product.images[0] : "/placeholder.svg"
       }));
       

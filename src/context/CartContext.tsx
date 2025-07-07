@@ -11,6 +11,7 @@ export interface CartItem {
   quantity: number;
   selectedColor?: string;
   selectedSize?: string;
+  selected_type?: string;
 }
 
 export interface CartContextProps {
@@ -18,11 +19,11 @@ export interface CartContextProps {
   cart: CartItem[];
   cartItemsCount: number;
   cartTotal: number;
-  addItem: (product: Product | SupabaseProduct, quantity?: number, selectedColor?: string, selectedSize?: string) => void;
-  addToCart: (product: Product | SupabaseProduct, quantity?: number, selectedColor?: string, selectedSize?: string) => void;
-  removeItem: (productId: string, selectedColor?: string, selectedSize?: string) => void;
-  removeFromCart: (productId: string, selectedColor?: string, selectedSize?: string) => void;
-  updateQuantity: (productId: string, quantity: number, selectedColor?: string, selectedSize?: string) => void;
+  addItem: (product: Product | SupabaseProduct, quantity?: number, selectedColor?: string, selectedSize?: string, selected_type?: string) => void;
+  addToCart: (product: Product | SupabaseProduct, quantity?: number, selectedColor?: string, selectedSize?: string, selected_type?: string) => void;
+  removeItem: (productId: string, selectedColor?: string, selectedSize?: string, selected_type?: string) => void;
+  removeFromCart: (productId: string, selectedColor?: string, selectedSize?: string, selected_type?: string) => void;
+  updateQuantity: (productId: string, quantity: number, selectedColor?: string, selectedSize?: string, selected_type?: string) => void;
   clearCart: () => void;
   getTotal: () => number;
   getItemQuantity: (productId: string) => number;
@@ -115,7 +116,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
           },
           quantity: item.quantity,
           selectedColor: item.selectedColor,
-          selectedSize: item.selectedSize
+          selectedSize: item.selectedSize,
+          selected_type: item.selected_type
         }));
         
         localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartToSave));
@@ -131,27 +133,30 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [items]);
 
-  const addItem = (product: Product | SupabaseProduct, quantity = 1, selectedColor?: string, selectedSize?: string) => {
+  const addItem = (
+    product: Product | SupabaseProduct,
+    quantity = 1,
+    selectedColor?: string,
+    selectedSize?: string,
+    selected_type?: string
+  ) => {
     const normalizedProduct = mapSupabaseProductToAppProduct(product);
-    
     setItems((prevItems) => {
-      // Create a unique identifier including color and size to distinguish variations
-      const productVariantId = `${normalizedProduct.id}-${selectedColor || ''}-${selectedSize || ''}`;
-      
-      // Find item with same id AND same color/size combination
+      // Create a unique identifier including color, size, and type to distinguish variations
+      const productVariantId = `${normalizedProduct.id}-${selectedColor || ''}-${selectedSize || ''}-${selected_type || ''}`;
+      // Find item with same id AND same color/size/type combination
       const existingItemIndex = prevItems.findIndex(
         (item) => item.product.id === normalizedProduct.id && 
                  item.selectedColor === selectedColor && 
-                 item.selectedSize === selectedSize
+                 item.selectedSize === selectedSize &&
+                 item.selected_type === selected_type
       );
-
       if (existingItemIndex >= 0) {
         const updatedItems = [...prevItems];
         updatedItems[existingItemIndex] = {
           ...updatedItems[existingItemIndex],
           quantity: updatedItems[existingItemIndex].quantity + quantity,
         };
-        
         toast({
           title: "Cart updated",
           description: `${truncateProductName(normalizedProduct.name)} quantity increased to ${updatedItems[existingItemIndex].quantity}`,
@@ -166,7 +171,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
             </Button>
           ),
         });
-        
         return updatedItems;
       } else {
         toast({
@@ -183,12 +187,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
             </Button>
           ),
         });
-        
         return [...prevItems, { 
           product: normalizedProduct, 
           quantity,
           selectedColor,
-          selectedSize
+          selectedSize,
+          selected_type
         }];
       }
     });
@@ -196,43 +200,26 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const addToCart = addItem;
 
-  const removeItem = (productId: string, selectedColor?: string, selectedSize?: string) => {
-    setItems((prevItems) => {
-      // Find item with the exact criteria (id, color, size)
-      const itemToRemoveIndex = prevItems.findIndex(
-        (item) => item.product.id === productId && 
-                 item.selectedColor === selectedColor && 
-                 item.selectedSize === selectedSize
-      );
-      
-      if (itemToRemoveIndex >= 0) {
-        toast({
-          title: "Item removed",
-          description: `${truncateProductName(prevItems[itemToRemoveIndex].product.name)} removed from your cart`,
-        });
-        
-        // Create a new array without the specific item variant
-        return prevItems.filter((_, index) => index !== itemToRemoveIndex);
-      }
-      
-      return prevItems;
-    });
+  const removeItem = (productId: string, selectedColor?: string, selectedSize?: string, selected_type?: string) => {
+    setItems((prevItems) => prevItems.filter(
+      (item) =>
+        !(item.product.id === productId &&
+          item.selectedColor === selectedColor &&
+          item.selectedSize === selectedSize &&
+          item.selected_type === selected_type)
+    ));
   };
 
   const removeFromCart = removeItem;
 
-  const updateQuantity = (productId: string, quantity: number, selectedColor?: string, selectedSize?: string) => {
-    if (quantity <= 0) {
-      removeItem(productId, selectedColor, selectedSize);
-      return;
-    }
-    
+  const updateQuantity = (productId: string, quantity: number, selectedColor?: string, selectedSize?: string, selected_type?: string) => {
     setItems((prevItems) =>
       prevItems.map((item) =>
-        item.product.id === productId && 
-        item.selectedColor === selectedColor && 
-        item.selectedSize === selectedSize 
-          ? { ...item, quantity } 
+        item.product.id === productId &&
+        item.selectedColor === selectedColor &&
+        item.selectedSize === selectedSize &&
+        item.selected_type === selected_type
+          ? { ...item, quantity }
           : item
       )
     );

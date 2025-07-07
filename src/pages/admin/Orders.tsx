@@ -710,8 +710,8 @@ const OrdersPage = () => {
                           <div key={item.id} className="flex justify-between items-center p-3 rounded-lg bg-card/60 backdrop-blur-sm shadow-sm border border-amber-200/30 dark:border-amber-800/30 hover:shadow-md transition-shadow">
                             <div className="flex items-center gap-3">
                               <div className="h-14 w-14 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/20 rounded-md flex items-center justify-center overflow-hidden shadow-sm">
-                                {item.products?.image ? (
-                                  <img src={item.products.image} alt={item.products?.name || 'Product'} className="object-cover w-full h-full" />
+                                {item.products && Array.isArray(item.products.images) && item.products.images.length > 0 ? (
+                                  <img src={item.products.images[0]} alt={item.products?.name || 'Product'} className="object-cover w-full h-full" />
                                 ) : (
                                   <ShoppingBag className="h-5 w-5 text-amber-500" />
                                 )}
@@ -723,9 +723,14 @@ const OrdersPage = () => {
                                   <p className="text-xs text-muted-foreground">${parseFloat(item.price_at_time).toFixed(2)} each</p>
                                 </div>
                                 
-                                {/* Display selected color and size if available */}
-                                {(item.selected_color || item.selected_size) && (
+                                {/* Display selected type, color and size if available */}
+                                {(item.selected_type || item.selected_color || item.selected_size) && (
                                   <div className="flex flex-wrap gap-2 mt-1">
+                                    {item.selected_type && (
+                                      <span className="text-xs px-1.5 py-0.5 bg-amber-100/50 dark:bg-amber-900/30 rounded-full">
+                                        {item.selected_type}
+                                      </span>
+                                    )}
                                     {item.selected_size && (
                                       <span className="text-xs px-1.5 py-0.5 bg-amber-100/50 dark:bg-amber-900/30 rounded-full">
                                         Size: {item.selected_size}

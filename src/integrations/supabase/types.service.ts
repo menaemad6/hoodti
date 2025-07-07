@@ -52,6 +52,7 @@ export type Product = {
   gender?: string;
   category: Category | string;
   category_id?: string; // Adding this to ensure compatibility
+  type?: string;
 };
 
 export type DeliverySlot = DeliverySlotRow;

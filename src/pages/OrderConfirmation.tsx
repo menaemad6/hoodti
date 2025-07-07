@@ -29,6 +29,7 @@ interface LocalOrderItem {
   quantity: number;
   selected_color?: string;
   selected_size?: string;
+  selected_type?: string;
 }
 
 interface Order {
@@ -137,7 +138,8 @@ const OrderConfirmation = () => {
             price_at_time: item.price_at_time,
             quantity: item.quantity,
             selected_color: item.selected_color,
-            selected_size: item.selected_size
+            selected_size: item.selected_size,
+            selected_type: item.selected_type
           })),
           tax: typeof orderWithExtras.tax === 'number' ? orderWithExtras.tax : undefined,
           discount_amount: typeof orderWithExtras.discount_amount === 'number' ? orderWithExtras.discount_amount : undefined,
@@ -390,9 +392,16 @@ const OrderConfirmation = () => {
                                     Per {item.product.unit}
                                   </p>
                                 )}
-                                {/* Display selected color and size if available */}
-                                {(item.selected_color || item.selected_size) && (
+                                {/* Display selected type, size, and color if available */}
+                                {(item.selected_type || item.selected_size || item.selected_color) && (
                                   <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-2">
+                                    {item.selected_type && (
+                                      <Badge 
+                                        variant="outline" 
+                                        className="text-xs px-2 py-0.5 bg-background border-border/50">
+                                        {item.selected_type}
+                                      </Badge>
+                                    )}
                                     {item.selected_size && (
                                       <Badge 
                                         variant="outline" 
@@ -403,9 +412,9 @@ const OrderConfirmation = () => {
                                     {item.selected_color && (
                                       <Badge 
                                         variant="outline" 
-                                        className="text-xs px-2 py-0.5 bg-background border-border/50 flex items-center gap-1">
+                                        className="text-xs px-2 py-0.5 bg-background border-border/50 flex items-center">
                                         <span 
-                                          className="w-2 h-2 rounded-full"
+                                          className="w-2 h-2 rounded-full mr-1"
                                           style={{ 
                                             backgroundColor: 
                                               ['black', 'white', 'red', 'blue', 'green', 'yellow', 'orange', 'purple', 'pink', 'brown', 'gray']

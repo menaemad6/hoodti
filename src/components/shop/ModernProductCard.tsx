@@ -47,35 +47,94 @@ const ModernProductCard: React.FC<ModernProductCardProps> = ({
         : normalizedProduct.category
     };
     
+    // Helper to parse nested sizes
+    let selectedType: string | undefined = undefined;
+    let selectedSize: string | undefined = undefined;
+    
+    // Try to parse nested size structure
+    if (normalizedProduct.size && typeof normalizedProduct.size === 'string') {
+      try {
+        const parsed = JSON.parse(normalizedProduct.size);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          // Nested object: { type: [sizes] }
+          const types = Object.keys(parsed);
+          if (types.length > 0) {
+            selectedType = types[0];
+            const sizes = parsed[selectedType];
+            if (Array.isArray(sizes) && sizes.length > 0) {
+              selectedSize = sizes[0];
+            }
+          }
+        } else if (Array.isArray(parsed)) {
+          // Flat array: use first size, try to get type from type field
+          selectedSize = parsed[0];
+          if (normalizedProduct.type) {
+            let typeArr: string[] = [];
+            if (typeof normalizedProduct.type === 'string' && normalizedProduct.type.startsWith('[')) {
+              try { typeArr = JSON.parse(normalizedProduct.type); } catch {}
+            } else if (Array.isArray(normalizedProduct.type)) {
+              typeArr = normalizedProduct.type;
+            }
+            if (typeArr.length > 0) selectedType = typeArr[0];
+          }
+        }
+      } catch {
+        // fallback: treat as single value
+        selectedSize = normalizedProduct.size;
+        if (normalizedProduct.type) {
+          let typeArr: string[] = [];
+          if (typeof normalizedProduct.type === 'string' && normalizedProduct.type.startsWith('[')) {
+            try { typeArr = JSON.parse(normalizedProduct.type); } catch {}
+          } else if (Array.isArray(normalizedProduct.type)) {
+            typeArr = normalizedProduct.type;
+          }
+          if (typeArr.length > 0) selectedType = typeArr[0];
+        }
+      }
+    } else if (Array.isArray(normalizedProduct.size)) {
+      selectedSize = normalizedProduct.size[0];
+      if (normalizedProduct.type) {
+        let typeArr: string[] = [];
+        if (typeof normalizedProduct.type === 'string' && normalizedProduct.type.startsWith('[')) {
+          try { typeArr = JSON.parse(normalizedProduct.type); } catch {}
+        } else if (Array.isArray(normalizedProduct.type)) {
+          typeArr = normalizedProduct.type;
+        }
+        if (typeArr.length > 0) selectedType = typeArr[0];
+      }
+    } else if (typeof normalizedProduct.size === 'string') {
+      selectedSize = normalizedProduct.size;
+      if (normalizedProduct.type) {
+        let typeArr: string[] = [];
+        if (typeof normalizedProduct.type === 'string' && normalizedProduct.type.startsWith('[')) {
+          try { typeArr = JSON.parse(normalizedProduct.type); } catch {}
+        } else if (Array.isArray(normalizedProduct.type)) {
+          typeArr = normalizedProduct.type;
+        }
+        if (typeArr.length > 0) selectedType = typeArr[0];
+      }
+    }
+    
     // Helper function to parse potential array values stored as strings
     const parseArrayValue = (value: string | string[] | null | undefined): string | undefined => {
       if (!value) return undefined;
-      
-      // If it's already an array, take the first value
       if (Array.isArray(value)) return value[0];
-      
-      // If it's a string that looks like a JSON array, try to parse it
       if (typeof value === 'string' && value.startsWith('[') && value.endsWith(']')) {
         try {
           const parsed = JSON.parse(value);
           if (Array.isArray(parsed) && parsed.length > 0) {
             return parsed[0];
           }
-        } catch (e) {
-          // If parsing fails, just use the string as is
-        }
+        } catch (e) {}
       }
-      
-      // Otherwise return the value as is if it's a string
       return typeof value === 'string' ? value : undefined;
     };
     
-    // Extract first size and color
-    const firstSize = parseArrayValue(normalizedProduct.size);
+    // Extract first color
     const firstColor = parseArrayValue(normalizedProduct.color);
     
-    // Add to cart with the first size and color
-    addToCart(cartProduct, 1, firstColor, firstSize);
+    // Add to cart with the first size, type, and color
+    addToCart(cartProduct, 1, firstColor, selectedSize, selectedType);
   };
 
   return (

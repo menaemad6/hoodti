@@ -399,9 +399,15 @@ const OrderDetail = () => {
                                         <div className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground/90 mt-1">
                                           {item.products.unit && `Per ${item.products.unit}`}
                                           
-                                          {/* Display color and size if available */}
-                                          {(item.selected_color || item.selected_size) && (
+                                          {/* Display type, color and size if available */}
+                                          {(item.selected_type || item.selected_color || item.selected_size) && (
                                             <div className="flex flex-wrap gap-1 sm:gap-2 mt-1">
+                                              {item.selected_type && (
+                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] sm:text-xs bg-muted/50">
+                                                  <Ruler className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1 text-gray-500" />
+                                                  {formatArrayValue(item.selected_type)}
+                                                </span>
+                                              )}
                                               {item.selected_size && (
                                                 <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] sm:text-xs bg-muted/50">
                                                   <Ruler className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1 text-gray-500" />

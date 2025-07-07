@@ -14,6 +14,7 @@ interface OrderItem {
   price_at_time: number;
   selected_color?: string;
   selected_size?: string;
+  selected_type?: string;
   products?: {
     id: string;
     name: string;
@@ -237,9 +238,15 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, status, withItems = false,
                       {item.products?.unit && <span>({item.products.unit})</span>}
                     </div>
                     
-                    {/* Product variations (size and color) */}
-                    {(item.selected_size || item.selected_color) && (
+                    {/* Product variations (type, size and color) */}
+                    {(item.selected_type || item.selected_size || item.selected_color) && (
                       <div className="mt-1 flex flex-wrap gap-1 sm:gap-2">
+                        {item.selected_type && (
+                          <div className="text-[10px] sm:text-xs flex items-center rounded-full bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5">
+                            <Ruler className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1 text-gray-500" />
+                            <span>{formatArrayValue(item.selected_type)}</span>
+                          </div>
+                        )}
                         {item.selected_size && (
                           <div className="text-[10px] sm:text-xs flex items-center rounded-full bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5">
                             <Ruler className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1 text-gray-500" />
