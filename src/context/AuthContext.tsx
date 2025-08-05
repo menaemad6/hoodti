@@ -150,7 +150,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       toast({
         title: "Account created",
-        description: "Please check your email to verify your account",
+        description: "Happy Shopping :)",
       });
       
       navigate("/auth/signin");
