@@ -33,6 +33,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { UserRole, useAuth } from "@/context/AuthContext";
+import { useCurrentTenant } from "@/context/TenantContext";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -54,6 +55,7 @@ const UserManagement = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
   const { user } = useAuth();
+  const currentTenant = useCurrentTenant();
 
   // Fetch users and their roles
   useEffect(() => {
@@ -61,7 +63,8 @@ const UserManagement = () => {
       try {
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
-          .select('*');
+          .select('*')
+          .eq('tenant_id', currentTenant.id);
 
         if (profilesError) throw profilesError;
 
@@ -104,7 +107,7 @@ const UserManagement = () => {
     };
 
     fetchUsers();
-  }, [toast]);
+  }, [currentTenant]);
 
   // Filter users based on search query
   useEffect(() => {

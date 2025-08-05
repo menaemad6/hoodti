@@ -252,7 +252,8 @@ const Signin = () => {
             </form>
           </Form>
           
-                <div className="mt-6 sm:mt-8">
+          {/* Gogle Signin  */}
+                {/* <div className="mt-6 sm:mt-8">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                       <div className="w-full border-t border-border/50"></div>
@@ -274,7 +275,7 @@ const Signin = () => {
                 Sign in with Google
               </Button>
             </div>
-          </div>
+          </div> */}
           
                 <div className="mt-6 sm:mt-8 text-center">
                   <div className="mt-4 text-center text-sm text-gray-500">
@@ -285,6 +286,10 @@ const Signin = () => {
                     for a <span className="font-medium text-foreground dark:text-foreground/90">{BRAND_NAME}</span> account today.
                   </div>
                 </div>
+
+
+
+
         </GlassCard>
             </div>
           </div>

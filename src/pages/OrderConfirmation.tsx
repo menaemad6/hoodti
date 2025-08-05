@@ -129,12 +129,12 @@ const OrderConfirmation = () => {
           },
           items: orderItems.map(item => ({
             id: item.id,
-            product: item.products ? {
-              id: item.products.id || '',
-              name: item.products.name || '',
-              price: typeof item.products.price === 'number' ? item.products.price : 0,
-              image: Array.isArray(item.products.images) && item.products.images.length > 0 ? item.products.images[0] : "/placeholder.svg",
-              unit: item.products.unit
+            product: item.product ? {
+              id: item.product.id || '',
+              name: item.product.name || '',
+              price: typeof item.product.price === 'number' ? item.product.price : 0,
+              image: Array.isArray(item.product.images) && item.product.images.length > 0 ? item.product.images[0] : "/placeholder.svg",
+              unit: item.product.unit
             } : null,
             price_at_time: item.price_at_time,
             quantity: item.quantity,

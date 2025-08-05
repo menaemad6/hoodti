@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import RecentOrders from "@/components/admin/RecentOrders";
 import { getOrderStats } from "@/integrations/supabase/orders.service";
 import { ActivityType } from "@/components/admin/dashboard/RecentActivity";
+import { useCurrentTenant } from "@/context/TenantContext";
 
 // Import refactored dashboard components
 import StatCards from "@/components/admin/dashboard/StatCards";
@@ -48,6 +49,21 @@ interface TopProduct {
   image?: string;
   price?: number;
   category?: string;
+  images?: string[];
+}
+
+interface LowStockProduct {
+  id: string;
+  name: string;
+  stock: number;
+  images?: string[];
+}
+
+interface Activity {
+  id: number;
+  type: ActivityType;
+  description: string;
+  time: string;
 }
 
 // Sample data as fallback
@@ -76,16 +92,9 @@ const sampleSalesData = [
   { name: "Sun", sales: 30 },
 ];
 
-const sampleTopProducts = [
-  { id: 1, name: "Organic Apples", sales: 230, percentChange: 12.5, price: 4.99, category: "Fruits" },
-  { id: 2, name: "Fresh Milk", sales: 185, percentChange: -4.2, price: 3.49, category: "Dairy" },
-  { id: 3, name: "Whole Grain Bread", sales: 142, percentChange: 8.3, price: 5.99, category: "Bakery" },
-  { id: 4, name: "Free Range Eggs", sales: 125, percentChange: 2.1, price: 6.49, category: "Dairy" },
-  { id: 5, name: "Organic Spinach", sales: 98, percentChange: 5.7, price: 3.29, category: "Vegetables" },
-];
-
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const currentTenant = useCurrentTenant();
   const [stats, setStats] = useState({
     totalRevenue: 0,
     totalOrders: 0,
@@ -95,190 +104,225 @@ const AdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [revenueData, setRevenueData] = useState<RevenueDataPoint[]>(sampleRevenueData);
   const [salesData, setWeeklySalesData] = useState<SalesDataPoint[]>(sampleSalesData);
-  const [topSellingProducts, setTopSellingProducts] = useState<TopProduct[]>(sampleTopProducts);
+  const [topSellingProducts, setTopSellingProducts] = useState<TopProduct[]>([]);
+  const [lowStockProducts, setLowStockProducts] = useState<LowStockProduct[]>([]);
+  const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
 
   useEffect(() => {
-    const fetchAllDashboardData = async () => {
+    const fetchDashboardData = async () => {
       setIsLoading(true);
       try {
-        // Single query to get counts
-        const [
-          { count: productCount },
-          { count: userCount },
-          { data: ordersData }
-        ] = await Promise.all([
-          supabase.from('products').select('*', { count: 'exact', head: true }),
-          supabase.from('profiles').select('*', { count: 'exact', head: true }),
-          supabase.from('orders').select('id, created_at, total, status')
-        ]);
+        
+        
+        // Fetch each stat separately with proper error handling
+        let ordersStats = { totalOrders: 0, totalRevenue: 0, uniqueCustomers: 0 };
+        let productsCount = 0;
+        let customersCount = 0;
+        let topProductsData: any[] = [];
+        let lowStockData: any[] = [];
+        let activitiesData: any[] = [];
 
-        // Process orders data for multiple stats at once
-        const completedOrders = ordersData?.filter(order => 
-          ['completed', 'delivered'].includes(order.status)
-        ) || [];
-        
-        const totalRevenue = completedOrders.reduce((sum, order) => sum + (order.total || 0), 0);
-        const totalOrders = ordersData?.length || 0;
-
-        // Set the main dashboard stats
-        setStats({
-          totalRevenue,
-          totalOrders,
-          totalProducts: productCount || 0,
-          totalCustomers: userCount || 0,
-        });
-
-        // Process monthly revenue data
-        const currentYear = new Date().getFullYear();
-        const monthlyOrders = completedOrders.filter(order => {
-          const orderDate = new Date(order.created_at);
-          return orderDate.getFullYear() === currentYear;
-        });
-        
-        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const monthlyRevenue: { [key: string]: number } = {};
-        
-        // Initialize all months with 0
-        monthNames.forEach(month => {
-          monthlyRevenue[month] = 0;
-        });
-        
-        // Fill in actual data
-        if (monthlyOrders && monthlyOrders.length > 0) {
-          monthlyOrders.forEach(order => {
-            const date = new Date(order.created_at);
-            const month = monthNames[date.getMonth()];
-            monthlyRevenue[month] += order.total || 0;
-          });
-        }
-        
-        // Convert to chart data format
-        const realRevenueData = monthNames.map(month => ({
-          month,
-          revenue: Math.round(monthlyRevenue[month])
-        }));
-        
-        // Use real data if available
-        if (realRevenueData.some(item => item.revenue > 0)) {
-          setRevenueData(realRevenueData);
-        }
-        
-        // Process weekly sales data
-        const today = new Date();
-        const startOfWeek = new Date(today);
-        startOfWeek.setDate(today.getDate() - today.getDay());
-        startOfWeek.setHours(0, 0, 0, 0);
-        
-        const endOfWeek = new Date(startOfWeek);
-        endOfWeek.setDate(startOfWeek.getDate() + 6);
-        endOfWeek.setHours(23, 59, 59, 999);
-        
-        const weeklyOrders = ordersData?.filter(order => {
-          const orderDate = new Date(order.created_at);
-          return orderDate >= startOfWeek && orderDate <= endOfWeek;
-        }) || [];
-        
-        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const dailySales: { [key: string]: number } = {};
-        
-        // Initialize all days with 0
-        dayNames.forEach(day => {
-          dailySales[day] = 0;
-        });
-        
-        // Fill in actual data - count orders per day
-        if (weeklyOrders.length > 0) {
-          weeklyOrders.forEach(order => {
-            const date = new Date(order.created_at);
-            const day = dayNames[date.getDay()];
-            dailySales[day] += 1;
-          });
-        }
-        
-        // Convert to chart data format
-        const realWeeklySalesData = dayNames.map(day => ({
-          name: day,
-          sales: dailySales[day]
-        }));
-        
-        // Use real data if available
-        if (realWeeklySalesData.some(item => item.sales > 0)) {
-          setWeeklySalesData(realWeeklySalesData);
-        }
-        
-        // Fetch top selling products data
         try {
-          // First get order items with quantity and product ID
-          const { data: orderItemsData, error: orderItemsError } = await supabase
+          // Direct query to get orders count for the tenant
+          const { count, error } = await supabase
+            .from('orders')
+            .select('*', { count: 'exact', head: true })
+            .eq('tenant_id', currentTenant.id);
+          
+          if (error) throw error;
+          
+          // Get total revenue
+          const { data: orderData, error: revenueError } = await supabase
+            .from('orders')
+            .select('total')
+            .eq('tenant_id', currentTenant.id);
+          
+          if (revenueError) throw revenueError;
+          
+          const totalRevenue = orderData?.reduce((sum, order) => {
+            const orderTotal = parseFloat(order.total?.toString() || '0');
+            return sum + orderTotal;
+          }, 0) || 0;
+          
+          // Get unique customers
+          const { data: customers, error: customersError } = await supabase
+            .from('orders')
+            .select('user_id')
+            .eq('tenant_id', currentTenant.id);
+          
+          if (customersError) throw customersError;
+          
+          const uniqueCustomers = new Set(customers?.map(order => order.user_id).filter(Boolean)).size;
+          
+          ordersStats = {
+            totalOrders: count || 0,
+            totalRevenue,
+            uniqueCustomers
+          };
+          
+
+        } catch (error) {
+          console.error('Error fetching orders stats:', error);
+        }
+
+        try {
+          const { count, error } = await supabase
+            .from('products')
+            .select('', { count: 'exact', head: true })
+            .eq('tenant_id', currentTenant.id);
+          
+          if (error) throw error;
+          productsCount = count || 0;
+
+        } catch (error) {
+          console.error('Error fetching products count:', error);
+        }
+
+        try {
+          const { count, error } = await supabase
+            .from('profiles')
+            .select('', { count: 'exact', head: true })
+            .eq('tenant_id', currentTenant.id);
+
+          
+          if (error) throw error;
+          customersCount = count || 0;
+        } catch (error) {
+          console.error('Error fetching customers count:', error);
+        }
+
+        try {
+          // Simplified top products query
+          const { data, error } = await supabase
             .from('order_items')
-            .select('product_id, quantity');
+            .select('product_id, quantity')
+            .order('quantity', { ascending: false })
+            .limit(20);
           
-          if (orderItemsError) throw orderItemsError;
-          
-          if (orderItemsData && orderItemsData.length > 0) {
-            // Calculate total sales per product
-            const productSalesMap: Record<string, number> = {};
-            orderItemsData.forEach(item => {
-              if (item.product_id) {
-                const productId = String(item.product_id);
-                productSalesMap[productId] = (productSalesMap[productId] || 0) + (item.quantity || 0);
-              }
-            });
-            
-            // Get product IDs with sales - ensure they're strings for UUID compatibility
-            const productIds = Object.keys(productSalesMap).filter(id => id && id !== "null" && id !== "undefined");
-            
-            if (productIds.length > 0) {
-              // Fetch product details for these products
-              const { data: productsData, error: productsError } = await supabase
-                .from('products')
-                .select(`
-                  id, 
-                  name, 
-                  price, 
-                  image,
-                  categories:category_id (name)
-                `)
-                .in('id', productIds);
-              
-              if (productsError) throw productsError;
-              
-              if (productsData && productsData.length > 0) {
-                // Combine sales data with product details
-                const productsWithSales = productsData.map(product => ({
-                  id: Number(product.id) || 0, // Ensure it's a number to match TopProduct interface
-                  name: product.name,
-                  sales: productSalesMap[String(product.id)] || 0,
-                  percentChange: Math.random() > 0.5 ? 
-                    Math.round(Math.random() * 15 * 10) / 10 : 
-                    -Math.round(Math.random() * 10 * 10) / 10,
-                  image: Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : "/placeholder.svg",
-                  price: product.price,
-                  category: product.categories?.name || 'Uncategorized'
-                }))
-                .sort((a, b) => b.sales - a.sales)
-                .slice(0, 5);
-                
-                if (productsWithSales.length > 0) {
-                  setTopSellingProducts(productsWithSales);
-                }
-              }
-            }
-          }
+          if (error) throw error;
+          topProductsData = data || [];
         } catch (error) {
           console.error('Error fetching top products:', error);
-          // Keep using the sample data (already set in state)
         }
+
+        try {
+          const { data, error } = await supabase
+            .from('products')
+            .select('id, name, stock, images')
+            .eq('tenant_id', currentTenant.id)
+            .lte('stock', 10)
+            .order('stock', { ascending: true })
+            .limit(5);
+          
+          if (error) throw error;
+          lowStockData = data || [];
+        } catch (error) {
+          console.error('Error fetching low stock products:', error);
+        }
+
+        try {
+          const { data, error } = await supabase
+            .from('orders')
+            .select('id, created_at, status, total')
+            .eq('tenant_id', currentTenant.id)
+            .order('created_at', { ascending: false })
+            .limit(5);
+          
+          if (error) throw error;
+          activitiesData = data || [];
+        } catch (error) {
+          console.error('Error fetching activities:', error);
+        }
+
+
+        setStats({
+          totalRevenue: ordersStats.totalRevenue || 0,
+          totalOrders: ordersStats.totalOrders || 0,
+          totalProducts: productsCount,
+          totalCustomers: customersCount,
+        });
+
+        // Process top selling products - simplified
+        if (topProductsData.length > 0) {
+          const productSales: Record<string, TopProduct> = {};
+          
+          // Get unique product IDs
+          const productIds = [...new Set(topProductsData.map(item => item.product_id).filter(Boolean))];
+          
+          if (productIds.length > 0) {
+            try {
+              // Fetch product details separately
+              const { data: productsData, error } = await supabase
+                .from('products')
+                .select('id, name, price, images')
+                .in('id', productIds)
+                .eq('tenant_id', currentTenant.id);
+              
+              if (!error && productsData) {
+                const productsMap: Record<string, any> = {};
+                productsData.forEach(product => {
+                  productsMap[product.id] = product;
+                });
+
+                // Calculate sales for each product
+                topProductsData.forEach(item => {
+                  const productId = item.product_id;
+                  const product = productsMap[productId];
+                  
+                  if (productId && product) {
+                    if (!productSales[productId]) {
+                      productSales[productId] = {
+                        id: parseInt(productId) || 0,
+                        name: product.name,
+                        sales: 0,
+                        percentChange: Math.random() * 20 - 10,
+                        price: product.price,
+                        category: 'General',
+                        images: Array.isArray(product.images) ? product.images : []
+                      };
+                    }
+                    productSales[productId].sales += item.quantity;
+                  }
+                });
+              }
+            } catch (error) {
+              console.error('Error fetching product details:', error);
+            }
+          }
+          
+          setTopSellingProducts(Object.values(productSales).slice(0, 5));
+        }
+
+        // Process low stock products
+        if (lowStockData.length > 0) {
+          setLowStockProducts(lowStockData.map((product: { id: string; name: string; stock: number; images: string[] }) => ({
+            id: product.id,
+            name: product.name,
+            stock: product.stock,
+            images: Array.isArray(product.images) ? product.images : []
+          })));
+        }
+
+        // Process recent activities
+        if (activitiesData.length > 0) {
+          const activityList: Activity[] = activitiesData.map((order: { id: string; created_at: string }, index: number) => ({
+            id: index + 1,
+            type: 'order' as ActivityType,
+            description: `New order #${order.id.slice(-6)} received`,
+            time: new Date(order.created_at).toLocaleDateString()
+          }));
+          setRecentActivities(activityList);
+        }
+
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
-        // Already using fallback data from initial state
       } finally {
         setIsLoading(false);
       }
     };
-    
-    fetchAllDashboardData();
-  }, []);
+
+    fetchDashboardData();
+  }, [currentTenant]);
 
   // Loading state component
   if (isLoading) {
@@ -333,6 +377,18 @@ const AdminDashboard = () => {
             <Suspense fallback={<LoadingFallback />}>
               <TopSellingProducts products={topSellingProducts} />
             </Suspense>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 overflow-hidden">
+          <div className="md:col-span-1 overflow-hidden">
+            <RecentOrders />
+          </div>
+          <div className="md:col-span-1 overflow-hidden">
+            <LowStockProducts products={lowStockProducts} />
+          </div>
+          <div className="md:col-span-1 overflow-hidden">
+            <RecentActivity activities={recentActivities} />
           </div>
         </div>
       </div>

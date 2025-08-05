@@ -18,14 +18,18 @@ export interface SiteSettings {
 /**
  * Fetches the current site settings
  */
-export async function getSettings(): Promise<SiteSettings | null> {
+export async function getSettings(tenantId?: string): Promise<SiteSettings | null> {
   try {
-    // Always fetch the first row as there should only be one settings record
-    const { data, error } = await supabase
+    let query = supabase
       .from('settings')
       .select('*')
-      .limit(1)
-      .single();
+      .limit(1);
+    
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+    
+    const { data, error } = await query.single();
 
     if (error) {
       console.error("Error fetching settings:", error);
@@ -42,10 +46,10 @@ export async function getSettings(): Promise<SiteSettings | null> {
 /**
  * Updates the shipping fee setting
  */
-export async function updateShippingFee(shippingFee: number): Promise<boolean> {
+export async function updateShippingFee(shippingFee: number, tenantId?: string): Promise<boolean> {
   try {
     // Get current settings
-    const settings = await getSettings();
+    const settings = await getSettings(tenantId);
     
     if (settings) {
       // Update existing settings
@@ -65,6 +69,7 @@ export async function updateShippingFee(shippingFee: number): Promise<boolean> {
         .insert({
           shipping_fee: shippingFee,
           tax_rate: 0.08, // Default tax rate
+          tenant_id: tenantId || 'hoodti',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
@@ -82,10 +87,10 @@ export async function updateShippingFee(shippingFee: number): Promise<boolean> {
 /**
  * Updates the tax rate setting
  */
-export async function updateTaxRate(taxRate: number): Promise<boolean> {
+export async function updateTaxRate(taxRate: number, tenantId?: string): Promise<boolean> {
   try {
     // Get current settings
-    const settings = await getSettings();
+    const settings = await getSettings(tenantId);
     
     if (settings) {
       // Update existing settings
@@ -103,8 +108,9 @@ export async function updateTaxRate(taxRate: number): Promise<boolean> {
       const { error } = await supabase
         .from('settings')
         .insert({
-          shipping_fee: 5.99, // Default shipping fee
           tax_rate: taxRate,
+          shipping_fee: 5.99, // Default shipping fee
+          tenant_id: tenantId || 'hoodti',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
@@ -122,10 +128,10 @@ export async function updateTaxRate(taxRate: number): Promise<boolean> {
 /**
  * Updates government shipping fees
  */
-export async function updateGovernmentShippingFees(governmentFees: GovernmentShippingFee[]): Promise<boolean> {
+export async function updateGovernmentShippingFees(governmentFees: GovernmentShippingFee[], tenantId?: string): Promise<boolean> {
   try {
     // Get current settings
-    const settings = await getSettings();
+    const settings = await getSettings(tenantId);
     
     if (settings) {
       // Update existing settings
@@ -146,6 +152,7 @@ export async function updateGovernmentShippingFees(governmentFees: GovernmentShi
           shipping_fee: 5.99, // Default shipping fee
           tax_rate: 0.08, // Default tax rate
           government_shipping_fees: governmentFees,
+          tenant_id: tenantId || 'hoodti',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
@@ -163,10 +170,10 @@ export async function updateGovernmentShippingFees(governmentFees: GovernmentShi
 /**
  * Updates both shipping fee and tax rate at once
  */
-export async function updateSettings(shippingFee: number, taxRate: number): Promise<boolean> {
+export async function updateSettings(shippingFee: number, taxRate: number, tenantId?: string): Promise<boolean> {
   try {
     // Get current settings
-    const settings = await getSettings();
+    const settings = await getSettings(tenantId);
     
     if (settings) {
       // Update existing settings
@@ -187,6 +194,7 @@ export async function updateSettings(shippingFee: number, taxRate: number): Prom
         .insert({
           shipping_fee: shippingFee,
           tax_rate: taxRate,
+          tenant_id: tenantId || 'hoodti',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
@@ -204,10 +212,10 @@ export async function updateSettings(shippingFee: number, taxRate: number): Prom
 /**
  * Gets the current shipping fee or returns a default value
  */
-export async function getShippingFee(): Promise<number> {
+export async function getShippingFee(tenantId?: string): Promise<number> {
   try {
     // Try to fetch settings first
-    const settings = await getSettings();
+    const settings = await getSettings(tenantId);
     
     if (settings && typeof settings.shipping_fee === 'number') {
       console.log("Retrieved shipping fee from settings:", settings.shipping_fee);
@@ -242,10 +250,10 @@ export async function getShippingFee(): Promise<number> {
 /**
  * Gets the current tax rate or returns a default value
  */
-export async function getTaxRate(): Promise<number> {
+export async function getTaxRate(tenantId?: string): Promise<number> {
   try {
     // Try to fetch settings first
-    const settings = await getSettings();
+    const settings = await getSettings(tenantId);
     
     if (settings && typeof settings.tax_rate === 'number') {
       console.log("Retrieved tax rate from settings:", settings.tax_rate);
@@ -280,9 +288,9 @@ export async function getTaxRate(): Promise<number> {
 /**
  * Gets government shipping fees
  */
-export async function getGovernmentShippingFees(): Promise<GovernmentShippingFee[]> {
+export async function getGovernmentShippingFees(tenantId?: string): Promise<GovernmentShippingFee[]> {
   try {
-    const settings = await getSettings();
+    const settings = await getSettings(tenantId);
     
     if (settings && settings.government_shipping_fees) {
       return settings.government_shipping_fees;
@@ -315,9 +323,9 @@ export async function getGovernmentShippingFees(): Promise<GovernmentShippingFee
 /**
  * Gets shipping fee for a specific government
  */
-export async function getShippingFeeForGovernment(governmentName: string): Promise<number> {
+export async function getShippingFeeForGovernment(governmentName: string, tenantId?: string): Promise<number> {
   try {
-    const governmentFees = await getGovernmentShippingFees();
+    const governmentFees = await getGovernmentShippingFees(tenantId);
     const government = governmentFees.find(g => g.name === governmentName);
     
     if (government) {
@@ -325,7 +333,7 @@ export async function getShippingFeeForGovernment(governmentName: string): Promi
     }
     
     // If government not found, return default shipping fee
-    return await getShippingFee();
+    return await getShippingFee(tenantId);
   } catch (error) {
     console.error("Error getting shipping fee for government:", error);
     return 5.99; // Default fallback
@@ -335,10 +343,10 @@ export async function getShippingFeeForGovernment(governmentName: string): Promi
 /**
  * Updates the delivery delay setting
  */
-export async function updateDeliveryDelay(delay: number): Promise<boolean> {
+export async function updateDeliveryDelay(delay: number, tenantId?: string): Promise<boolean> {
   try {
     // Get current settings
-    const settings = await getSettings();
+    const settings = await getSettings(tenantId);
     
     if (settings) {
       // Update existing settings
@@ -359,6 +367,7 @@ export async function updateDeliveryDelay(delay: number): Promise<boolean> {
           shipping_fee: 5.99, // Default shipping fee
           tax_rate: 0.08, // Default tax rate
           delivery_delay: delay,
+          tenant_id: tenantId || 'hoodti',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
@@ -376,9 +385,9 @@ export async function updateDeliveryDelay(delay: number): Promise<boolean> {
 /**
  * Gets the current delivery delay or returns a default value
  */
-export async function getDeliveryDelay(): Promise<number> {
+export async function getDeliveryDelay(tenantId?: string): Promise<number> {
   try {
-    const settings = await getSettings();
+    const settings = await getSettings(tenantId);
     
     if (settings && typeof settings.delivery_delay === 'number') {
       console.log("Retrieved delivery delay from settings:", settings.delivery_delay);
@@ -386,11 +395,16 @@ export async function getDeliveryDelay(): Promise<number> {
     }
     
     // If no settings exist or delivery_delay is not set, fetch directly from the table
-    const { data, error } = await supabase
+    let query = supabase
       .from('settings')
       .select('delivery_delay')
-      .limit(1)
-      .single();
+      .limit(1);
+      
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+    
+    const { data, error } = await query.single();
     
     if (error) {
       console.error("Error fetching delivery delay directly:", error);
@@ -408,4 +422,4 @@ export async function getDeliveryDelay(): Promise<number> {
     console.error("Error in getDeliveryDelay:", error);
     return 0; // Default if anything goes wrong
   }
-} 
+}

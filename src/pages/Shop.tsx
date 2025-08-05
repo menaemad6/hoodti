@@ -22,7 +22,8 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { getProducts, getCategories } from "@/integrations/supabase/products.service";
+import { useProductsService } from "@/integrations/supabase/products.service";
+import { getCategories } from "@/integrations/supabase/categories.service";
 import { Product as SupabaseProduct, Category, getCategoryId } from "@/integrations/supabase/types.service";
 import { Product as AppProduct } from "@/types";
 import { mapSupabaseProductToAppProduct } from "@/types/supabase-types";
@@ -50,6 +51,7 @@ import {
 import SearchInput from "@/components/shop/SearchInput";
 import AnimatedWrapper from "@/components/ui/animated-wrapper";
 import GlassCard from "@/components/ui/glass-card";
+import { useCurrentTenant } from "@/context/TenantContext";
 
 const Shop = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -85,8 +87,13 @@ const Shop = () => {
   
   const toggleFilters = () => setShowFilters(!showFilters);
 
+  const currentTenant = useCurrentTenant();
+
   // Get SEO configuration for shop page
   const seoConfig = getSEOConfig('shop');
+  
+  // Use the tenant-aware products service
+  const productsService = useProductsService();
 
   // Helper functions to extract unique values from products
   const extractUniqueValues = (products: SupabaseProduct[], property: keyof SupabaseProduct): string[] => {
@@ -119,12 +126,13 @@ const Shop = () => {
       setIsLoading(true);
       try {
         const [productsData, categoriesData] = await Promise.all([
-          getProducts(),
-          getCategories()
+          productsService.getProducts(),
+          getCategories(currentTenant.id)
         ]);
         
         setProducts(productsData);
-        setCategories(categoriesData);
+        // Fix image type
+        setCategories(categoriesData.map(cat => ({ ...cat, image: Array.isArray(cat.image) ? cat.image[0] : cat.image })));
         
         if (productsData.length > 0) {
           const prices = productsData.map(p => p.price);
@@ -317,11 +325,6 @@ const Shop = () => {
       );
     }
 
-    // Featured filter
-    if (showFeatured) {
-      result = result.filter(product => product.featured);
-    }
-
     // New products filter
     if (showNew) {
       result = result.filter(product => product.is_new);
@@ -347,7 +350,7 @@ const Shop = () => {
         result.sort((a, b) => b.name.localeCompare(a.name));
         break;
       default:
-        result.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
+        result.sort((a, b) => (b.is_new ? 1 : 0) - (a.is_new ? 1 : 0));
         break;
     }
     
@@ -361,7 +364,7 @@ const Shop = () => {
       searchParams.delete("category");
     }
     setSearchParams(searchParams);
-  }, [products, selectedCategory, selectedSort, priceRange, debouncedSearchQuery, showFeatured, showNew, showDiscounted, searchParams, setSearchParams, selectedSizes, selectedColors, selectedGender]);
+  }, [products, selectedCategory, selectedSort, priceRange, debouncedSearchQuery, showNew, showDiscounted, searchParams, setSearchParams, selectedSizes, selectedColors, selectedGender]);
 
   const clearFilters = () => {
     setSelectedCategory("");
@@ -374,7 +377,6 @@ const Shop = () => {
     setMaxPriceInput(maxPrice.toString());
     setInputValue("");
     setDebouncedSearchQuery("");
-    setShowFeatured(false);
     setShowNew(false);
     setShowDiscounted(false);
     // Clear clothing filters
@@ -743,13 +745,6 @@ const Shop = () => {
           </AccordionTrigger>
           <AccordionContent>
             <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  checked={showFeatured}
-                  onCheckedChange={(checked) => setShowFeatured(checked as boolean)}
-                />
-                <Label className="cursor-pointer">Featured Products</Label>
-              </div>
               <div className="flex items-center space-x-2">
                 <Checkbox 
                   checked={showNew}

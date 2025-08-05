@@ -4,7 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { getOrCreateUserRole } from "@/integrations/supabase/roles.service";
-import { getOrCreateProfile } from "@/integrations/supabase/profiles.service";
+import { ensureProfileExists } from "@/integrations/supabase/profiles.service";
+import { useCurrentTenant } from "./TenantContext";
+import { createTenantEmail, extractOriginalEmail } from "@/lib/tenant-utils";
 
 export type UserRole = "user" | "admin" | "super_admin";
 
@@ -30,17 +32,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const currentTenant = useCurrentTenant();
 
   useEffect(() => {
     // Setup the auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
+      async (event, currentSession) => {
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         
         // Clear role on signout
         if (event === "SIGNED_OUT") {
           setUserRole(null);
+        }
+        
+        // Handle SIGNED_IN event - profile creation is now handled in callback
+        if (event === "SIGNED_IN" && currentSession?.user) {
+          // Profile creation is handled in the OAuth callback for better reliability
+          console.log("User signed in:", currentSession.user.id);
         }
       }
     );
@@ -72,6 +81,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const fetchUserRole = async (userId: string) => {
     try {
+      // First ensure profile exists for the current tenant
+      const profile = await ensureProfileExists(userId, currentTenant.id);
+      if (!profile) {
+        console.error("Failed to ensure profile exists for user:", userId);
+      }
+      
       // Use getOrCreateUserRole to ensure a role exists
       const role = await getOrCreateUserRole(userId);
       
@@ -91,12 +106,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signUp = async (email: string, password: string, userData?: Record<string, any>) => {
     setIsLoading(true);
     try {
-      // Sign up the user
+      // Set tenant context in database BEFORE creating user
+      try {
+        await supabase.rpc('set_tenant_context_for_profile', { tenant_id: currentTenant.id });
+        console.log("Set tenant context before signup:", currentTenant.id);
+      } catch (contextError) {
+        console.warn("Failed to set tenant context before signup:", contextError);
+      }
+      
+      // Create tenant-specific email for user management
+      const tenantEmail = createTenantEmail(email, currentTenant.id);
+      
+      // Sign up the user with tenant-specific email
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: tenantEmail,
         password,
         options: {
-          data: userData,
+          data: {
+            ...userData,
+            original_email: email, // Store the original email
+            tenant_id: currentTenant.id,
+          },
         },
       });
 
@@ -108,7 +138,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           // Small delay to ensure auth signup is completed
           setTimeout(async () => {
             console.log("Creating profile for new user:", data.user?.id);
-            await getOrCreateProfile(data.user?.id);
+            await ensureProfileExists(data.user?.id, currentTenant.id);
             console.log("Creating role for new user:", data.user?.id);
             await getOrCreateUserRole(data.user?.id);
           }, 1000);
@@ -117,11 +147,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           // Continue - we don't want to fail signup if this fails
         }
       }
-
-      // We don't need to manually create a profile here as:
-      // 1. Database trigger will create it automatically
-      // 2. getOrCreateProfile will ensure it exists when accessing the profile
-      // 3. We now also try to create it explicitly as a failsafe
 
       toast({
         title: "Account created",
@@ -143,8 +168,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);
     try {
+      // Create tenant-specific email for sign in
+      const tenantEmail = createTenantEmail(email, currentTenant.id);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: tenantEmail,
         password,
       });
 
@@ -171,10 +199,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signInWithGoogle = async () => {
     setIsLoading(true);
     try {
+      // Set tenant context in database BEFORE OAuth redirect
+      try {
+        await supabase.rpc('set_tenant_context_for_profile', { tenant_id: currentTenant.id });
+        console.log("Set tenant context before Google OAuth:", currentTenant.id);
+      } catch (contextError) {
+        console.warn("Failed to set tenant context before Google OAuth:", contextError);
+      }
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/callback?tenant=${currentTenant.id}`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         },
       });
 
@@ -209,7 +249,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const resetPassword = async (email: string) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      // Create tenant-specific email for password reset
+      const tenantEmail = createTenantEmail(email, currentTenant.id);
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(tenantEmail, {
         redirectTo: `${window.location.origin}/auth/reset-password`,
       });
 

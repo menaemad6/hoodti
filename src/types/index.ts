@@ -79,4 +79,5 @@ export interface DeliverySlot {
   date: Date;
   time_slot: string;
   available: boolean;
+  tenant_id: string;
 }

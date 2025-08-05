@@ -40,6 +40,7 @@ import {
   CategoryInput
 } from "@/integrations/supabase/categories.service";
 import { CategoryRow } from "@/integrations/supabase/types.service";
+import { useCurrentTenant } from "@/context/TenantContext";
 
 interface CategoryFormData {
   id?: string;
@@ -68,12 +69,13 @@ const ContentPage = () => {
   
   // Image preview state
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const currentTenant = useCurrentTenant();
 
   const fetchCategories = async () => {
     console.log('Fetching categories...');
     setIsLoading(true);
     try {
-      const data = await getCategories();
+      const data = await getCategories(currentTenant.id);
       console.log('Categories fetched successfully:', data);
       setCategories(data);
     } catch (error: any) {
@@ -95,7 +97,7 @@ const ContentPage = () => {
     if (activeTab === "categories") {
       fetchCategories();
     }
-  }, [activeTab]);
+  }, [activeTab, currentTenant]);
 
   const handleDeleteCategory = async (categoryId: string) => {
     console.log(`Attempting to delete category with ID: ${categoryId}`);

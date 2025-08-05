@@ -115,12 +115,12 @@ const MultiSelect = ({
     <div className="relative" ref={ref}>
       <div 
         className={cn(
-          "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
+          "flex h-auto min-h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
           "cursor-pointer"
         )}
         onClick={() => setIsOpen(!isOpen)}
       >
-        <div className="flex flex-wrap gap-1 flex-1 overflow-hidden">
+        <div className="flex flex-wrap gap-1 flex-1 overflow-hidden py-1">
           {selectedValues.length === 0 ? (
             <span className="text-muted-foreground">{placeholder}</span>
           ) : (
@@ -130,7 +130,7 @@ const MultiSelect = ({
                 <Badge 
                   key={value} 
                   variant="secondary" 
-                  className="px-2 py-0.5 text-xs flex items-center gap-1"
+                  className="px-2 py-0.5 text-xs flex items-center gap-1 my-0.5"
                   onClick={(e) => {
                     e.stopPropagation();
                     toggleOption(value);
@@ -146,7 +146,7 @@ const MultiSelect = ({
             })
           )}
         </div>
-        <ChevronDown className="h-4 w-4 opacity-50" />
+        <ChevronDown className="h-4 w-4 opacity-50 flex-shrink-0 ml-2" />
       </div>
       
       {isOpen && (
@@ -168,11 +168,11 @@ const MultiSelect = ({
                       <Check className="h-3 w-3 text-primary" />
                     )}
                   </div>
-                  <span>{option}</span>
+                  <span className="truncate">{option}</span>
                   {sizingOptions && !hasSizing && (
-                    <span className="ml-2 text-xs text-orange-500 flex items-center gap-1">
+                    <span className="ml-2 text-xs text-orange-500 flex items-center gap-1 flex-shrink-0">
                       <AlertCircle className="h-3 w-3" />
-                      No settings
+                      <span className="hidden sm:inline">No settings</span>
                     </span>
                   )}
                 </div>
@@ -344,7 +344,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
     const { name, value } = e.target;
     setFormData((prev: ProductFormData) => ({
       ...prev,
-      [name]: name === "price" || name === "stock" || name === "original_price" || name === "discount" 
+      [name]: name === "price" || name === "original_price" || name === "discount" 
         ? value === "" ? null : Number(value)
         : value,
     }));
@@ -627,7 +627,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
   return (
     <>
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Product Name *</Label>
@@ -692,7 +692,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
                   id="stock"
                   name="stock"
                   type="number"
-                  min="0"
                   value={formData.stock || ""}
                   onChange={handleChange}
                   required
@@ -759,24 +758,20 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
               <h3 className="text-sm font-medium mb-2">Product Details</h3>
               <Separator className="mb-4" />
               
-
               {/* Product Type MultiSelect */}
-            <div className="space-y-2 mb-4">
-              <Label htmlFor="type">Product Type Sizing Options</Label>
-              <MultiSelect
-                options={PRODUCT_TYPE_OPTIONS}
-                selectedValues={selectedTypes}
-                onChange={setSelectedTypes}
-                placeholder="Select product types"
-                label="Product Types"
-                sizingOptions={SIZING_OPTIONS}
-              />
-            </div>
+              <div className="space-y-2 mb-4">
+                <Label htmlFor="type">Product Type Sizing Options</Label>
+                <MultiSelect
+                  options={PRODUCT_TYPE_OPTIONS}
+                  selectedValues={selectedTypes}
+                  onChange={setSelectedTypes}
+                  placeholder="Select product types"
+                  label="Product Types"
+                  sizingOptions={SIZING_OPTIONS}
+                />
+              </div>
 
-
-              <div className="grid gap-4 grid-cols-2">
-
-                
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                 {/* Sizes MultiSelect grouped by type */}
                 <div className="space-y-2 mb-4">
                   <Label htmlFor="size">Available Sizes</Label>
@@ -789,10 +784,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
                       const isDefault = sizing.type === 'Other';
                       return (
                         <div key={type} className="mb-2">
-                          <div className="font-semibold text-xs mb-1 text-primary flex items-center gap-2">
-                            {type}
+                          <div className="font-semibold text-xs mb-1 text-primary flex flex-wrap items-center gap-2">
+                            <span>{type}</span>
                             {isDefault && (
-                              <span className="text-xs text-orange-500 bg-orange-50 rounded px-2 py-0.5 ml-2">Default Sizing</span>
+                              <span className="text-xs text-orange-500 bg-orange-50 rounded px-2 py-0.5">Default Sizing</span>
                             )}
                           </div>
                           <MultiSelect
@@ -816,6 +811,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
                     onChange={setSelectedColors}
                     placeholder="Select colors"
                     label="Colors"
+                    className="mt-2"
                   />
                 </div>
               </div>

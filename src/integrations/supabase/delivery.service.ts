@@ -16,33 +16,50 @@ export interface WeeklySlot {
   available: boolean;
 }
 
-export async function getBaseTimeSlots(): Promise<DeliveryTimeSlot[]> {
+export async function getBaseTimeSlots(tenantId?: string): Promise<DeliveryTimeSlot[]> {
   try {
+    // Get tenant ID from parameter or localStorage if not provided
+    const tenant_id = tenantId || localStorage.getItem('tenantId');
+    
+    if (!tenant_id) {
+      console.error("No tenant ID available for fetching delivery slots");
+      return [];
+    }
+    
     const { data, error } = await supabase
       .from('delivery_slots')
       .select('*')
       .eq('available', true)
+      .eq('tenant_id', tenant_id)
       .order('time_slot', { ascending: true });
     
     if (error) {
       throw error;
     }
     
-    return data;
+    return data || [];
   } catch (error) {
     console.error("Error fetching delivery slots:", error);
     return [];
   }
 }
 
-export async function generateWeeklySlots(): Promise<WeeklySlot[]> {
+export async function generateWeeklySlots(tenantId?: string): Promise<WeeklySlot[]> {
   try {
-    const timeSlots = await getBaseTimeSlots();
+    // Get tenant ID from parameter or localStorage if not provided
+    const tenant_id = tenantId || localStorage.getItem('tenantId');
+    
+    if (!tenant_id) {
+      console.error("No tenant ID available for generating weekly slots");
+      return [];
+    }
+    
+    const timeSlots = await getBaseTimeSlots(tenant_id);
     const slots: WeeklySlot[] = [];
     const today = startOfToday();
     
     // Get the delivery delay from settings
-    const deliveryDelay = await getDeliveryDelay();
+    const deliveryDelay = await getDeliveryDelay(tenant_id);
     console.log("Using delivery delay:", deliveryDelay, "days");
 
     // Generate slots starting from the delay date (e.g., if delay is 2, start from day 2)
@@ -93,9 +110,9 @@ export async function getDeliverySlotByDateAndTime(slotId: string): Promise<Week
   }
 }
 
-export async function getAvailableDeliverySlots(): Promise<WeeklySlot[]> {
+export async function getAvailableDeliverySlots(tenantId?: string): Promise<WeeklySlot[]> {
   try {
-    const slots = await generateWeeklySlots();
+    const slots = await generateWeeklySlots(tenantId);
     return slots.filter(slot => slot.available);
   } catch (error) {
     console.error("Error fetching available delivery slots:", error);

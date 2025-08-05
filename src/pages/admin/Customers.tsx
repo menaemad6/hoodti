@@ -13,6 +13,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { DataTable } from "@/components/admin/DataTable";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useCurrentTenant } from "@/context/TenantContext";
 import { ChevronRight, Mail, Calendar, Package, ArrowLeft, CheckCircle, Clock, Truck, AlertTriangle, XCircle, Phone, MapPin, CreditCard, ShoppingBag } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -115,64 +116,69 @@ interface OrderDetails {
 }
 
 const CustomersPage = () => {
-  const { toast } = useToast();
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [selectedCustomerOrders, setSelectedCustomerOrders] = useState<Order[]>([]);
-  const [selectedOrder, setSelectedOrder] = useState<OrderDetails | null>(null);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [isLoadingOrderDetails, setIsLoadingOrderDetails] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [customerOrders, setCustomerOrders] = useState<Order[]>([]);
+  const [selectedCustomerOrders, setSelectedCustomerOrders] = useState<Order[]>([]);
+  const [selectedOrder, setSelectedOrder] = useState<OrderDetails | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(0);
+  const { toast } = useToast();
+  const currentTenant = useCurrentTenant();
 
-  // Fetch customers data
   useEffect(() => {
     const fetchCustomers = async () => {
-      setIsLoading(true);
       try {
-        // Get profiles with roles
+        setIsLoading(true);
+        
+        // Fetch all profiles for this tenant
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
-          .select('*, id, email, name, avatar, created_at, phone_number')
-          .range(page * pageSize, (page + 1) * pageSize - 1);
+          .select('*')
+          .eq('tenant_id', currentTenant.id);
 
         if (profilesError) throw profilesError;
 
-        // Get count for pagination
-        const { count, error: countError } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true });
+        if (!profiles || profiles.length === 0) {
+          setCustomers([]);
+          setFilteredCustomers([]);
+          setIsLoading(false);
+          return;
+        }
 
-        if (countError) throw countError;
-        
-        setTotalPages(Math.ceil((count || 0) / pageSize));
+        const customersWithRoles: Customer[] = [];
 
-        const customersWithData = await Promise.all((profiles || []).map(async (profile) => {
-          // Get highest role
+        // For each profile, get their role and order statistics
+        for (const profile of profiles) {
           const { data: roleData } = await supabase.rpc('get_highest_role', {
             user_id: profile.id
           });
 
-          // Get order summary for this user
-          const { data: orderStats, error: orderError } = await supabase
+          // Get order count and total spent for this customer in this tenant
+          const { data: ordersData, error: ordersError } = await supabase
             .from('orders')
-            .select('id', { count: 'exact' })
-            .eq('user_id', profile.id);
-
-          const { data: totalSpentData } = await supabase
-            .from('orders')
-            .select('total')
+            .select('id, total')
             .eq('user_id', profile.id)
-            .eq('status', 'delivered');
+            .eq('tenant_id', currentTenant.id);
 
-          const orderCount = orderStats?.length || 0;
-          const spent = totalSpentData?.reduce((sum, order) => {
-            return sum + (Number(order.total) || 0);
-          }, 0) || 0;
+          if (ordersError) {
+            console.error('Error fetching orders for customer:', ordersError);
+            continue;
+          }
 
-          return {
+          const orderCount = ordersData?.length || 0;
+          const totalSpent = ordersData?.reduce((sum, order) => sum + (typeof order.total === 'string' ? parseFloat(order.total) : order.total || 0), 0) || 0;
+
+          customersWithRoles.push({
             id: profile.id,
             email: profile.email || '',
             name: profile.name,
@@ -180,12 +186,16 @@ const CustomersPage = () => {
             created_at: profile.created_at || '',
             role: roleData as UserRole,
             orderCount,
-            totalSpent: spent,
-            phone_number: profile.phone_number,
-          };
-        }));
+            totalSpent,
+            phone_number: profile.phone_number
+          });
+        }
 
-        setCustomers(customersWithData);
+        // Sort by total spent (highest first)
+        const sortedCustomers = customersWithRoles.sort((a, b) => b.totalSpent - a.totalSpent);
+        
+        setCustomers(sortedCustomers);
+        setFilteredCustomers(sortedCustomers);
       } catch (error) {
         console.error('Error fetching customers:', error);
         toast({
@@ -199,7 +209,7 @@ const CustomersPage = () => {
     };
 
     fetchCustomers();
-  }, [page, pageSize, toast]);
+  }, [currentTenant, toast]);
 
   const handleViewCustomer = async (customer: Customer) => {
     setSelectedCustomer(customer);
@@ -216,6 +226,7 @@ const CustomersPage = () => {
           items:order_items!order_items_order_id_fkey(count)
         `)
         .eq('user_id', customer.id)
+        .eq('tenant_id', currentTenant.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -223,9 +234,9 @@ const CustomersPage = () => {
       const formattedOrders: Order[] = (orders || []).map(order => ({
         id: order.id,
         created_at: order.created_at,
-        status: order.status as Order['status'],
-        total: order.total,
-        item_count: order.items?.[0]?.count || 0
+        status: order.status as OrderStatus,
+        total: typeof order.total === 'string' ? parseFloat(order.total) : order.total,
+        item_count: Array.isArray(order.items) && order.items.length > 0 ? order.items[0]?.count || 0 : 0
       }));
 
       // Calculate total spent from delivered orders
@@ -314,6 +325,7 @@ const CustomersPage = () => {
           )
         `)
         .eq('id', order.id)
+        .eq('tenant_id', currentTenant.id)
         .single();
 
       if (error) throw error;
@@ -389,7 +401,7 @@ const CustomersPage = () => {
 
   const closeDialog = () => {
     setSelectedCustomer(null);
-    setSelectedCustomerOrders([]);
+    setCustomerOrders([]);
     setSelectedOrder(null);
   };
 
@@ -779,10 +791,10 @@ const CustomersPage = () => {
                         </p>
                       </div>
                       
-                      <div className="bg-muted/40 rounded-lg p-3 flex items-center gap-3">
+                      <div className="bg-muted/30 rounded-lg p-3 flex items-center gap-3">
                         {getStatusIcon(selectedOrder.status)}
-                        <Badge className="text-base px-3 py-1" variant={getStatusVariant(selectedOrder.status)}>
-                          {selectedOrder.status.toUpperCase()}
+                        <Badge className="text-white px-3 py-1" variant={getStatusVariant(selectedOrder.status)}>
+                          {selectedOrder.status}
                         </Badge>
                       </div>
                     </div>
@@ -807,7 +819,7 @@ const CustomersPage = () => {
                     </div>
 
                     {/* Shipping and Payment Information */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {selectedOrder.shipping_address && (
                         <div className="bg-muted/30 rounded-lg p-4">
                           <h4 className="font-medium mb-2 flex items-center">

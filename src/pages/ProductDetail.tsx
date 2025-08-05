@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/seo/SEOHead";
@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import ProductGrid from "@/components/shop/ProductGrid";
-import { getProduct, getProductsByCategory } from "@/integrations/supabase/products.service";
+import { useProductsService } from "@/integrations/supabase/products.service";
 import { Product } from "@/integrations/supabase/types.service";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
@@ -53,6 +53,7 @@ const ProductDetail = () => {
   const [selectedTab, setSelectedTab] = useState("description");
   const navigate = useNavigate();
   const { toast } = useToast();
+  const productsService = useProductsService();
   
   // Add state for selected color and size
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
@@ -73,7 +74,7 @@ const ProductDetail = () => {
     id: product.id,
     name: product.name,
     description: product.description,
-    image: Array.isArray(product.image) ? product.image[0] : product.image,
+    image: product.images && product.images.length > 0 ? product.images[0] : product.image || '',
     price: product.price,
     category_name: typeof product.category === 'object' ? product.category.name : undefined
   }) : getProductSEO(null);
@@ -153,63 +154,71 @@ const ProductDetail = () => {
   // Utility to get images array from product
   const getGalleryImages = (product: Product | null): string[] => {
     if (!product) return [];
-    // Prefer images array if available and non-empty
+    
+    // Use the 'image' field from database (string[])
+    if (Array.isArray(product.image) && product.image.length > 0) {
+      return product.image.filter(Boolean);
+    }
+    
+    // Fallback to 'images' field if it exists
     if (Array.isArray(product.images) && product.images.length > 0) {
       return product.images.filter(Boolean);
     }
-    // If images is a string (bad data), try to parse as JSON
-    if (typeof (product as any).images === 'string') {
+    
+    // If image is a string (bad data), try to parse as JSON
+    if (typeof product.image === 'string' && product.image) {
       try {
-        const parsed = JSON.parse((product as any).images);
+        const parsed = JSON.parse(product.image);
         if (Array.isArray(parsed)) return parsed.filter(Boolean);
       } catch {}
-    }
-    // Fallback to single image string
-    if (typeof product.image === 'string' && product.image) {
       return [product.image];
     }
+    
     // Fallback to placeholder
     return ["/placeholder.svg"];
   };
 
   const galleryImages = getGalleryImages(product);
   
-  useEffect(() => {
-    const fetchProduct = async () => {
-      if (!id) return;
+  const fetchProduct = async () => {
+    if (!id) return;
+    
+    try {
+      setIsLoading(true);
+      console.log('Fetching product with ID:', id);
+      const productData = await productsService.getProduct(id);
+      console.log('Product data received:', productData);
       
-      try {
-        setIsLoading(true);
-        const productData = await getProduct(id);
-        
-        if (!productData) {
-          setIsLoading(false);
-          return;
-        }
-        
-        setProduct(productData);
-        // Set the first image as active by default
-        const imgs = getGalleryImages(productData);
-        setActiveImage(imgs[0] || "/placeholder.svg");
-        
-        const related = await getProductsByCategory(productData.category_id);
-        setRelatedProducts(related.filter(p => p.id !== id).slice(0, 4));
-        
+      if (!productData) {
+        console.log('No product data found');
         setIsLoading(false);
-      } catch (error) {
-        console.error("Error fetching product:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load product details. Please try again later.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
+        return;
       }
-    };
+      
+      setProduct(productData);
+      // Set the first image as active by default
+      const imgs = getGalleryImages(productData);
+      setActiveImage(imgs[0] || "/placeholder.svg");
+      
+      const related = await productsService.getProductsByCategory(productData.category_id);
+      setRelatedProducts(related.filter(p => p.id !== id).slice(0, 4));
+      
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching product:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load product details. Please try again later.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchProduct();
     window.scrollTo(0, 0);
-  }, [id, toast]);
+  }, [id]);
   
   // Set initial selected color, size, and type when product loads
   useEffect(() => {
@@ -550,13 +559,17 @@ const ProductDetail = () => {
                       ))}
                     </div>
                     <Separator orientation="vertical" className="h-4" />
-                    <span className="inline-flex items-center">
-                      <span className={cn(
-                        "w-2 h-2 rounded-full mr-1.5",
-                        product.stock > 0 ? "bg-green-500" : "bg-red-500"
-                      )}></span>
-                      {product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}
-                    </span>
+                    {product.stock > 0 ? (
+                      <span className="inline-flex items-center">
+                        <span className="w-2 h-2 rounded-full mr-1.5 bg-green-500"></span>
+                        {`${product.stock} in stock`}
+                      </span>
+                    ) : (
+                      <Badge variant="destructive" className="text-xs font-semibold px-2 py-0.5 rounded-full">
+                        <X className="w-3 h-3 mr-1" />
+                        Sold Out
+                      </Badge>
+                    )}
                   </div>
                 </div>
                   
@@ -859,15 +872,25 @@ const ProductDetail = () => {
                     }
                     transition={{ duration: 0.3 }}
                   >
-                    <Button
-                      size="lg"
-                      className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground font-medium rounded-full shadow-lg shadow-primary/20 dark:shadow-primary/10 border border-primary/20 transition-all duration-300 hover:shadow-xl"
-                      onClick={handleAddToCart}
-                      disabled={product.stock === 0}
-                    >
-                      <ShoppingCart className="w-5 h-5 mr-2" />
-                      Add to Cart
-                    </Button>
+                    {product.stock === 0 ? (
+                      <Button
+                        size="lg"
+                        className="w-full bg-gray-400 dark:bg-gray-600 text-white font-medium rounded-full shadow-lg border border-gray-300 dark:border-gray-700 cursor-not-allowed"
+                        disabled
+                      >
+                        <X className="w-5 h-5 mr-2" />
+                        Sold Out
+                      </Button>
+                    ) : (
+                      <Button
+                        size="lg"
+                        className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground font-medium rounded-full shadow-lg shadow-primary/20 dark:shadow-primary/10 border border-primary/20 transition-all duration-300 hover:shadow-xl"
+                        onClick={handleAddToCart}
+                      >
+                        <ShoppingCart className="w-5 h-5 mr-2" />
+                        Add to Cart
+                      </Button>
+                    )}
                   </motion.div>
                 </div>
                     

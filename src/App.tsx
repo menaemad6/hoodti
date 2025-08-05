@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { TenantProvider } from "@/context/TenantContext";
 import AuthRoute from "@/components/auth/AuthRoute";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Spinner from "@/components/ui/spinner";
@@ -55,10 +56,11 @@ function App() {
       <ThemeProvider>
         <Router>
           <ScrollToTop />
-          <AuthProvider>
-            <CartProvider>
-              <Suspense fallback={<LoadingFallback />}>
-                <Routes>
+          <TenantProvider>
+            <AuthProvider>
+              <CartProvider>
+                <Suspense fallback={<LoadingFallback />}>
+                  <Routes>
                   {/* Public routes */}
                   <Route path="/" element={<Index />} />
                   <Route path="/shop" element={<Shop />} />
@@ -115,6 +117,7 @@ function App() {
               <Toaster />
             </CartProvider>
           </AuthProvider>
+          </TenantProvider>
         </Router>
       </ThemeProvider>
     </HelmetProvider>

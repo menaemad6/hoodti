@@ -26,6 +26,7 @@ import ModernCard from "@/components/ui/modern-card";
 import { Clock, Plus, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useCurrentTenant } from "@/context/TenantContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,16 +62,18 @@ const DeliverySlots = () => {
   });
   const { toast } = useToast();
   const navigate = useNavigate();
+  const currentTenant = useCurrentTenant();
 
   useEffect(() => {
     fetchSlots();
-  }, []);
+  }, [currentTenant]);
 
   const fetchSlots = async () => {
     try {
       const { data, error } = await supabase
         .from("delivery_slots")
         .select("*")
+        .eq('tenant_id', currentTenant.id)
         .order('time_slot', { ascending: true });
 
       if (error) throw error;
@@ -115,7 +118,8 @@ const DeliverySlots = () => {
             time_slot: formData.time_slot,
             available: formData.available,
           } as any)
-          .eq("id", editingSlot.id);
+          .eq("id", editingSlot.id)
+          .eq('tenant_id', currentTenant.id);
 
         if (error) throw error;
 
@@ -129,6 +133,7 @@ const DeliverySlots = () => {
           .insert([{
             time_slot: formData.time_slot,
             available: formData.available,
+            tenant_id: currentTenant.id,
           } as any]);
 
         if (error) throw error;
@@ -159,7 +164,8 @@ const DeliverySlots = () => {
       const { error } = await supabase
         .from("delivery_slots")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq('tenant_id', currentTenant.id);
 
       if (error) throw error;
 

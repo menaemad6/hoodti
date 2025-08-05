@@ -18,8 +18,10 @@ import { useAuth } from "@/context/AuthContext";
 import { createOrder } from "@/integrations/supabase/orders.service";
 import { getUserAddresses, addAddress } from "@/integrations/supabase/address.service";
 import { getShippingFee, getTaxRate, getShippingFeeForGovernment } from "@/integrations/supabase/settings.service";
+import { checkProductStock, updateProductStock } from "@/integrations/supabase/products.service";
 import Spinner from "@/components/ui/spinner";
 import { getAvailableDeliverySlots } from "@/integrations/supabase/delivery.service";
+import { useCurrentTenant } from "@/context/TenantContext";
 import { incrementDiscountUsage } from "@/integrations/supabase/discounts.service";
 import { sendOrderConfirmationEmail } from "@/integrations/email.service";
 import { ProfileRow } from "@/integrations/supabase/types.service";
@@ -58,6 +60,7 @@ interface OrderData {
   email: string;
   phone_number: string;
   full_name: string;
+  tenant_id: string;
 }
 
 const Checkout = () => {
@@ -65,6 +68,7 @@ const Checkout = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const currentTenant = useCurrentTenant();
   
   const [currentStep, setCurrentStep] = useState<'delivery' | 'payment'>('delivery');
   const [formData, setFormData] = useState({
@@ -163,13 +167,13 @@ const Checkout = () => {
       setIsLoadingSettings(true);
       try {
         // Fetch shipping fee
-        const fee = await getShippingFee();
+        const fee = await getShippingFee(currentTenant.id);
         console.log("Fetched shipping fee:", fee);
         setShippingFee(fee);
         setCityShippingFee(fee); // Initialize with default fee
         
         // Fetch tax rate
-        const rate = await getTaxRate();
+        const rate = await getTaxRate(currentTenant.id);
         console.log("Fetched tax rate:", rate);
         setTaxRate(rate);
       } catch (error) {
@@ -181,7 +185,7 @@ const Checkout = () => {
     };
     
     fetchSettings();
-  }, []);
+  }, [currentTenant.id]);
   
   useEffect(() => {
     if (user) {
@@ -213,7 +217,7 @@ const Checkout = () => {
         const selectedAddress = addresses.find(addr => addr.id === selectedAddressId);
         if (selectedAddress && selectedAddress.city) {
           try {
-            const fee = await getShippingFeeForGovernment(selectedAddress.city);
+            const fee = await getShippingFeeForGovernment(selectedAddress.city, currentTenant.id);
             setCityShippingFee(fee);
           } catch (error) {
             console.error("Error getting shipping fee for city:", error);
@@ -244,7 +248,7 @@ const Checkout = () => {
     // Fetch available delivery slots
     const fetchDeliverySlots = async () => {
       try {
-        const slots = await getAvailableDeliverySlots();
+        const slots = await getAvailableDeliverySlots(currentTenant.id);
         setAvailableSlots(slots);
       } catch (error) {
         console.error("Error fetching delivery slots:", error);
@@ -259,7 +263,7 @@ const Checkout = () => {
     // Fetch shipping fee
     const fetchShippingFee = async () => {
       try {
-        const fee = await getShippingFee();
+        const fee = await getShippingFee(currentTenant.id);
         setShippingFee(fee);
       } catch (error) {
         console.error("Error fetching shipping fee:", error);
@@ -366,6 +370,20 @@ const Checkout = () => {
       // Get the active email based on tab selection
       const emailToUse = useProfileEmail ? formData.email : customEmail;
       
+      // Check stock for all items in the cart
+      for (const item of cart) {
+        const stock = await checkProductStock(item.product.id);
+        if (stock < item.quantity) {
+          toast({
+            title: "Insufficient stock",
+            description: `Only ${stock} units of ${item.product.name} are available.`,
+            variant: "destructive"
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      }
+      
       const subtotal = cartTotal;
       // Use the same shipping calculation as the one used in the UI
       const isFreeShipping = subtotal >= 50;
@@ -409,12 +427,18 @@ const Checkout = () => {
         // Add the new fields to save to the database
         email: emailToUse,
         phone_number: formData.phone,
-        full_name: fullName
+        full_name: fullName,
+        tenant_id: currentTenant.id // Add tenant_id from current tenant
       };
       
       // Still increment usage counter if a discount was applied
       const order = await createOrder(orderData);
       setCreatedOrderId(order.id);
+      
+      // Update stock for all items in the cart
+      for (const item of cart) {
+        await updateProductStock(item.product.id, -item.quantity);
+      }
       
       // If a discount was applied, increment its usage counter
       if (discountId) {

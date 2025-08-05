@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getRecentOrders } from "@/integrations/supabase/orders.service";
+import { getOrdersWithItems } from "@/integrations/supabase/orders.service";
+import { useCurrentTenant } from "@/context/TenantContext";
 
 interface Order {
   id: string;
@@ -25,17 +26,18 @@ const RecentOrders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const currentTenant = useCurrentTenant();
 
   useEffect(() => {
     const fetchOrders = async () => {
       setIsLoading(true);
       try {
-        // Fetch orders with forAdminView set to true
-        const ordersData = await getRecentOrders(5, true);
+        // Fetch orders with tenant filtering using the same approach as Orders.tsx
+        const ordersData = await getOrdersWithItems(undefined, true, currentTenant.id);
 
-        if (ordersData) {
+        if (ordersData && ordersData.length > 0) {
           // Get all user IDs from orders
-          const userIds = ordersData.map(order => order.user_id).filter(Boolean);
+          const userIds = [...new Set(ordersData.map(order => order.user_id).filter(Boolean))];
           
           // Fetch profiles separately for those user IDs
           const { data: profilesData, error: profilesError } = await supabase
@@ -53,20 +55,10 @@ const RecentOrders = () => {
             });
           }
 
-          // Count items per order
-          const orderIds = ordersData.map(order => order.id);
-          const { data: orderItemsCount, error: countError } = await supabase
-            .from('order_items')
-            .select('order_id, quantity')
-            .in('order_id', orderIds);
-
-          if (countError) throw countError;
-
-          // Process the data
-          const processedOrders = ordersData.map(order => {
-            const itemsForOrder = orderItemsCount?.filter(item => item.order_id === order.id) || [];
-            const itemsCount = itemsForOrder.reduce((sum, item) => sum + item.quantity, 0);
+          // Process the data - take only the first 5 orders
+          const processedOrders = ordersData.slice(0, 5).map(order => {
             const profile = order.user_id ? profilesMap[order.user_id] : null;
+            const itemsCount = order.order_items ? order.order_items.reduce((sum, item) => sum + item.quantity, 0) : 0;
 
             return {
               id: order.id,
@@ -82,16 +74,19 @@ const RecentOrders = () => {
           });
 
           setOrders(processedOrders);
+        } else {
+          setOrders([]);
         }
       } catch (error) {
         console.error('Error fetching recent orders:', error);
+        setOrders([]);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchOrders();
-  }, []);
+  }, [currentTenant]);
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {

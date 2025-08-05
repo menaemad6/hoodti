@@ -16,10 +16,10 @@ interface OrderItem {
   selected_color?: string;
   selected_size?: string;
   selected_type?: string;
-  products?: {
+  product?: {
     id: string;
     name: string;
-    image: string;
+    images: string[]; // Fixed: Changed from string to string[]
     unit?: string;
   } | null;
 }
@@ -214,10 +214,10 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, status, withItems = false,
             {order.order_items.slice(0, 3).map((item) => (
               <div key={item.id} className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl border border-gray-100 hover:border-gray-200 dark:border-gray-800/60 dark:hover:border-gray-700/80 transition-colors bg-gray-50/50 dark:bg-gray-900/20">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden bg-white dark:bg-gray-800 flex-shrink-0 border border-gray-100 dark:border-gray-700">
-                  {item.products && Array.isArray(item.products.images) && item.products.images.length > 0 ? (
+                  {item.product && Array.isArray(item.product.images) && item.product.images.length > 0 ? (
                     <img 
-                      src={item.products.images[0]} 
-                      alt={item.products.name} 
+                      src={item.product.images[0]} 
+                      alt={item.product.name} 
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -230,13 +230,13 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, status, withItems = false,
                 <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <div className="text-xs sm:text-sm font-medium truncate">
-                      {item.products ? item.products.name : "Product unavailable"}
+                      {item.product ? item.product.name : "Product unavailable"}
                     </div>
                     <div className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1">
                       <span>{formatPrice(item.price_at_time)}</span>
                       <span>×</span>
                       <span>{item.quantity}</span>
-                      {item.products?.unit && <span>({item.products.unit})</span>}
+                      {item.product?.unit && <span>({item.product.unit})</span>}
                     </div>
                     
                     {/* Product variations (type, size and color) */}

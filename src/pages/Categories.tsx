@@ -13,32 +13,23 @@ import GlassCard from "@/components/ui/glass-card";
 import { Layers, Grid3X3, ArrowRight, ShoppingBag, Package, Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useCurrentTenant } from "@/context/TenantContext";
+import { getCategories } from "@/integrations/supabase/categories.service";
 
 const Categories = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const currentTenant = useCurrentTenant();
 
   // Get SEO configuration for categories page
   const seoConfig = getSEOConfig('categories');
 
   useEffect(() => {
     const fetchCategories = async () => {
+      setLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('categories')
-          .select('*');
-        
-        if (error) {
-          throw error;
-        }
-        
-        setCategories(data.map(category => ({
-          id: category.id,
-          name: category.name,
-          image: category.image,
-          description: category.description,
-          created_at: category.created_at
-        })));
+        const categoriesData = await getCategories(currentTenant.id);
+        setCategories(categoriesData.map(cat => ({ ...cat, image: Array.isArray(cat.image) ? cat.image[0] : cat.image })));
       } catch (error) {
         console.error("Error fetching categories:", error);
       } finally {
@@ -47,7 +38,7 @@ const Categories = () => {
     };
     
     fetchCategories();
-  }, []);
+  }, [currentTenant]);
 
   if (loading) {
     return (

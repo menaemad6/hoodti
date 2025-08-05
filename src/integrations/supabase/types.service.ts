@@ -38,8 +38,8 @@ export type Product = {
   id: string;
   name: string;
   price: number;
-  images?: string[];
-  image?: string;
+  images?: string[]; // This is the actual database field (JSONB array)
+  image?: string; // Keep for backward compatibility
   unit?: string;
   discount?: number;
   is_new?: boolean;
@@ -50,8 +50,9 @@ export type Product = {
   material?: string;
   brand?: string;
   gender?: string;
+  stock?: number; // Add stock property
   category: Category | string;
-  category_id?: string; // Adding this to ensure compatibility
+  category_id?: string;
   type?: string;
 };
 
@@ -161,4 +162,23 @@ export function ensureProductTypeCompatibility(product: any): Product {
     brand: product.brand || null,
     gender: product.gender || null
   } as Product;
+}
+
+/**
+ * Helper function to get the first image from a product's images array
+ */
+export function getProductImage(product: Product | null): string {
+  if (!product) return '';
+  
+  // If product has images array, return the first image
+  if (product.images && product.images.length > 0) {
+    return product.images[0];
+  }
+  
+  // Fallback to image field for backward compatibility
+  if (product.image) {
+    return product.image;
+  }
+  
+  return '';
 }

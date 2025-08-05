@@ -38,6 +38,7 @@ import { sendOrderStatusEmail } from "@/integrations/email.service";
 import SEOHead from "@/components/seo/SEOHead";
 import { getSEOConfig } from "@/lib/seo-config";
 import { formatPrice } from "../../lib/utils";
+import { useCurrentTenant } from "@/context/TenantContext";
 
 // Add function to calculate relative time
 const getRelativeTimeString = (date: Date): string => {
@@ -76,13 +77,13 @@ const OrdersPage = () => {
   const [pageSize, setPageSize] = useState(10);
   const [customerDetails, setCustomerDetails] = useState<Record<string, any>>({});
   const seoConfig = getSEOConfig('adminOrders');
+  const currentTenant = useCurrentTenant();
 
   useEffect(() => {
     const fetchOrders = async () => {
       setIsLoading(true);
       try {
-        // Pass true for forAdminView to get all orders
-        const ordersData = await getOrdersWithItems(undefined, true);
+        const ordersData = await getOrdersWithItems(undefined, true, currentTenant.id);
         setOrders(ordersData || []);
         
         // Fetch customer details for all orders
@@ -115,7 +116,7 @@ const OrdersPage = () => {
     };
 
     fetchOrders();
-  }, [toast]);
+  }, [toast, currentTenant]);
 
   useEffect(() => {
     if (orderFilter === "all") {
@@ -129,7 +130,7 @@ const OrdersPage = () => {
     setSelectedOrder(order);
     
     try {
-      const items = await getOrderItemsWithProducts(order.id);
+      const items = await getOrderItemsWithProducts(order.id, currentTenant.id);
       setSelectedOrderItems(items || []);
     } catch (error) {
       console.error("Error fetching order items:", error);
@@ -711,14 +712,14 @@ const OrdersPage = () => {
                           <div key={item.id} className="flex justify-between items-center p-3 rounded-lg bg-card/60 backdrop-blur-sm shadow-sm border border-amber-200/30 dark:border-amber-800/30 hover:shadow-md transition-shadow">
                             <div className="flex items-center gap-3">
                               <div className="h-14 w-14 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/20 rounded-md flex items-center justify-center overflow-hidden shadow-sm">
-                                {item.products && Array.isArray(item.products.images) && item.products.images.length > 0 ? (
-                                  <img src={item.products.images[0]} alt={item.products?.name || 'Product'} className="object-cover w-full h-full" />
+                                {item.product && Array.isArray(item.product.images) && item.product.images.length > 0 ? (
+                                  <img src={item.product.images[0]} alt={item.product?.name || 'Product'} className="object-cover w-full h-full" />
                                 ) : (
                                   <ShoppingBag className="h-5 w-5 text-amber-500" />
                                 )}
                               </div>
                               <div>
-                                <p className="font-medium">{item.products?.name || 'Unknown Product'}</p>
+                                <p className="font-medium">{item.product?.name || 'Unknown Product'}</p>
                                 <div className="flex items-center gap-3 mt-1">
                                   <p className="text-xs px-2 py-0.5 bg-amber-100/50 dark:bg-amber-900/30 rounded-full">Qty: {item.quantity}</p>
                                   <p className="text-xs text-muted-foreground">{formatPrice(item.price_at_time)} each</p>

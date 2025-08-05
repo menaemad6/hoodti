@@ -178,7 +178,8 @@ const AddressModal: React.FC<AddressModalProps> = ({
                 ) : (
                   <Select
                     value={selectedCity}
-                    onValueChange={(value) => setValue('city', value)}
+                    onValueChange={(value) => setValue('city', value, { shouldValidate: true })}
+                    {...register('city', { required: "City/Government is required" })}
                   >
                     <SelectTrigger className={errors.city ? "border-destructive" : ""}>
                       <SelectValue placeholder="Select a city/government" />

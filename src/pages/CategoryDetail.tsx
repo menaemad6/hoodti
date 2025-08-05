@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import ProductGrid from "@/components/shop/ProductGrid";
 import GlassCard from "@/components/ui/glass-card";
-import { getCategories, getProductsByCategory } from "@/integrations/supabase/products.service";
+import { useProductsService } from "@/integrations/supabase/products.service";
+import { getCategories } from "@/integrations/supabase/categories.service";
 import { Category, Product } from "@/integrations/supabase/types.service";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
@@ -15,6 +16,7 @@ import Spinner from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import SEOHead from "@/components/seo/SEOHead";
 import { getCategorySEO } from "@/lib/seo-config";
+import { useCurrentTenant } from "@/context/TenantContext";
 
 const CategoryDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -24,56 +26,58 @@ const CategoryDetail = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const productsService = useProductsService();
+  const currentTenant = useCurrentTenant();
   
   // Get SEO configuration for category page
   const seoConfig = category ? getCategorySEO({
     id: category.id,
     name: category.name,
     description: category.description,
-    image: category.image
+    image: Array.isArray(category.image) ? category.image[0] : category.image || ''
   }) : getCategorySEO(null);
 
-  useEffect(() => {
-    const fetchCategoryData = async () => {
-      if (!id) {
-        setError("No category ID provided");
+  const fetchCategoryData = async () => {
+    if (!id) {
+      setError("No category ID provided");
+      setIsLoading(false);
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const categoriesData = await getCategories(currentTenant.id);
+      const foundCategory = categoriesData.find(c => c.id === id);
+      
+      if (!foundCategory) {
+        setError("Category not found");
         setIsLoading(false);
         return;
       }
       
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        const categoriesData = await getCategories();
-        const foundCategory = categoriesData.find(c => c.id === id);
-        
-        if (!foundCategory) {
-          setError("Category not found");
-          setIsLoading(false);
-          return;
-        }
-        
-        setCategory(foundCategory);
-        
-        const categoryProducts = await getProductsByCategory(id);
-        setProducts(categoryProducts);
-        
-      } catch (error) {
-        console.error("Error fetching category data:", error);
-        setError("Failed to load category details");
-        toast({
-          title: "Error",
-          description: "Failed to load category details. Please try again later.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      setCategory(foundCategory);
+      
+      const categoryProducts = await productsService.getProductsByCategory(id);
+      setProducts(categoryProducts);
+      
+    } catch (error) {
+      console.error("Error fetching category data:", error);
+      setError("Failed to load category details");
+      toast({
+        title: "Error",
+        description: "Failed to load category details. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchCategoryData();
-  }, [id, toast]);
+  }, [id, currentTenant.id]);
   
   if (isLoading) {
     return (
@@ -155,7 +159,7 @@ const CategoryDetail = () => {
           <div className="relative h-64 sm:h-80 rounded-2xl overflow-hidden mb-6 group">
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20 z-10" />
             <img 
-              src={category.image} 
+              src={Array.isArray(category.image) ? category.image[0] : category.image || '/placeholder.svg'} 
               alt={category.name} 
               className="w-full h-full object-cover object-center transition-transform duration-5000 group-hover:scale-105" 
             />

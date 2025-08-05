@@ -4,15 +4,17 @@ import SEOHead from "@/components/seo/SEOHead";
 import { getSEOConfig } from "@/lib/seo-config";
 import ProductGrid from "@/components/shop/ProductGrid";
 import GlassCard from "@/components/ui/glass-card";
-import { getDiscountedProducts } from "@/integrations/supabase/products.service";
+import { createProductsService } from "@/integrations/supabase/products.service";
 import { Product } from "@/integrations/supabase/types.service";
 import AnimatedWrapper from "@/components/ui/animated-wrapper";
 import { PercentIcon, Tag, ShoppingBag, BadgePercent } from "lucide-react";
 import { formatPrice } from "../lib/utils";
+import { useCurrentTenant } from "@/context/TenantContext";
 
 const Deals = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const currentTenant = useCurrentTenant();
 
   // Get SEO configuration for deals page
   const seoConfig = getSEOConfig('deals');
@@ -21,7 +23,9 @@ const Deals = () => {
     const fetchProducts = async () => {
       setIsLoading(true);
       try {
-        const discountedProducts = await getDiscountedProducts();
+        // Use tenant-aware products service
+        const productsService = createProductsService(currentTenant.id);
+        const discountedProducts = await productsService.getDiscountedProducts();
         setProducts(discountedProducts);
       } catch (error) {
         console.error('Error fetching discounted products:', error);
@@ -31,7 +35,7 @@ const Deals = () => {
     };
 
     fetchProducts();
-  }, []);
+  }, [currentTenant]);
 
   return (
     <Layout>

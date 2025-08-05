@@ -10,6 +10,7 @@ BEGIN
       name TEXT,
       avatar TEXT,
       phone_number TEXT,
+      tenant_id TEXT DEFAULT ''hoodti'',
       created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
     )
@@ -17,11 +18,12 @@ BEGIN
 
   -- Insert a row into public.profiles for the new user
   -- Using ON CONFLICT DO NOTHING to make it idempotent
-  INSERT INTO public.profiles (id, email, name, created_at, updated_at)
+  INSERT INTO public.profiles (id, email, name, tenant_id, created_at, updated_at)
   VALUES (
     NEW.id,
     NEW.email,
     NEW.raw_user_meta_data->>'name',
+    COALESCE(NEW.raw_user_meta_data->>'tenant_id', 'hoodti'),
     COALESCE(NEW.created_at, now()),
     now()
   )
@@ -58,11 +60,12 @@ BEGIN
     )
   LOOP
     BEGIN
-      INSERT INTO public.profiles (id, email, name, created_at, updated_at)
+      INSERT INTO public.profiles (id, email, name, tenant_id, created_at, updated_at)
       VALUES (
         missing_users.id,
         missing_users.email,
         missing_users.name,
+        'hoodti',
         COALESCE(missing_users.created_at, now()),
         now()
       );

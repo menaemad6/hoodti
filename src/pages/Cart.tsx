@@ -9,6 +9,7 @@ import { useCart } from "@/context/CartContext";
 import { getShippingFee, getTaxRate, getShippingFeeForGovernment } from '../integrations/supabase/settings.service';
 import OrderSummary from '@/components/checkout/OrderSummary';
 import { formatPrice } from "../lib/utils";
+import { useCurrentTenant } from "@/context/TenantContext";
 
 // Custom styles for animations and effects
 import "./cart.css";
@@ -24,6 +25,7 @@ const Cart = () => {
   const [selectedCity, setSelectedCity] = useState<string>('');
   const [cityShippingFee, setCityShippingFee] = useState<number>(0);
   const navigate = useNavigate();
+  const currentTenant = useCurrentTenant();
   
   const handleApplyPromo = (code: string, percent: number, id: string) => {
     setDiscountCode(code);
@@ -100,7 +102,7 @@ const Cart = () => {
     // Fetch the current shipping fee from settings
     const fetchShippingFee = async () => {
       try {
-        const fee = await getShippingFee();
+        const fee = await getShippingFee(currentTenant.id);
         setShippingFee(fee);
       } catch (error) {
         console.error("Error fetching shipping fee:", error);
@@ -111,7 +113,7 @@ const Cart = () => {
     // Fetch the current tax rate from settings
     const fetchTaxRate = async () => {
       try {
-        const rate = await getTaxRate();
+        const rate = await getTaxRate(currentTenant.id);
         setTaxRate(rate);
       } catch (error) {
         console.error("Error fetching tax rate:", error);
@@ -121,7 +123,7 @@ const Cart = () => {
     
     fetchShippingFee();
     fetchTaxRate();
-  }, []);
+  }, [currentTenant.id]);
   
   if (cart.length === 0) {
     return (

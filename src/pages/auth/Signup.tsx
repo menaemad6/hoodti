@@ -250,7 +250,8 @@ const Signup = () => {
                   </form>
                 </Form>
                 
-                <div className="mt-6 sm:mt-8">
+                {/* Google Signup  */}
+                {/* <div className="mt-6 sm:mt-8">
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
                       <div className="w-full border-t border-border/50"></div>
@@ -272,7 +273,7 @@ const Signup = () => {
                       Sign up with Google
                     </Button>
                   </div>
-                </div>
+                </div> */}
                 
                 <div className="mt-6 sm:mt-8 text-center">
                   <p className="text-muted-foreground">

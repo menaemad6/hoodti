@@ -1,6 +1,5 @@
 import { supabase } from "./client";
 import { Order, OrderItem, ProductDetail } from "./types.service";
-import { getBaseSlotId } from './delivery.service';
 import { format } from "date-fns";
 
 export async function getOrders(userId?: string) {
@@ -26,10 +25,10 @@ export async function getOrders(userId?: string) {
   }
 }
 
-export async function getOrdersWithItems(userId?: string, forAdminView: boolean = false) {
+export async function getOrdersWithItems(userId?: string, forAdminView: boolean = false, tenantId?: string) {
   try {
-    // If viewing as admin and no specific userId is provided, don't filter by user_id
-    let query = supabase
+    // Build the base query
+    let baseQuery = supabase
       .from('orders')
       .select(`
         *,
@@ -40,61 +39,29 @@ export async function getOrdersWithItems(userId?: string, forAdminView: boolean 
           product_id,
           selected_color,
           selected_size,
-          selected_type
+          selected_type,
+          product:products!order_items_product_id_fkey(
+            id,
+            name,
+            price,
+            images
+          )
         )
       `);
-      
-    // Only filter by user_id if it's provided and we're not in admin view
-    if (userId && !forAdminView) {
-      query = query.eq('user_id', userId);
+    
+    // Apply filters
+    if (tenantId) {
+      baseQuery = baseQuery.eq('tenant_id', tenantId);
     }
     
-    const { data, error } = await query.order('created_at', { ascending: false });
+    if (userId && !forAdminView) {
+      baseQuery = baseQuery.eq('user_id', userId);
+    }
+    
+    const { data, error } = await baseQuery.order('created_at', { ascending: false });
     
     if (error) {
       throw error;
-    }
-    
-    // If we have order data, append product information to each order item
-    if (data && data.length > 0) {
-      for (const order of data) {
-        if (order.order_items && order.order_items.length > 0) {
-          // Get all product IDs from order items
-          const productIds = order.order_items
-            .map(item => item.product_id)
-            .filter(Boolean); // Filter out null/undefined
-          
-          if (productIds.length > 0) {
-            // Fetch all products in a single query
-            const { data: productsData } = await supabase
-              .from('products')
-              .select('id, name, price, images, unit')
-              .in('id', productIds);
-            
-            // Create a map of product data by id for quick lookup
-            const productsMap: Record<string, any> = {};
-            if (productsData) {
-              productsData.forEach(product => {
-                productsMap[product.id] = product;
-              });
-            }
-            
-            // Attach product data to each order item
-            order.order_items = order.order_items.map(item => ({
-              ...item,
-              products: item.product_id ? {
-                id: productsMap[item.product_id]?.id || '',
-                name: productsMap[item.product_id]?.name || '',
-                price: typeof productsMap[item.product_id]?.price === 'number' 
-                  ? productsMap[item.product_id]?.price 
-                  : 0,
-                images: Array.isArray(productsMap[item.product_id]?.images) ? productsMap[item.product_id].images : [],
-                unit: productsMap[item.product_id]?.unit
-              } : null
-            }));
-          }
-        }
-      }
     }
     
     return data;
@@ -126,101 +93,111 @@ export async function getOrderById(orderId: string) {
   }
 }
 
-export async function getOrderItemsWithProducts(orderId: string) {
+export async function getOrderItemsWithProducts(orderId: string, tenantId?: string) {
   try {
-    // First get the order items
-    const { data, error } = await supabase
+    let query = supabase
       .from('order_items')
       .select(`
         id,
-        order_id,
-        product_id,
         quantity,
         price_at_time,
         selected_color,
         selected_size,
-        selected_type
+        selected_type,
+        product:products!order_items_product_id_fkey(
+          id,
+          name,
+          price,
+          images
+        )
       `)
       .eq('order_id', orderId);
+    
+    if (tenantId) {
+      // Filter by tenant through the order
+      const { data: order } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('id', orderId)
+        .eq('tenant_id', tenantId)
+        .single();
+      
+      if (!order) {
+        return [];
+      }
+    }
+    
+    const { data, error } = await query;
     
     if (error) {
       throw error;
     }
     
-    // If no product_id is present in any items, return early
-    if (!data.some(item => item.product_id)) {
-      return data as OrderItem[];
-    }
-    
-    // Get all product IDs from order items
-    const productIds = data
-      .map(item => item.product_id)
-      .filter(Boolean); // Filter out null/undefined
-    
-    // Fetch all products in a single query for better performance
-    const { data: productsData, error: productsError } = await supabase
-      .from('products')
-      .select('id, name, price, images, unit')
-      .in('id', productIds);
-      
-    if (productsError) {
-      console.error('Error fetching products:', productsError);
-    }
-    
-    // Create a map of product data by id for quick lookup
-    const productsMap: Record<string, ProductDetail> = {};
-    if (productsData) {
-      productsData.forEach(product => {
-        productsMap[product.id] = {
-          id: product.id,
-          name: product.name,
-          price: typeof product.price === 'number' ? product.price : 0,
-          images: Array.isArray(product.images) ? product.images : [],
-          unit: product.unit
-        };
-      });
-    }
-    
-    // Attach product data to each order item
-    const orderItemsWithProducts = data.map(item => ({
-      ...item,
-      products: item.product_id ? productsMap[item.product_id] || null : null
-    })) as OrderItem[];
-    
-    return orderItemsWithProducts;
+    return data;
   } catch (error) {
     console.error('Error getting order items with products:', error);
     return [];
   }
 }
 
-export async function getOrderStats() {
+export async function getOrderStats(tenantId?: string) {
   try {
+    console.log('Getting order stats for tenant:', tenantId);
+    
+    // Build base query
+    let ordersQuery = supabase.from('orders');
+    
+    // Add tenant filter if provided
+    if (tenantId) {
+      ordersQuery = ordersQuery.eq('tenant_id', tenantId);
+    }
+    
     // Get total number of orders
-    const { count: totalOrders, error: ordersError } = await supabase
-      .from('orders')
+    const { count: totalOrders, error: ordersError } = await ordersQuery
       .select('*', { count: 'exact', head: true });
     
-    if (ordersError) throw ordersError;
+    if (ordersError) {
+      console.error('Error getting orders count:', ordersError);
+      throw ordersError;
+    }
     
-    // Get total revenue
-    const { data: orderData, error: revenueError } = await supabase
-      .from('orders')
-      .select('total');
+    console.log('Total orders found:', totalOrders);
     
-    if (revenueError) throw revenueError;
+    // Get total revenue - only if there are orders
+    let totalRevenue = 0;
+    if (totalOrders && totalOrders > 0) {
+      const { data: orderData, error: revenueError } = await ordersQuery
+        .select('total');
+      
+      if (revenueError) {
+        console.error('Error getting revenue data:', revenueError);
+        throw revenueError;
+      }
+      
+      totalRevenue = orderData.reduce((sum, order) => {
+        const orderTotal = parseFloat(order.total?.toString() || '0');
+        return sum + orderTotal;
+      }, 0);
+    }
     
-    const totalRevenue = orderData.reduce((sum, order) => sum + parseFloat(order.total.toString()), 0);
+    console.log('Total revenue calculated:', totalRevenue);
     
-    // Get customers count (distinct user_ids)
-    const { data: customers, error: customersError } = await supabase
-      .from('orders')
-      .select('user_id')
-      .limit(1000);
+    // Get customers count (distinct user_ids) - only if there are orders
+    let uniqueCustomers = 0;
+    if (totalOrders && totalOrders > 0) {
+      const { data: customers, error: customersError } = await ordersQuery
+        .select('user_id')
+        .limit(1000);
+      
+      if (customersError) {
+        console.error('Error getting customers data:', customersError);
+        throw customersError;
+      }
+      
+      uniqueCustomers = new Set(customers.map(order => order.user_id).filter(Boolean)).size;
+    }
     
-    if (customersError) throw customersError;
-    
-    const uniqueCustomers = new Set(customers.map(order => order.user_id)).size;
+    console.log('Unique customers found:', uniqueCustomers);
     
     return {
       totalOrders: totalOrders || 0,
@@ -237,7 +214,7 @@ export async function getOrderStats() {
   }
 }
 
-export async function getRecentOrders(limit = 5, forAdminView: boolean = false) {
+export async function getRecentOrders(limit = 5, forAdminView: boolean = false, tenantId?: string) {
   try {
     let query = supabase
       .from('orders')
@@ -254,6 +231,11 @@ export async function getRecentOrders(limit = 5, forAdminView: boolean = false) 
           product_id
         )
       `);
+    
+    // Add tenant filter if provided
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
     
     // Only filter by user_id if we're not in admin view
     if (!forAdminView) {
@@ -294,6 +276,7 @@ export async function createOrder(orderData: {
   email?: string;
   phone_number?: string;
   full_name?: string;
+  tenant_id?: string; // Add tenant_id parameter
   items: {
     product_id: string;
     quantity: number;
@@ -314,6 +297,10 @@ export async function createOrder(orderData: {
       }
     }
 
+    // Get tenant ID from parameter or default to 'hoodti' if not provided
+    // Note: localStorage is not available in server-side code
+    const tenant_id = orderData.tenant_id || 'hoodti';
+    
     // Create order record
     const { data: order, error: orderError } = await supabase
       .from('orders')
@@ -332,7 +319,8 @@ export async function createOrder(orderData: {
         shipping_amount: orderData.shipping_amount !== undefined ? parseFloat(Number(orderData.shipping_amount).toFixed(2)) : null,
         email: orderData.email,
         phone_number: orderData.phone_number,
-        full_name: orderData.full_name
+        full_name: orderData.full_name,
+        tenant_id: tenant_id // Add tenant_id to the order
       })
       .select()
       .single();

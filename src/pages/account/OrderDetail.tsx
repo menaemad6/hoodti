@@ -375,10 +375,10 @@ const OrderDetail = () => {
                                 <TableRow key={item.id}>
                                   <TableCell className="p-2 sm:p-4">
                                     <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-lg overflow-hidden bg-primary/[0.03] dark:bg-primary/[0.02]">
-                                      {item.products && Array.isArray(item.products.images) && item.products.images.length > 0 ? (
+                                      {item.product && Array.isArray(item.product.images) && item.product.images.length > 0 ? (
                                         <img 
-                                          src={item.products.images[0]} 
-                                          alt={item.products.name} 
+                                          src={item.product.images[0]} 
+                                          alt={item.product.name} 
                                           className="h-full w-full object-cover"
                                         />
                                       ) : (
@@ -389,16 +389,16 @@ const OrderDetail = () => {
                                     </div>
                                   </TableCell>
                                   <TableCell className="font-medium p-2 sm:p-4">
-                                    {item.products ? (
+                                    {item.product ? (
                                       <>
                                         <Link 
                                           to={`/product/${item.product_id}`}
                                           className="hover:text-primary dark:hover:text-primary/90 transition-colors line-clamp-1 text-sm sm:text-base"
                                         >
-                                          {item.products.name}
+                                          {item.product.name}
                                         </Link>
                                         <div className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground/90 mt-1">
-                                          {item.products.unit && `Per ${item.products.unit}`}
+                                          {item.product.unit && `Per ${item.product.unit}`}
                                           
                                           {/* Display type, color and size if available */}
                                           {(item.selected_type || item.selected_color || item.selected_size) && (

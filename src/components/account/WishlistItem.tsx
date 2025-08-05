@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/CartContext";
 import { Product } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { Heart, ShoppingCart, ExternalLink, Trash2, Eye, Plus } from "lucide-react";
+import { Heart, ShoppingCart, ExternalLink, Trash2, Eye, Plus, ShoppingBag } from "lucide-react";
 import { motion } from "framer-motion";
 import { Product as SupabaseProduct } from "@/integrations/supabase/types.service";
 import { ensureProductTypeCompatibility } from "@/types/supabase-types";
@@ -140,14 +140,28 @@ const WishlistItem: React.FC<WishlistItemProps> = ({ wishlistItem, product, onRe
             
             {/* Action buttons */}
             <div className="flex items-center gap-2">
-              <Button
-                onClick={addToCartHandler}
-                className="w-full rounded-full font-medium bg-primary/90 hover:bg-primary text-primary-foreground transition-all duration-300"
-                size="sm"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add to Cart
-              </Button>
+             {/* Quick add to cart button */}
+                                {normalizedProduct?.stock === 0 ? (
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    className="w-full bg-gray-400 dark:bg-gray-600 text-white rounded-full px-5 cursor-not-allowed"
+                                    disabled
+                                  >
+                                    <ShoppingBag className="h-3.5 w-3.5 mr-1.5" />
+                                    Sold Out
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    onClick={addToCartHandler}
+                                    className="w-full rounded-full font-medium bg-primary/90 hover:bg-primary text-primary-foreground transition-all duration-300"
+                                    size="sm"
+                                  >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Add to Cart
+                                  </Button>
+                                )}
+             
               <Button
                 variant="outline"
                 onClick={onRemove}

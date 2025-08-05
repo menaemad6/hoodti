@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getDeliveryDelay } from "@/integrations/supabase/settings.service";
 import Spinner from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
+import { useCurrentTenant } from "@/context/TenantContext";
 
 interface DeliveryTimeSlot {
   id: string;
@@ -33,18 +34,19 @@ const DeliverySlotSelector: React.FC<DeliverySlotSelectorProps> = ({
   selectedSlotId,
   onSelectSlot,
 }) => {
+  const currentTenant = useCurrentTenant();
   const [loading, setLoading] = useState(true);
   const [weeklySlots, setWeeklySlots] = useState<DaySlots[]>([]);
   const [deliveryDelay, setDeliveryDelay] = useState<number>(0);
 
   useEffect(() => {
     fetchAndGenerateSlots();
-  }, []);
+  }, [currentTenant.id]);
 
   const fetchAndGenerateSlots = async () => {
     try {
       // Get delivery delay from settings
-      const delay = await getDeliveryDelay();
+      const delay = await getDeliveryDelay(currentTenant.id);
       setDeliveryDelay(delay);
       
       // Fetch base time slots from the database
@@ -52,6 +54,7 @@ const DeliverySlotSelector: React.FC<DeliverySlotSelectorProps> = ({
         .from("delivery_slots")
         .select("*")
         .eq("available", true)
+        .eq("tenant_id", currentTenant.id)
         .order("time_slot", { ascending: true });
 
       if (error) throw error;

@@ -7,20 +7,18 @@ export interface CategoryInput {
   image?: string;
 }
 
-export async function getCategories() {
-  console.log('Fetching all categories');
+export async function getCategories(tenantId: string) {
+  console.log('Fetching categories for tenant:', tenantId);
   try {
     const { data, error } = await supabase
       .from('categories')
       .select('*')
+      .eq('tenant_id', tenantId)
       .order('name');
-    
     if (error) {
       console.error('Error fetching categories:', error);
       throw error;
     }
-    
-    console.log(`Retrieved ${data?.length || 0} categories`);
     return data as CategoryRow[];
   } catch (error) {
     console.error('Exception in getCategories:', error);

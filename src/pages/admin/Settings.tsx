@@ -38,6 +38,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { useCurrentTenant } from "@/context/TenantContext";
 import { 
   getSettings, 
   updateSettings, 
@@ -55,6 +56,7 @@ import { Badge } from "@/components/ui/badge";
 
 const SettingsPage = () => {
   const { toast } = useToast();
+  const currentTenant = useCurrentTenant();
   const [activeTab, setActiveTab] = useState("discounts");
   const [shippingFee, setShippingFee] = useState<string>('');
   const [taxRate, setTaxRate] = useState<string>('');
@@ -88,22 +90,45 @@ const SettingsPage = () => {
   const loadSettings = async () => {
     setIsLoading(true);
     try {
-      const settings = await getSettings();
+      const settings = await getSettings(currentTenant.id);
       if (settings) {
         setShippingFee(settings.shipping_fee.toString());
         setTaxRate(settings.tax_rate.toString());
         setDeliveryDelay(settings.delivery_delay?.toString() || '0');
       } else {
-        setShippingFee('5.99'); // Default value
-        setTaxRate('0.08'); // Default value (8%)
-        setDeliveryDelay('0'); // Default value
-      }
+        // Default values
+        const defaultShippingFee = 5.99;
+        const defaultTaxRate = 0.08; // 8%
+        const defaultDeliveryDelay = 0;
+        
+        // Create default settings if none exist
+        console.log('No settings found for tenant, creating defaults...');
+        const success = await updateSettings(defaultShippingFee, defaultTaxRate, currentTenant.id);
+        
+        if (success) {
+          console.log('Default settings created successfully');
+          toast({
+            title: "Settings initialized",
+            description: "Default settings have been created for your store."
+          });
+        } else {
+          console.error('Failed to create default settings');
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to initialize settings"
+          });
+        }
+        
+        setShippingFee(defaultShippingFee.toString());
+        setTaxRate(defaultTaxRate.toString());
+        setDeliveryDelay(defaultDeliveryDelay.toString())}
     } catch (error) {
-      console.error("Error loading settings:", error);
+      console.error('Error loading settings:', error);
       toast({
-        variant: "destructive",
         title: "Error",
-        description: "Failed to load settings."
+        description: "Failed to load settings",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -112,14 +137,14 @@ const SettingsPage = () => {
 
   const loadGovernmentFees = async () => {
     try {
-      const fees = await getGovernmentShippingFees();
-      setGovernmentFees(fees);
+      const fees = await getGovernmentShippingFees(currentTenant.id);
+      setGovernmentFees(fees || []);
     } catch (error) {
-      console.error("Error loading government fees:", error);
+      console.error('Error loading government fees:', error);
       toast({
-        variant: "destructive",
         title: "Error",
-        description: "Failed to load government shipping fees."
+        description: "Failed to load government fees",
+        variant: "destructive",
       });
     }
   };
@@ -163,7 +188,7 @@ const SettingsPage = () => {
         throw new Error("Invalid number format");
       }
       
-      const success = await updateSettings(shippingFeeNumber, taxRateNumber);
+      const success = await updateSettings(shippingFeeNumber, taxRateNumber, currentTenant.id);
       if (success) {
         toast({
           title: "Settings updated",
@@ -187,7 +212,7 @@ const SettingsPage = () => {
   const handleSaveGovernmentFees = async () => {
     setIsSavingGovernmentFees(true);
     try {
-      const success = await updateGovernmentShippingFees(governmentFees);
+      const success = await updateGovernmentShippingFees(currentTenant.id, governmentFees);
       if (success) {
         toast({
           title: "Government fees updated",
@@ -360,7 +385,7 @@ const SettingsPage = () => {
         throw new Error("Invalid number format or negative value");
       }
       
-      const success = await updateDeliveryDelay(delayNumber);
+      const success = await updateDeliveryDelay(currentTenant.id, delayNumber);
       if (success) {
         toast({
           title: "Delivery delay updated",

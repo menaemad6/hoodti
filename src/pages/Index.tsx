@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import HomeLayout from "@/components/layout/HomeLayout";
 import SEOHead from "@/components/seo/SEOHead";
 import { getSEOConfig } from "@/lib/seo-config";
-import { getProducts } from "@/integrations/supabase/products.service";
+import { useProductsService } from "@/integrations/supabase/products.service";
 import { getCategories } from "@/integrations/supabase/categories.service";
 import { Product, CategoryRow } from "@/integrations/supabase/types.service";
 import { Button } from "@/components/ui/button";
@@ -14,10 +14,11 @@ import ModernCategoryCard from "@/components/home/ModernCategoryCard";
 import { useTheme } from "@/context/ThemeContext";
 import { useCart } from "@/context/CartContext";
 import { formatPrice } from "../lib/utils";
+import { useCurrentTenant } from "@/context/TenantContext";
 
 const Index = () => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<CategoryRow[]>([]);
+  const [categories, setCategories] = useState<{ image: string; created_at: string; description: string; id: string; name: string; }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCategoriesLoading, setIsCategoriesLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -28,6 +29,8 @@ const Index = () => {
   const featuredCarouselRef = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
   const { addToCart } = useCart();
+  const productsService = useProductsService();
+  const currentTenant = useCurrentTenant();
 
   // Get SEO configuration for home page
   const seoConfig = getSEOConfig('home');
@@ -104,7 +107,7 @@ const Index = () => {
   const getFeaturedProducts = useCallback((products: Product[]) => {
     // Create a copy of the array to avoid modifying the original
     return products
-      .filter(product => product.featured)
+      .filter(product => product.is_new === true)
       .map(product => ({
         ...product,
         id: `featured-${product.id}` // Ensure unique IDs for featured products
@@ -244,34 +247,34 @@ const Index = () => {
     return () => carousel.removeEventListener('scroll', handleScroll);
   }, [featuredActiveIndex]);
 
+  const fetchProducts = async () => {
+    setIsLoading(true);
+    try {
+      const productsData = await productsService.getProducts();
+      setProducts(productsData);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    setIsCategoriesLoading(true);
+    try {
+      const categoriesData = await getCategories(currentTenant.id);
+      setCategories(categoriesData.map(cat => ({ ...cat, image: Array.isArray(cat.image) ? cat.image[0] : cat.image })));
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    } finally {
+      setIsCategoriesLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchProducts = async () => {
-      setIsLoading(true);
-      try {
-        const productsData = await getProducts();
-        setProducts(productsData);
-      } catch (error) {
-        console.error("Error fetching products:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    const fetchCategories = async () => {
-      setIsCategoriesLoading(true);
-      try {
-        const categoriesData = await getCategories();
-        setCategories(categoriesData);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      } finally {
-        setIsCategoriesLoading(false);
-      }
-    };
-
     fetchProducts();
     fetchCategories();
-  }, []);
+  }, [currentTenant.id]);
 
   return (
     <HomeLayout>
@@ -583,15 +586,27 @@ const Index = () => {
                                 </Button>
                                 
                                 {/* Quick add to cart button */}
-                                <Button 
-                                  size="sm" 
-                                  variant="outline" 
-                                  className="bg-background/80 hover:bg-primary border-border hover:border-primary text-foreground hover:text-primary-foreground rounded-full px-5 backdrop-blur-sm"
-                                  onClick={(e) => handleAddToCart(product, e)}
-                                >
-                                  <ShoppingBag className="h-3.5 w-3.5 mr-1.5" />
-                                  Add to Cart
-                                </Button>
+                                {product?.stock === 0 ? (
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    className="bg-gray-400 dark:bg-gray-600 text-white rounded-full px-5 cursor-not-allowed"
+                                    disabled
+                                  >
+                                    <ShoppingBag className="h-3.5 w-3.5 mr-1.5" />
+                                    Sold Out
+                                  </Button>
+                                ) : (
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    className="bg-background/80 hover:bg-primary border-border hover:border-primary text-foreground hover:text-primary-foreground rounded-full px-5 backdrop-blur-sm"
+                                    onClick={(e) => handleAddToCart(product, e)}
+                                  >
+                                    <ShoppingBag className="h-3.5 w-3.5 mr-1.5" />
+                                    Add to Cart
+                                  </Button>
+                                )}
                               </div>
                             </div>
                             
@@ -714,15 +729,27 @@ const Index = () => {
                               )}
                             </div>
                             {/* Add to cart button - fixed functionality */}
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              className="p-0 h-8 w-8 rounded-full border border-border hover:border-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 transform hover:scale-110 active:scale-95"
-                              onClick={(e) => handleAddToCart(product, e)}
-                              aria-label="Add to cart"
-                            >
-                              <ShoppingBag className="h-4 w-4" />
-                            </Button>
+                            {product?.stock === 0 ? (
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                className="p-0 h-8 w-8 rounded-full border border-gray-300 bg-gray-400 dark:bg-gray-600 text-white cursor-not-allowed"
+                                disabled
+                                aria-label="Sold out"
+                              >
+                                <ShoppingBag className="h-4 w-4" />
+                              </Button>
+                            ) : (
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                className="p-0 h-8 w-8 rounded-full border border-border hover:border-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 transform hover:scale-110 active:scale-95"
+                                onClick={(e) => handleAddToCart(product, e)}
+                                aria-label="Add to cart"
+                              >
+                                <ShoppingBag className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1038,15 +1065,27 @@ const Index = () => {
                               )}
                             </div>
                             {/* Add to cart button - same style as new arrivals */}
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              className="p-0 h-8 w-8 rounded-full border border-border hover:border-amber-500 hover:bg-amber-500 hover:text-white transition-all duration-300 transform hover:scale-110 active:scale-95"
-                              onClick={(e) => handleAddToCart(product, e)}
-                              aria-label="Add to cart"
-                            >
-                              <ShoppingBag className="h-4 w-4" />
-                            </Button>
+                            {product?.stock === 0 ? (
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                className="p-0 h-8 w-8 rounded-full border border-gray-300 bg-gray-400 dark:bg-gray-600 text-white cursor-not-allowed"
+                                disabled
+                                aria-label="Sold out"
+                              >
+                                <ShoppingBag className="h-4 w-4" />
+                              </Button>
+                            ) : (
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                className="p-0 h-8 w-8 rounded-full border border-border hover:border-amber-500 hover:bg-amber-500 hover:text-white transition-all duration-300 transform hover:scale-110 active:scale-95"
+                                onClick={(e) => handleAddToCart(product, e)}
+                                aria-label="Add to cart"
+                              >
+                                <ShoppingBag className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </div>

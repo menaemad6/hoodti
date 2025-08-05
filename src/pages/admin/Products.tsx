@@ -27,6 +27,8 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useCurrentTenant } from "@/context/TenantContext";
+import { getCategories } from "@/integrations/supabase/categories.service";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -79,6 +81,32 @@ const parseArrayField = (field: string | string[] | null | undefined): string[] 
   }
 };
 
+// Parse sizes from JSON object with style types
+const parseSizesWithStyles = (sizesField: string | null | undefined): { style: string; sizes: string[] }[] => {
+  if (!sizesField) return [];
+  try {
+    const sizesObj = JSON.parse(sizesField as string);
+    if (typeof sizesObj === 'object' && !Array.isArray(sizesObj)) {
+      return Object.entries(sizesObj).map(([style, sizes]) => ({
+        style,
+        sizes: Array.isArray(sizes) ? sizes : []
+      }));
+    }
+    // If it's just an array, return it as a single style
+    if (Array.isArray(sizesObj)) {
+      return [{ style: 'Default', sizes: sizesObj }];
+    }
+  } catch (e) {
+    // If parsing fails, check if it's already an array
+    if (Array.isArray(sizesField)) {
+      return [{ style: 'Default', sizes: sizesField }];
+    }
+    // Return as a single value
+    return [{ style: 'Default', sizes: [sizesField as string] }];
+  }
+  return [];
+};
+
 // Add constants for predefined options, matching ProductForm
 const COLOR_OPTIONS = [
   "Black", "White", "Red", "Blue", "Green", "Yellow", 
@@ -94,6 +122,7 @@ const SIZE_OPTIONS = [
 const ProductsPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const currentTenant = useCurrentTenant();
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -111,81 +140,43 @@ const ProductsPage = () => {
   });
   const seoConfig = getSEOConfig('adminProducts');
 
+  const fetchProducts = async () => {
+    setIsLoading(true);
+    try {
+      // Use tenant-aware query
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('tenant_id', currentTenant.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setProducts(data || []);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch products",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const fetchCategories = async () => {
+    try {
+      const categoriesData = await getCategories(currentTenant.id);
+      setCategories(categoriesData);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
+  
   useEffect(() => {
-    const fetchProducts = async () => {
-      setIsLoading(true);
-      try {
-        const { data: categoriesData, error: categoriesError } = await supabase
-          .from("categories")
-          .select("*");
-
-        if (categoriesError) throw categoriesError;
-        setCategories(categoriesData || []);
-
-        let query = supabase
-          .from("products")
-          .select(`
-            *,
-            category:categories(*)
-          `, { count: 'exact' });
-
-        if (filters.category && filters.category !== "all") {
-          query = query.eq("category_id", filters.category);
-        }
-
-        if (filters.status === "featured") {
-          query = query.eq("featured", true);
-        } else if (filters.status === "new") {
-          query = query.eq("is_new", true);
-        } else if (filters.status === "discounted") {
-          query = query.not("discount", "is", null);
-        }
-
-        // For size and color, we need to use ilike and or for searching within JSON arrays
-        if (filters.size && filters.size !== "all") {
-          query = query.or(`size.ilike.%${filters.size}%,size.eq.${filters.size}`);
-        }
-
-        if (filters.color && filters.color !== "all") {
-          query = query.or(`color.ilike.%${filters.color}%,color.eq.${filters.color}`);
-        }
-
-        if (filters.gender && filters.gender !== "all") {
-          query = query.eq("gender", filters.gender);
-        }
-
-        if (filters.price === "low") {
-          query = query.order("price", { ascending: true });
-        } else if (filters.price === "high") {
-          query = query.order("price", { ascending: false });
-        } else {
-          query = query.order("name", { ascending: true });
-        }
-
-        const from = currentPage * pageSize;
-        const to = from + pageSize - 1;
-        
-        const { data, count, error } = await query
-          .range(from, to);
-
-        if (error) throw error;
-        
-        setProducts(data || []);
-        setTotalPages(Math.ceil((count || 0) / pageSize));
-      } catch (error: any) {
-        console.error("Error fetching products:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load products. Please try again.",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchProducts();
-  }, [currentPage, pageSize, filters, toast]);
+    fetchCategories();
+  }, [currentTenant]);
 
   const handleDeleteProduct = async (productId: string) => {
     try {
@@ -331,67 +322,90 @@ const ProductsPage = () => {
       id: "clothing_details",
       header: "Product Details",
       cell: ({ row }) => {
-        // Parse sizes and colors as arrays
-        const sizes = parseArrayField(row.original.size);
+        // Parse sizes with styles and colors as arrays
+        const sizeStyles = parseSizesWithStyles(row.original.size);
         const colors = parseArrayField(row.original.color);
         
         return (
           <div className="text-left">
-            <div className="flex flex-wrap gap-1 mb-1">
-              {sizes.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  <span className="text-xs text-gray-500 dark:text-gray-400 mr-1">Sizes:</span>
-                  {sizes.map((size, index) => (
-                    <Badge 
-                      key={index}
-                      variant="outline" 
-                      className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800 text-xs px-1.5 py-0.5"
-                    >
-                      {size}
-                    </Badge>
+            <div className="flex flex-col gap-1 mb-1">
+              {sizeStyles.length > 0 && (
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Sizes:</span>
+                  {sizeStyles.map((styleItem, styleIndex) => (
+                    <div key={styleIndex} className="flex flex-wrap items-center gap-1 ml-1">
+                      {styleItem.style !== 'Default' && (
+                        <span className="text-xs text-gray-600 dark:text-gray-300 italic mr-1">
+                          {styleItem.style}:
+                        </span>
+                      )}
+                      {styleItem.sizes.map((size, sizeIndex) => (
+                        <Badge 
+                          key={sizeIndex}
+                          variant="outline" 
+                          className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800 text-xs px-1.5 py-0.5"
+                        >
+                          {size}
+                        </Badge>
+                      ))}
+                    </div>
                   ))}
                 </div>
               )}
             </div>
             
-            <div className="flex flex-wrap gap-1 mb-1">
+            <div className="flex flex-col gap-1 mb-1">
               {colors.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  <span className="text-xs text-gray-500 dark:text-gray-400 mr-1">Colors:</span>
-                  {colors.map((color, index) => (
-                    <Badge 
-                      key={index}
-                      variant="outline" 
-                      className="flex items-center bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800 text-xs px-1.5 py-0.5"
-                    >
-                      <span 
-                        className="inline-block w-2 h-2 rounded-full mr-1" 
-                        style={{ 
-                          backgroundColor: 
-                            ['black', 'white', 'red', 'blue', 'green', 'yellow', 'orange', 'purple', 'pink', 'brown', 'gray']
-                              .includes(color.toLowerCase()) 
-                              ? color.toLowerCase()
-                              : '#888' 
-                        }}
-                      ></span>
-                      {color}
-                    </Badge>
-                  ))}
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Colors:</span>
+                  <div className="flex flex-wrap items-center gap-1 ml-1">
+                    {colors.map((color, index) => (
+                      <Badge 
+                        key={index}
+                        variant="outline" 
+                        className="flex items-center bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800 text-xs px-1.5 py-0.5"
+                      >
+                        <span 
+                          className="inline-block w-2 h-2 rounded-full mr-1" 
+                          style={{ 
+                            backgroundColor: 
+                              ['black', 'white', 'red', 'blue', 'green', 'yellow', 'orange', 'purple', 'pink', 'brown', 'gray']
+                                .includes(color.toLowerCase()) 
+                                ? color.toLowerCase()
+                                : '#888' 
+                          }}
+                        ></span>
+                        {color}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
             
-            {row.original.gender && (
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800">
-                {row.original.gender}
-              </Badge>
-            )}
+            <div className="flex flex-col gap-1 mb-1">
+              {row.original.gender && (
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Gender:</span>
+                  <div className="flex flex-wrap items-center gap-1 ml-1">
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800">
+                      {row.original.gender}
+                    </Badge>
+                  </div>
+                </div>
+              )}
+            </div>
             
-            {row.original.brand && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {row.original.brand}
-              </p>
-            )}
+            <div className="flex flex-col gap-1">
+              {row.original.brand && (
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Brand:</span>
+                  <span className="text-xs text-gray-700 dark:text-gray-300 ml-1">
+                    {row.original.brand}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         );
       },
@@ -502,15 +516,15 @@ const ProductsPage = () => {
     <ProtectedRoute requiredRole={["admin", "super_admin"]}>
       <AdminLayout>
         <SEOHead {...seoConfig} />
-        <div className="flex flex-col gap-6">
-          <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-emerald-500/10 p-6 backdrop-blur-sm border border-white/10 dark:border-gray-800/40 shadow-lg">
+        <div className="flex flex-col gap-4 sm:gap-6">
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-emerald-500/10 p-3 sm:p-4 md:p-6 backdrop-blur-sm border border-white/10 dark:border-gray-800/40 shadow-lg">
             <div className="absolute inset-0 bg-grid-black/5 dark:bg-grid-white/5 bg-[size:var(--grid-size)_var(--grid-size)] [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"></div>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative">
-              <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600 dark:from-purple-400 dark:to-blue-400">Products</h1>
-              <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-3 relative">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600 dark:from-purple-400 dark:to-blue-400">Products</h1>
+              <div className="flex w-full sm:w-auto justify-center sm:justify-end gap-2">
                 <Button 
                   onClick={() => navigate("/admin/products/new")} 
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg gap-2 shadow-md hover:shadow-lg transition-all duration-200"
+                  className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg gap-2 shadow-md hover:shadow-lg transition-all duration-200"
                 >
                   <Plus className="h-4 w-4" />
                   Add Product
@@ -519,15 +533,15 @@ const ProductsPage = () => {
             </div>
           </div>
 
-          <GlassCard className="overflow-hidden backdrop-blur-xl bg-white/30 dark:bg-black/30 border border-white/20 dark:border-gray-800/30 shadow-xl">
+          <GlassCard className="mt-8 overflow-hidden backdrop-blur-xl bg-white/30 dark:bg-black/30 border border-white/20 dark:border-gray-800/30 shadow-xl">
             <CardHeader className="bg-gradient-to-r from-gray-50 to-white/60 dark:from-gray-900/70 dark:to-gray-900/40 border-b border-gray-100 dark:border-gray-800/30">
               <CardTitle className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-gray-100 dark:to-gray-400">Product Management</CardTitle>
               <CardDescription className="text-gray-600 dark:text-gray-400">View and manage your store's products.</CardDescription>
             </CardHeader>
-            <CardContent className="p-6">
-              <div className="space-y-6">
-                <div className="flex flex-col gap-4 pb-4 bg-gradient-to-r from-gray-50/50 to-white/50 dark:from-gray-900/50 dark:to-gray-800/30 p-4 rounded-xl backdrop-blur-sm">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-6 gap-4">
+            <CardContent className="p-3 sm:p-4 md:p-6">
+              <div className="space-y-4 sm:space-y-6">
+                <div className="flex flex-col gap-3 pb-3 sm:pb-4 bg-gradient-to-r from-gray-50/50 to-white/50 dark:from-gray-900/50 dark:to-gray-800/30 p-3 sm:p-4 rounded-xl backdrop-blur-sm">
+                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                     <Select
                       value={filters.category}
                       onValueChange={(value) => setFilters({ ...filters, category: value })}
@@ -621,10 +635,10 @@ const ProductsPage = () => {
                     </Select>
                   </div>
                   
-                  <div className="flex justify-end">
+                  <div className="flex justify-center sm:justify-end mt-2">
                     <Button 
                       variant="outline" 
-                      className="whitespace-nowrap bg-white/70 dark:bg-gray-900/70 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg shadow-sm hover:shadow transition-all duration-200"
+                      className="whitespace-nowrap w-full sm:w-auto bg-white/70 dark:bg-gray-900/70 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg shadow-sm hover:shadow transition-all duration-200"
                       onClick={resetFilters}
                     >
                       <Filter className="mr-2 h-4 w-4" />

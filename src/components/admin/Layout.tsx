@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useRoleAccess } from "@/hooks/use-role-access";
 import { useToast } from "@/hooks/use-toast";
+import { useCurrentTenant } from "@/context/TenantContext";
 import { 
   LayoutDashboard, 
   ShoppingBag, 
@@ -34,6 +35,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const { isAdmin, isSuperAdmin } = useRoleAccess();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const currentTenant = useCurrentTenant();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -59,7 +61,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       const { count } = await supabase
         .from("orders")
         .select("*", { count: "exact", head: true })
-        .eq("status", "pending");
+        .eq("status", "pending")
+        .eq("tenant_id", currentTenant.id);
       
       if (count !== null) {
         setPendingOrders(count);
@@ -68,7 +71,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
     getProfile();
     getPendingOrders();
-  }, [user]);
+  }, [user, currentTenant]);
 
   if (!isAdmin && !isSuperAdmin) {
     navigate('/');

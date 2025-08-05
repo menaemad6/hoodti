@@ -174,14 +174,25 @@ const ModernProductCard: React.FC<ModernProductCardProps> = ({
         <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none dark:bg-black/30"></div>
         
         <div className="absolute bottom-0 left-0 right-0 flex justify-center p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-          <Button 
-            onClick={handleAddToCart}
-            size="sm"
-            className="rounded-full shadow-lg"
-          >
-            <ShoppingCart className="h-4 w-4 mr-2" />
-            Add to Cart
-          </Button>
+          {normalizedProduct.stock === 0 ? (
+            <Button 
+              size="sm"
+              className="rounded-full shadow-lg bg-gray-400 dark:bg-gray-600 cursor-not-allowed"
+              disabled
+            >
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              Sold Out
+            </Button>
+          ) : (
+            <Button 
+              onClick={handleAddToCart}
+              size="sm"
+              className="rounded-full shadow-lg"
+            >
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              Add to Cart
+            </Button>
+          )}
         </div>
       </div>
       
