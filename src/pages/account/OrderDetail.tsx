@@ -81,7 +81,7 @@ const getStatusColor = (status: string) => {
     case 'delivered':
       return 'bg-green-500';
     case 'processing':
-      return 'bg-blue-500';
+      return 'bg-primary';
     case 'shipped':
       return 'bg-purple-500';
     case 'pending':
@@ -103,7 +103,7 @@ const StatusBadge = ({ status }: { status: string }) => {
       badgeClass = 'border-green-200 bg-green-50 text-green-700';
       break;
     case 'processing':
-      badgeClass = 'border-blue-200 bg-blue-50 text-blue-700';
+      badgeClass = 'border-primary/30 bg-primary/10 text-primary';
       break;
     case 'shipped':
       badgeClass = 'border-purple-200 bg-purple-50 text-purple-700';
@@ -237,7 +237,7 @@ const OrderDetail = () => {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className="h-9 px-2 sm:h-10 sm:px-3 hover:bg-background/80 dark:hover:bg-background/40"
+                  className="h-9 px-2 sm:h-10 sm:px-3 hover:bg-primary/10 dark:hover:bg-primary/20"
                   asChild
                 >
                   <Link to="/account/orders">
@@ -260,8 +260,8 @@ const OrderDetail = () => {
             
             <AnimatedWrapper animation="fade-in" className="space-y-4 sm:space-y-6">
               <ModernCard 
-                className="overflow-hidden border-0 shadow-lg shadow-gray-100/50 dark:shadow-black/10 dark:bg-gray-950/50"
-                headerClassName="bg-gradient-to-r from-gray-50 to-gray-100/50 dark:from-gray-900/50 dark:to-gray-950/50"
+                className="overflow-hidden border border-border shadow-md bg-card"
+                headerClassName="bg-gradient-to-r from-background to-muted/50"
                 title={
                   <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 p-2">
                     <div>
@@ -286,7 +286,7 @@ const OrderDetail = () => {
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 p-3 sm:p-4 lg:p-6">
                       {/* Contact Information */}
-                      <div className="bg-gray-50/30 dark:bg-gray-900/30 backdrop-blur-xl rounded-xl p-3 sm:p-4 border border-border hover:border-gray-200 dark:hover:border-gray-700 transition-colors md:col-span-3">
+                      <div className="bg-muted/30 rounded-xl p-3 sm:p-4 border border-border hover:border-border/80 transition-colors md:col-span-3">
                         <h3 className="font-medium mb-2 flex items-center text-foreground/90 dark:text-foreground/80">
                           <User className="h-4 w-4 mr-1.5 text-primary/90 dark:text-primary/80" /> 
                           Customer Information
@@ -314,7 +314,7 @@ const OrderDetail = () => {
                       </div>
 
                       {order.shipping_address && (
-                        <div className="bg-gray-50/30 dark:bg-gray-900/30 backdrop-blur-xl rounded-xl p-3 sm:p-4 border border-border hover:border-gray-200 dark:hover:border-gray-700 transition-colors">
+                        <div className="bg-muted/30 rounded-xl p-3 sm:p-4 border border-border hover:border-border/80 transition-colors">
                           <h3 className="font-medium mb-2 flex items-center text-foreground/90 dark:text-foreground/80">
                             <MapPin className="h-4 w-4 mr-1.5 text-primary/90 dark:text-primary/80" /> 
                             Shipping Address
@@ -326,7 +326,7 @@ const OrderDetail = () => {
                       )}
                       
                       {order.payment_method && (
-                        <div className="bg-gray-50/30 dark:bg-gray-900/30 backdrop-blur-xl rounded-xl p-3 sm:p-4 border border-border hover:border-gray-200 dark:hover:border-gray-700 transition-colors">
+                        <div className="bg-muted/30 rounded-xl p-3 sm:p-4 border border-border hover:border-border/80 transition-colors">
                           <h3 className="font-medium mb-2 flex items-center text-foreground/90 dark:text-foreground/80">
                             <CreditCard className="h-4 w-4 mr-1.5 text-primary/90 dark:text-primary/80" /> 
                             Payment Method
@@ -338,7 +338,7 @@ const OrderDetail = () => {
                       )}
                       
                       {deliverySlotInfo && (
-                        <div className="bg-gray-50/30 dark:bg-gray-900/30 backdrop-blur-xl rounded-xl p-3 sm:p-4 border border-border hover:border-gray-200 dark:hover:border-gray-700 transition-colors">
+                        <div className="bg-muted/30 rounded-xl p-3 sm:p-4 border border-border hover:border-border/80 transition-colors">
                           <h3 className="font-medium mb-2 flex items-center text-foreground/90 dark:text-foreground/80">
                             <CalendarDays className="h-4 w-4 mr-1.5 text-primary/90 dark:text-primary/80" /> 
                             Delivery Window
@@ -352,13 +352,13 @@ const OrderDetail = () => {
                       )}
                     </div>
                     
-                    <div className="p-3 sm:p-4 lg:p-6 pt-0">
+                      <div className="p-3 sm:p-4 lg:p-6 pt-0">
                       <h3 className="font-medium mb-2 sm:mb-4 flex items-center text-foreground/90 dark:text-foreground/80">
                         <ShoppingBag className="h-4 w-4 mr-2 text-primary/90 dark:text-primary/80" /> 
                         Order Items ({orderItems.length})
                       </h3>
                       
-                      <div className="rounded-xl border border-border overflow-hidden bg-background/40 dark:bg-background/30">
+                        <div className="rounded-xl border border-border overflow-hidden bg-background/40">
                         <div className="overflow-x-auto">
                           <Table>
                             <TableHeader className="bg-primary/[0.03] dark:bg-primary/[0.02]">
@@ -455,7 +455,7 @@ const OrderDetail = () => {
                         </div>
                       </div>
                       
-                      <div className="mt-4 sm:mt-6 bg-gray-50/30 dark:bg-gray-900/30 rounded-xl p-3 sm:p-4 border border-border">
+                       <div className="mt-4 sm:mt-6 bg-muted/30 rounded-xl p-3 sm:p-4 border border-border">
                         <div className="flex justify-between items-center mb-2">
                           <span className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground/90">Subtotal</span>
                           <span className="text-xs sm:text-sm">{formatPrice(orderItems.reduce((total, item) => total + (Number(item.price_at_time) * item.quantity), 0))}</span>
@@ -495,7 +495,7 @@ const OrderDetail = () => {
                         asChild 
                         variant="outline"
                         size="sm"
-                        className="rounded-full border hover:bg-background/80 dark:hover:bg-background/40 text-xs sm:text-sm w-full xs:w-auto"
+                        className="rounded-full border hover:bg-primary/10 dark:hover:bg-primary/20 text-xs sm:text-sm w-full xs:w-auto"
                       >
                         <Link to="/shop" className="justify-center xs:justify-start">
                           Continue Shopping
@@ -504,7 +504,7 @@ const OrderDetail = () => {
                       <Button 
                         asChild
                         size="sm"
-                        className="rounded-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 dark:from-green-500 dark:to-blue-500 dark:hover:from-green-600 dark:hover:to-blue-600 text-white shadow-lg shadow-blue-600/10 dark:shadow-blue-500/10 text-xs sm:text-sm w-full xs:w-auto"
+                        className="rounded-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary dark:from-primary dark:to-primary/80 dark:hover:from-primary/90 dark:hover:to-primary text-primary-foreground shadow-lg shadow-primary/10 dark:shadow-primary/10 text-xs sm:text-sm w-full xs:w-auto"
                       >
                         <Link to="/account/orders" className="justify-center xs:justify-start">
                           View All Orders

@@ -51,7 +51,7 @@ const getStatusColor = (status: string) => {
     case 'delivered':
       return 'bg-green-500 dark:bg-green-500/90';
     case 'processing':
-      return 'bg-blue-500 dark:bg-blue-500/90';
+      return 'bg-primary dark:bg-primary/90';
     case 'shipped':
       return 'bg-purple-500 dark:bg-purple-500/90';
     case 'pending':
@@ -69,7 +69,7 @@ const getBadgeStyles = (status: string) => {
     case 'delivered':
       return 'border-green-200 bg-green-50 text-green-700 dark:border-green-800/60 dark:bg-green-900/20 dark:text-green-400';
     case 'processing':
-      return 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800/60 dark:bg-blue-900/20 dark:text-blue-400';
+      return 'border-primary/30 bg-primary/10 text-primary dark:border-primary/40 dark:bg-primary/10 dark:text-primary';
     case 'shipped':
       return 'border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-800/60 dark:bg-purple-900/20 dark:text-purple-400';
     case 'pending':
@@ -140,7 +140,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, status, withItems = false,
   
   return (
     <ModernCard 
-      className="overflow-hidden backdrop-blur-sm border-0 shadow-lg shadow-gray-100/50 dark:shadow-black/10 dark:bg-gray-950/50 transition-all duration-300 hover:shadow-xl hover:shadow-gray-100/70 dark:hover:shadow-black/20"
+      className="overflow-hidden backdrop-blur-sm border border-border bg-card text-card-foreground shadow-md transition-all duration-300 hover:shadow-lg hover:bg-card/80"
       title={
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 w-full">
           <div>
@@ -168,9 +168,9 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, status, withItems = false,
           </div>
         </div>
       }
-      headerClassName="p-3 sm:p-5 bg-gradient-to-r from-gray-50 to-gray-100/50 dark:from-gray-900/50 dark:to-gray-950/50"
+      headerClassName="p-3 sm:p-5 bg-gradient-to-r from-background to-muted/50"
       contentClassName="p-0"
-      footerClassName="p-3 sm:p-5 bg-gray-50/50 dark:bg-gray-900/30"
+      footerClassName="p-3 sm:p-5 bg-muted/30"
       footer={
         <div className="flex flex-col xs:flex-row justify-between items-start xs:items-center w-full gap-3 xs:gap-0">
           <div>
@@ -181,7 +181,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, status, withItems = false,
             <Button 
               variant="outline" 
               size="sm" 
-              className="w-full xs:w-auto h-8 px-3 sm:h-9 text-xs sm:text-sm rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors dark:bg-gray-900 dark:border-gray-800 dark:hover:bg-gray-800/80"
+              className="w-full xs:w-auto h-8 px-3 sm:h-9 text-xs sm:text-sm rounded-full border border-border bg-background hover:bg-muted/40 transition-colors"
               onClick={onViewDetails}
             >
               View Details
@@ -192,7 +192,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, status, withItems = false,
               asChild 
               variant="outline" 
               size="sm" 
-              className="w-full xs:w-auto h-8 px-3 sm:h-9 text-xs sm:text-sm rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors dark:bg-gray-900 dark:border-gray-800 dark:hover:bg-gray-800/80"
+              className="w-full xs:w-auto h-8 px-3 sm:h-9 text-xs sm:text-sm rounded-full border border-border bg-background hover:bg-muted/40 transition-colors"
             >
               <Link to={`/account/orders/${order.id}`} className="w-full flex justify-center xs:justify-start items-center">
                 View Details
@@ -204,7 +204,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, status, withItems = false,
       }
     >
       {withItems && order.order_items && order.order_items.length > 0 && (
-        <div className="p-3 sm:p-5 space-y-3 sm:space-y-4 bg-white/80 dark:bg-transparent dark:backdrop-blur-sm">
+        <div className="p-3 sm:p-5 space-y-3 sm:space-y-4 bg-background/60 backdrop-blur-sm">
           <div className="flex items-center gap-2 mb-1 sm:mb-2">
             <ShoppingBag className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
             <h4 className="text-xs sm:text-sm font-medium">Items ({order.order_items.length})</h4>
@@ -212,8 +212,8 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, status, withItems = false,
           
           <div className="space-y-3 sm:space-y-4">
             {order.order_items.slice(0, 3).map((item) => (
-              <div key={item.id} className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl border border-gray-100 hover:border-gray-200 dark:border-gray-800/60 dark:hover:border-gray-700/80 transition-colors bg-gray-50/50 dark:bg-gray-900/20">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden bg-white dark:bg-gray-800 flex-shrink-0 border border-gray-100 dark:border-gray-700">
+              <div key={item.id} className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl border border-border hover:border-border/80 transition-colors bg-muted/30">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden bg-background flex-shrink-0 border border-border">
                   {item.product && Array.isArray(item.product.images) && item.product.images.length > 0 ? (
                     <img 
                       src={item.product.images[0]} 

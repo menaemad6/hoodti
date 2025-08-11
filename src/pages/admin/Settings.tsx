@@ -51,7 +51,7 @@ import {
 import Spinner from "@/components/ui/spinner";
 import DiscountsTab from "@/components/admin/DiscountsTab";
 import SEOHead from "@/components/seo/SEOHead";
-import { getSEOConfig } from "@/lib/seo-config";
+import { useSEOConfig } from "@/lib/seo-config";
 import { Badge } from "@/components/ui/badge";
 
 const SettingsPage = () => {
@@ -416,7 +416,7 @@ const SettingsPage = () => {
     }
   };
   
-  const seoConfig = getSEOConfig('adminDashboard');
+  const seoConfig = useSEOConfig('adminDashboard');
   
   return (
     <ProtectedRoute requiredRole={["admin", "super_admin"]}>

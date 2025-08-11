@@ -39,7 +39,7 @@ const AccountLayout: React.FC<AccountLayoutProps> = ({
               <Button 
                 variant="outline" 
                 onClick={() => navigate(backLink)}
-                className="flex items-center rounded-full"
+                className="flex items-center rounded-full hover:bg-primary/10 dark:hover:bg-primary/20"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 {backLinkText}

@@ -40,7 +40,7 @@ const Navbar = () => {
               {/* Mobile menu */}
               <Sheet>
                 <SheetTrigger asChild className="md:hidden">
-                  <Button variant="ghost" size="icon" className="hover:bg-accent rounded-full">
+                  <Button variant="ghost" size="icon" className="hover:bg-primary/10 dark:hover:bg-primary/20 rounded-full">
                     <Menu className="h-[18px] w-[18px]" />
                     <span className="sr-only">Open menu</span>
                   </Button>
@@ -86,24 +86,24 @@ const Navbar = () => {
 
                     <nav className="flex-1 overflow-y-auto">
                       <div className="px-2 py-4 space-y-1">
-                        <Link to="/" className="flex items-center px-2 py-3 text-sm font-medium hover:bg-accent rounded-lg transition-colors">
+                        <Link to="/" className="flex items-center px-2 py-3 text-sm font-medium hover:bg-primary/10 dark:hover:bg-primary/20 rounded-lg transition-colors">
                           Home
                         </Link>
-                        <Link to="/shop" className="flex items-center px-2 py-3 text-sm font-medium hover:bg-accent rounded-lg transition-colors">
+                        <Link to="/shop" className="flex items-center px-2 py-3 text-sm font-medium hover:bg-primary/10 dark:hover:bg-primary/20 rounded-lg transition-colors">
                           Shop
                         </Link>
-                        <Link to="/categories" className="flex items-center px-2 py-3 text-sm font-medium hover:bg-accent rounded-lg transition-colors">
+                        <Link to="/categories" className="flex items-center px-2 py-3 text-sm font-medium hover:bg-primary/10 dark:hover:bg-primary/20 rounded-lg transition-colors">
                           Categories
                         </Link>
-                        <Link to="/deals" className="flex items-center px-2 py-3 text-sm font-medium hover:bg-accent rounded-lg transition-colors">
+                        <Link to="/deals" className="flex items-center px-2 py-3 text-sm font-medium hover:bg-primary/10 dark:hover:bg-primary/20 rounded-lg transition-colors">
                           Deals
                         </Link>
                         {!isAuthenticated && (
                           <>
-                            <Link to="/signin" className="flex items-center px-2 py-3 text-sm font-medium hover:bg-accent rounded-lg transition-colors">
+                            <Link to="/signin" className="flex items-center px-2 py-3 text-sm font-medium hover:bg-primary/10 dark:hover:bg-primary/20 rounded-lg transition-colors">
                               Sign In
                             </Link>
-                            <Link to="/signup" className="flex items-center px-2 py-3 text-sm font-medium hover:bg-accent rounded-lg transition-colors">
+                            <Link to="/signup" className="flex items-center px-2 py-3 text-sm font-medium hover:bg-primary/10 dark:hover:bg-primary/20 rounded-lg transition-colors">
                               Sign Up
                             </Link>
                           </>
@@ -155,16 +155,16 @@ const Navbar = () => {
 
               {/* Desktop navigation */}
               <nav className="hidden md:flex items-center space-x-1">
-                <Link to="/" className="px-3 py-1.5 text-sm font-medium hover:bg-accent rounded-full transition-colors">
+                <Link to="/" className="px-3 py-1.5 text-sm font-medium hover:bg-primary/10 dark:hover:bg-primary/20 rounded-full transition-colors">
                   Home
                 </Link>
-                <Link to="/shop" className="px-3 py-1.5 text-sm font-medium hover:bg-accent rounded-full transition-colors">
+                <Link to="/shop" className="px-3 py-1.5 text-sm font-medium hover:bg-primary/10 dark:hover:bg-primary/20 rounded-full transition-colors">
                   Shop
                 </Link>
-                <Link to="/categories" className="px-3 py-1.5 text-sm font-medium hover:bg-accent rounded-full transition-colors">
+                <Link to="/categories" className="px-3 py-1.5 text-sm font-medium hover:bg-primary/10 dark:hover:bg-primary/20 rounded-full transition-colors">
                   Categories
                 </Link>
-                <Link to="/deals" className="px-3 py-1.5 text-sm font-medium hover:bg-accent rounded-full transition-colors">
+                <Link to="/deals" className="px-3 py-1.5 text-sm font-medium hover:bg-primary/10 dark:hover:bg-primary/20 rounded-full transition-colors">
                   Deals
                 </Link>
               </nav>

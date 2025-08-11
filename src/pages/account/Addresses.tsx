@@ -50,7 +50,7 @@ import { useNavigate } from "react-router-dom";
 import { ChevronLeft, Plus, Home, Building2, MapPin, Check, Edit, Trash2 } from "lucide-react";
 import AnimatedWrapper from "@/components/ui/animated-wrapper";
 import SEOHead from "@/components/seo/SEOHead";
-import { getSEOConfig } from "@/lib/seo-config";
+import { useSEOConfig } from "@/lib/seo-config";
 import { getGovernmentShippingFees, GovernmentShippingFee } from "@/integrations/supabase/settings.service";
 import {
   Select,
@@ -391,7 +391,7 @@ const AddressList: React.FC<AddressListProps> = ({
               <div className="flex items-start gap-3">
                 <div className={cn(
                   "p-2.5 rounded-full",
-                  isHome ? "bg-blue-50 text-blue-500 dark:bg-blue-950/50 dark:text-blue-400" :
+            isHome ? "bg-primary/10 text-primary" :
                   isWork ? "bg-purple-50 text-purple-500 dark:bg-purple-950/50 dark:text-purple-400" :
                   "bg-green-50 text-green-500 dark:bg-green-950/50 dark:text-green-400"
                 )}>
@@ -476,7 +476,7 @@ const Addresses = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState<AddressType | null>(null);
   const { toast } = useToast();
-  const seoConfig = getSEOConfig('accountAddresses');
+  const seoConfig = useSEOConfig('accountAddresses');
 
   useEffect(() => {
     fetchAddresses();
@@ -623,7 +623,7 @@ const Addresses = () => {
               <Button 
                 asChild 
                 variant="ghost" 
-                className="h-10 px-3 hover:bg-background/80 dark:hover:bg-background/40"
+                className="h-10 px-3 hover:bg-primary/10 dark:hover:bg-primary/20"
               >
                 <Link to="/account">
                   <ChevronLeft className="h-4 w-4 mr-1" />
@@ -674,7 +674,7 @@ const Addresses = () => {
                       <p className="text-muted-foreground dark:text-muted-foreground/90 mb-6 max-w-md mx-auto">
                         You haven't added any addresses yet. Add an address to make checkout easier.
                       </p>
-                      <Button onClick={handleCreate} className="gap-1 rounded-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 dark:from-green-500 dark:to-blue-500 dark:hover:from-green-600 dark:hover:to-blue-600 text-white shadow-lg shadow-blue-600/10 dark:shadow-blue-500/10">
+  <Button onClick={handleCreate} className="gap-1 rounded-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-lg shadow-primary/10">
                         <Plus className="h-4 w-4" />
                         Add New Address
                       </Button>

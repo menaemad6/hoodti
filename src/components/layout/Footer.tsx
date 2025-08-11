@@ -11,9 +11,11 @@ import {
   Heart
 } from "lucide-react";
 import { BRAND_NAME } from "@/lib/constants";
+import { useCurrentTenant } from "@/context/TenantContext";
 import { Button } from "@/components/ui/button";
 
 const Footer = () => {
+  const tenant = useCurrentTenant();
   return (
     <footer className="pt-16 pb-24 md:pb-8 bg-background">
       {/* Main Footer Content */}
@@ -27,23 +29,41 @@ const Footer = () => {
               </span>
             </Link>
             <p className="text-muted-foreground mb-6 max-w-md">
-              Discover curated fashion collections that blend timeless elegance with contemporary trends. 
-              From everyday essentials to statement pieces, we're dedicated to quality craftsmanship 
-              and sustainable style that empowers your personal expression.
+              {tenant.footerDescription ||
+                "Discover curated fashion collections that blend timeless elegance with contemporary trends. From everyday essentials to statement pieces, we're dedicated to quality craftsmanship and sustainable style that empowers your personal expression."}
             </p>
             <div className="flex items-center space-x-1.5 mb-8">
-              <Button size="icon" variant="outline" className="rounded-full w-9 h-9 text-foreground/80 hover:text-primary hover:border-primary">
-                <Facebook size={18} />
-                <span className="sr-only">Facebook</span>
-              </Button>
-              <Button size="icon" variant="outline" className="rounded-full w-9 h-9 text-foreground/80 hover:text-primary hover:border-primary">
-                <Instagram size={18} />
-                <span className="sr-only">Instagram</span>
-              </Button>
-              <Button size="icon" variant="outline" className="rounded-full w-9 h-9 text-foreground/80 hover:text-primary hover:border-primary">
-                <Twitter size={18} />
-                <span className="sr-only">Twitter</span>
-              </Button>
+              {tenant.socialMedia?.facebook && (
+                <Button asChild size="icon" variant="outline" className="rounded-full w-9 h-9 text-foreground/80 hover:text-primary hover:border-primary">
+                  <a href={tenant.socialMedia.facebook} target="_blank" rel="noopener noreferrer">
+                    <Facebook size={18} />
+                    <span className="sr-only">Facebook</span>
+                  </a>
+                </Button>
+              )}
+              {tenant.socialMedia?.instagram && (
+                <Button asChild size="icon" variant="outline" className="rounded-full w-9 h-9 text-foreground/80 hover:text-primary hover:border-primary">
+                  <a href={tenant.socialMedia.instagram} target="_blank" rel="noopener noreferrer">
+                    <Instagram size={18} />
+                    <span className="sr-only">Instagram</span>
+                  </a>
+                </Button>
+              )}
+              {tenant.socialMedia?.twitter && (
+                <Button asChild size="icon" variant="outline" className="rounded-full w-9 h-9 text-foreground/80 hover:text-primary hover:border-primary">
+                  <a href={tenant.socialMedia.twitter} target="_blank" rel="noopener noreferrer">
+                    <Twitter size={18} />
+                    <span className="sr-only">Twitter</span>
+                  </a>
+                </Button>
+              )}
+              {tenant.socialMedia?.youtube && (
+                <Button asChild size="icon" variant="outline" className="rounded-full w-9 h-9 text-foreground/80 hover:text-primary hover:border-primary">
+                  <a href={tenant.socialMedia.youtube} target="_blank" rel="noopener noreferrer">
+                    <span className="sr-only">YouTube</span>
+                  </a>
+                </Button>
+              )}
             </div>
           </div>
           
@@ -117,21 +137,20 @@ const Footer = () => {
                 <div className="flex items-start">
                   <MapPin className="h-5 w-5 mr-3 text-primary/70 mt-0.5" />
                   <span className="text-muted-foreground">
-                    123 Fashion St.<br />
-                    New York, NY 10001
+                    {tenant.address}
                   </span>
                 </div>
               </li>
               <li>
                 <div className="flex items-center">
                   <Phone className="h-5 w-5 mr-3 text-primary/70" />
-                  <span className="text-muted-foreground">(800) 123-4567</span>
+                  <span className="text-muted-foreground">{tenant.contactPhone}</span>
                 </div>
               </li>
               <li>
                 <div className="flex items-center">
                   <Mail className="h-5 w-5 mr-3 text-primary/70" />
-                  <span className="text-muted-foreground">support@{BRAND_NAME.toLowerCase()}.com</span>
+                  <span className="text-muted-foreground">{tenant.contactEmail}</span>
                 </div>
               </li>
             </ul>
@@ -146,7 +165,7 @@ const Footer = () => {
           <div className="flex items-center text-sm text-muted-foreground">
             Developed by 
             <a 
-              href="https://mina-emad.netlify.app" 
+              href="https://mina-emad.com" 
               target="_blank" 
               rel="noopener noreferrer" 
               className="ml-1 font-medium hover:text-primary/80 text-xl text-primary transition-colors"

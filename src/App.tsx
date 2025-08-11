@@ -10,6 +10,7 @@ import AuthRoute from "@/components/auth/AuthRoute";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Spinner from "@/components/ui/spinner";
 import ScrollToTop from "@/components/layout/ScrollToTop";
+import MusicPlayer from "@/components/ui/music-player";
 
 // Lazy-loaded components
 const Index = lazy(() => import("@/pages/Index"));
@@ -115,6 +116,8 @@ function App() {
                 </Routes>
               </Suspense>
               <Toaster />
+              {/* Global background music player (needs Tenant context) */}
+              <MusicPlayer />
             </CartProvider>
           </AuthProvider>
           </TenantProvider>

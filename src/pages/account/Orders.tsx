@@ -10,14 +10,16 @@ import { ChevronLeft, PackageSearch } from "lucide-react";
 import AnimatedWrapper from "@/components/ui/animated-wrapper";
 import { useToast } from "@/hooks/use-toast";
 import SEOHead from "@/components/seo/SEOHead";
-import { getSEOConfig } from "@/lib/seo-config";
+import { useSEOConfig } from "@/lib/seo-config";
+import type { Order as SupabaseOrder, OrderItem as SupabaseOrderItem } from "@/integrations/supabase/types.service";
+type AccountOrder = SupabaseOrder & { order_items?: SupabaseOrderItem[] };
 
 const Orders = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<AccountOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const seoConfig = getSEOConfig('accountOrders');
+  const seoConfig = useSEOConfig('accountOrders');
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -25,7 +27,7 @@ const Orders = () => {
 
       try {
         setIsLoading(true);
-        const userOrders = await getOrdersWithItems(user.id);
+        const userOrders = await getOrdersWithItems(user.id) as unknown as AccountOrder[];
 
         if (userOrders && userOrders.length > 0) {
           setOrders(userOrders);
@@ -59,7 +61,7 @@ const Orders = () => {
               <Button 
                 asChild 
                 variant="ghost" 
-                className="h-9 px-2 sm:h-10 sm:px-3 hover:bg-background/80 dark:hover:bg-background/40"
+                className="h-9 px-2 sm:h-10 sm:px-3 hover:bg-primary/10 dark:hover:bg-primary/20"
               >
                 <Link to="/account">
                   <ChevronLeft className="h-4 w-4 mr-1" />
@@ -96,10 +98,10 @@ const Orders = () => {
                 ))}
               </div>
             ) : (
-              <ModernCard className="max-w-2xl mx-auto border-0 shadow-lg shadow-gray-100/50 dark:shadow-black/10 dark:bg-gray-950/50">
+              <ModernCard className="max-w-2xl mx-auto border-0 shadow-lg">
                 <div className="p-4 sm:p-8 text-center">
                   <div className="mb-4 sm:mb-6 flex justify-center">
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950/50 dark:to-blue-950/50 flex items-center justify-center">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-r from-primary/10 to-primary/20 dark:from-primary/20 dark:to-primary/10 flex items-center justify-center">
                       <PackageSearch className="w-6 h-6 sm:w-8 sm:h-8 text-primary dark:text-primary/90" />
                     </div>
                   </div>
@@ -112,7 +114,7 @@ const Orders = () => {
                   <Button 
                     asChild 
                     size="sm"
-                    className="rounded-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 dark:from-green-500 dark:to-blue-500 dark:hover:from-green-600 dark:hover:to-blue-600 text-white shadow-lg shadow-blue-600/10 dark:shadow-blue-500/10 text-xs sm:text-sm px-4 py-2 h-auto"
+                    className="rounded-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary dark:from-primary dark:to-primary/80 dark:hover:from-primary/90 dark:hover:to-primary text-primary-foreground shadow-lg shadow-primary/10 dark:shadow-primary/10 text-xs sm:text-sm px-4 py-2 h-auto"
                   >
                     <Link to="/shop">Start Shopping</Link>
                   </Button>

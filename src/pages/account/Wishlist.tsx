@@ -16,7 +16,7 @@ import { ChevronLeft, Heart, ShoppingBag, ShoppingCart, Trash2 } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import SEOHead from "@/components/seo/SEOHead";
-import { getSEOConfig } from "@/lib/seo-config";
+import { useSEOConfig } from "@/lib/seo-config";
 
 const Wishlist = () => {
   const { user } = useAuth();
@@ -24,7 +24,7 @@ const Wishlist = () => {
   const [wishlistItems, setWishlistItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isClearingAll, setIsClearingAll] = useState(false);
-  const seoConfig = getSEOConfig('accountWishlist');
+  const seoConfig = useSEOConfig('accountWishlist');
 
   useEffect(() => {
     const fetchWishlistedProducts = async () => {
@@ -118,7 +118,7 @@ const Wishlist = () => {
           >
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
               <div className="flex items-center">
-                <Button asChild variant="ghost" className="mr-4 rounded-full h-10 px-4 hover:bg-background/80 dark:hover:bg-background/40">
+                <Button asChild variant="ghost" className="mr-4 rounded-full h-10 px-4 hover:bg-primary/10 dark:hover:bg-primary/20">
                   <Link to="/account" className="flex items-center">
                     <ChevronLeft className="h-4 w-4 mr-1" /> Back to Account
                   </Link>

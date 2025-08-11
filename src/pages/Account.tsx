@@ -16,7 +16,7 @@ import { getOrCreateProfile } from "@/integrations/supabase/profiles.service";
 import { repairUserAccount } from "@/integrations/supabase/repair.service";
 import { useToast } from "@/hooks/use-toast";
 import SEOHead from "@/components/seo/SEOHead";
-import { getSEOConfig } from "@/lib/seo-config";
+import { useSEOConfig } from "@/lib/seo-config";
 
 const Account = () => {
   const { user, signOut } = useAuth();
@@ -127,7 +127,7 @@ const Account = () => {
     fetchUserProfile();
   }, [user]);
 
-  const seoConfig = getSEOConfig('account');
+  const seoConfig = useSEOConfig('account');
 
   if (!user) {
     return (

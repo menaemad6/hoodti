@@ -142,8 +142,7 @@ const ModernProductCard: React.FC<ModernProductCardProps> = ({
     <Link 
       to={`/product/${normalizedProduct.id}`}
       className={cn(
-        "group overflow-hidden rounded-lg bg-card text-card-foreground shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full",
-        "dark:bg-gray-800/50 dark:backdrop-blur-sm dark:border dark:border-gray-700/50",
+        "group overflow-hidden rounded-lg bg-card text-card-foreground border border-border shadow-md hover:shadow-xl hover:bg-card/80 transition-all duration-300 flex flex-col h-full backdrop-blur-sm",
         className
       )}
     >

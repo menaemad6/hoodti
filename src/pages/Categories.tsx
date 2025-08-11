@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/seo/SEOHead";
-import { getSEOConfig } from "@/lib/seo-config";
+import { useSEOConfig } from "@/lib/seo-config";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import AnimatedWrapper from "@/components/ui/animated-wrapper";
@@ -22,7 +22,7 @@ const Categories = () => {
   const currentTenant = useCurrentTenant();
 
   // Get SEO configuration for categories page
-  const seoConfig = getSEOConfig('categories');
+  const seoConfig = useSEOConfig('categories');
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -40,18 +40,7 @@ const Categories = () => {
     fetchCategories();
   }, [currentTenant]);
 
-  if (loading) {
-    return (
-      <Layout>
-        <div className="container mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold mb-8">All Categories</h1>
-          <div className="flex justify-center items-center py-12">
-            <Spinner size="lg" />
-          </div>
-        </div>
-      </Layout>
-    );
-  }
+
 
   return (
     <Layout>
@@ -79,7 +68,9 @@ const Categories = () => {
               </div>
             </AnimatedWrapper>
             
-            {/* Right: Visual elements */}
+          {loading && (
+            
+
             <AnimatedWrapper animation="fade-in" delay="300" className="hidden lg:block">
               <div className="relative h-72">
                 {/* Featured category cards */}
@@ -113,6 +104,9 @@ const Categories = () => {
                 ))}
               </div>
             </AnimatedWrapper>
+
+              )
+              }
           </div>
         </div>
       </section>

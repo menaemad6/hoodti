@@ -1,0 +1,115 @@
+/* Transitional overrides: map legacy blue utility classes to tenant primary tokens */
+
+/* Text */
+.text-blue-400 { color: hsl(var(--primary)) !important; opacity: 0.85; }
+.text-blue-500 { color: hsl(var(--primary)) !important; }
+.text-blue-600 { color: hsl(var(--primary)) !important; font-weight: inherit; }
+.text-blue-700 { color: hsl(var(--primary)) !important; }
+.text-blue-800 { color: hsl(var(--primary)) !important; }
+.hover\:text-blue-600:hover { color: hsl(var(--primary)) !important; }
+.dark .hover\:text-blue-400:hover { color: hsl(var(--primary)) !important; opacity: 0.9; }
+
+/* Dark mode text variants often used */
+.dark .text-blue-400 { color: hsl(var(--primary)) !important; opacity: 0.9; }
+.dark .text-blue-300 { color: hsl(var(--primary)) !important; opacity: 0.8; }
+
+/* Background (tints) */
+.bg-blue-50 { background-color: hsl(var(--primary) / 0.08) !important; }
+.bg-blue-100 { background-color: hsl(var(--primary) / 0.12) !important; }
+.bg-blue-100\/20 { background-color: hsl(var(--primary) / 0.12) !important; opacity: 0.2; }
+.bg-blue-100\/30 { background-color: hsl(var(--primary) / 0.12) !important; opacity: 0.3; }
+.bg-blue-500\/10 { background-color: hsl(var(--primary) / 0.10) !important; }
+.bg-blue-400\/20 { background-color: hsl(var(--primary) / 0.20) !important; }
+.bg-blue-500\/20 { background-color: hsl(var(--primary) / 0.20) !important; }
+.bg-blue-950\/20 { background-color: hsl(var(--primary) / 0.12) !important; }
+.bg-blue-950\/30 { background-color: hsl(var(--primary) / 0.18) !important; }
+
+/* Dark mode background tints */
+.dark .bg-blue-900\/10 { background-color: hsl(var(--primary) / 0.08) !important; }
+.dark .bg-blue-900\/20 { background-color: hsl(var(--primary) / 0.12) !important; }
+.dark .bg-blue-900\/30 { background-color: hsl(var(--primary) / 0.18) !important; }
+.dark .bg-blue-800\/10 { background-color: hsl(var(--primary) / 0.10) !important; }
+.dark .bg-blue-800\/20 { background-color: hsl(var(--primary) / 0.14) !important; }
+
+/* Borders */
+.border-blue-200 { border-color: hsl(var(--primary) / 0.30) !important; }
+.border-blue-200\/30 { border-color: hsl(var(--primary) / 0.30) !important; }
+.border-blue-500\/20 { border-color: hsl(var(--primary) / 0.20) !important; }
+.dark .border-blue-800 { border-color: hsl(var(--primary) / 0.35) !important; }
+.dark .border-blue-800\/30 { border-color: hsl(var(--primary) / 0.30) !important; }
+.dark .border-blue-800\/50 { border-color: hsl(var(--primary) / 0.50) !important; }
+
+/* Shadows */
+.shadow-blue-600\/10 { --tw-shadow-color: hsl(var(--primary)); --tw-shadow: var(--tw-shadow-colored); box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow); opacity: 0.10; }
+.dark .shadow-blue-500\/10 { --tw-shadow-color: hsl(var(--primary)); --tw-shadow: var(--tw-shadow-colored); box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow); opacity: 0.10; }
+
+/* Gradients - map blue stops to primary */
+.from-blue-50 { --tw-gradient-from: hsl(var(--primary) / 0.08) var(--tw-gradient-from-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgb(255 255 255 / 0) var(--tw-gradient-to-position)); }
+.from-blue-100 { --tw-gradient-from: hsl(var(--primary) / 0.12) var(--tw-gradient-from-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgb(255 255 255 / 0) var(--tw-gradient-to-position)); }
+.from-blue-500 { --tw-gradient-from: hsl(var(--primary)) var(--tw-gradient-from-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, hsl(var(--primary) / 0) var(--tw-gradient-to-position)); }
+.from-blue-600 { --tw-gradient-from: hsl(var(--primary)) var(--tw-gradient-from-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, hsl(var(--primary) / 0) var(--tw-gradient-to-position)); }
+.to-blue-50 { --tw-gradient-to: hsl(var(--primary) / 0.08) var(--tw-gradient-to-position); }
+.to-blue-100 { --tw-gradient-to: hsl(var(--primary) / 0.12) var(--tw-gradient-to-position); }
+.to-blue-300 { --tw-gradient-to: hsl(var(--primary) / 0.25) var(--tw-gradient-to-position); }
+.to-blue-400 { --tw-gradient-to: hsl(var(--primary) / 0.35) var(--tw-gradient-to-position); }
+.to-blue-500 { --tw-gradient-to: hsl(var(--primary)) var(--tw-gradient-to-position); }
+.to-blue-600 { --tw-gradient-to: hsl(var(--primary)) var(--tw-gradient-to-position); }
+.via-blue-400 { --tw-gradient-stops: var(--tw-gradient-from), hsl(var(--primary) / 0.35) var(--tw-gradient-via-position), var(--tw-gradient-to); }
+.via-blue-500 { --tw-gradient-stops: var(--tw-gradient-from), hsl(var(--primary)) var(--tw-gradient-via-position), var(--tw-gradient-to); }
+
+/* Rings */
+.ring-blue-600 { --tw-ring-color: hsl(var(--primary)) !important; }
+.ring-blue-500 { --tw-ring-color: hsl(var(--primary)) !important; }
+
+/* Icon fills */
+.fill-blue-500 { fill: hsl(var(--primary)) !important; }
+
+/* Text */
+.text-blue-300 { color: hsl(var(--primary)) !important; opacity: 0.8; }
+.text-blue-900 { color: hsl(var(--primary)) !important; }
+
+/* Background more variants */
+.bg-blue-200 { background-color: hsl(var(--primary) / 0.16) !important; }
+.bg-blue-950\/40 { background-color: hsl(var(--primary) / 0.24) !important; }
+.bg-blue-950\/50 { background-color: hsl(var(--primary) / 0.30) !important; }
+
+/* Dark backgrounds more variants */
+.dark .bg-blue-950\/40 { background-color: hsl(var(--primary) / 0.24) !important; }
+.dark .bg-blue-950\/50 { background-color: hsl(var(--primary) / 0.30) !important; }
+
+/* Borders more variants */
+.border-blue-500 { border-color: hsl(var(--primary)) !important; }
+.border-blue-500\/10 { border-color: hsl(var(--primary) / 0.10) !important; }
+.border-blue-500\/20 { border-color: hsl(var(--primary) / 0.20) !important; }
+
+/* Gradient variants */
+.from-blue-50\/30 { --tw-gradient-from: hsl(var(--primary) / 0.08) var(--tw-gradient-from-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, hsl(var(--primary) / 0) var(--tw-gradient-to-position)); }
+.from-blue-50\/80 { --tw-gradient-from: hsl(var(--primary) / 0.08) var(--tw-gradient-from-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, hsl(var(--primary) / 0) var(--tw-gradient-to-position)); }
+.from-blue-500\/10 { --tw-gradient-from: hsl(var(--primary) / 0.10) var(--tw-gradient-from-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, hsl(var(--primary) / 0) var(--tw-gradient-to-position)); }
+.from-blue-900\/20 { --tw-gradient-from: hsl(var(--primary) / 0.12) var(--tw-gradient-from-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, hsl(var(--primary) / 0) var(--tw-gradient-to-position)); }
+.dark .from-blue-950\/40 { --tw-gradient-from: hsl(var(--primary) / 0.24) var(--tw-gradient-from-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, hsl(var(--primary) / 0) var(--tw-gradient-to-position)); }
+.to-blue-50\/30 { --tw-gradient-to: hsl(var(--primary) / 0.08) var(--tw-gradient-to-position); }
+.to-blue-100\/20 { --tw-gradient-to: hsl(var(--primary) / 0.12) var(--tw-gradient-to-position); }
+.to-blue-100\/30 { --tw-gradient-to: hsl(var(--primary) / 0.12) var(--tw-gradient-to-position); }
+.to-blue-400\/20 { --tw-gradient-to: hsl(var(--primary) / 0.35) var(--tw-gradient-to-position); }
+.to-blue-700\/10 { --tw-gradient-to: hsl(var(--primary)) var(--tw-gradient-to-position); }
+.to-blue-800\/5 { --tw-gradient-to: hsl(var(--primary)) var(--tw-gradient-to-position); }
+.via-blue-200\/50 { --tw-gradient-stops: var(--tw-gradient-from), hsl(var(--primary) / 0.20) var(--tw-gradient-via-position), var(--tw-gradient-to); }
+
+/* Hover text variants */
+.hover\:text-blue-600:hover { color: hsl(var(--primary)) !important; }
+.dark .hover\:text-blue-400:hover { color: hsl(var(--primary)) !important; opacity: 0.9; }
+
+/* Fractional text opacity */
+.text-blue-600\/70 { color: hsl(var(--primary) / 0.7) !important; }
+.dark .text-blue-400\/70 { color: hsl(var(--primary) / 0.7) !important; }
+
+/* More bg opacity variants */
+.bg-blue-100\/50 { background-color: hsl(var(--primary) / 0.12) !important; opacity: 0.5; }
+.bg-blue-400\/30 { background-color: hsl(var(--primary) / 0.20) !important; opacity: 0.3; }
+.bg-blue-50\/95 { background-color: hsl(var(--primary) / 0.08) !important; opacity: 0.95; }
+
+/* More border opacity variants */
+.dark .border-blue-800\/60 { border-color: hsl(var(--primary) / 0.60) !important; }
+.border-blue-200\/50 { border-color: hsl(var(--primary) / 0.30) !important; opacity: 0.5; }
+

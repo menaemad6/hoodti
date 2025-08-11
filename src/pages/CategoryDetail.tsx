@@ -15,7 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import Spinner from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import SEOHead from "@/components/seo/SEOHead";
-import { getCategorySEO } from "@/lib/seo-config";
+import { useCategorySEO } from "@/lib/seo-config";
 import { useCurrentTenant } from "@/context/TenantContext";
 
 const CategoryDetail = () => {
@@ -30,12 +30,12 @@ const CategoryDetail = () => {
   const currentTenant = useCurrentTenant();
   
   // Get SEO configuration for category page
-  const seoConfig = category ? getCategorySEO({
+  const seoConfig = category ? useCategorySEO({
     id: category.id,
     name: category.name,
     description: category.description,
     image: Array.isArray(category.image) ? category.image[0] : category.image || ''
-  }) : getCategorySEO(null);
+  }) : useCategorySEO(null);
 
   const fetchCategoryData = async () => {
     if (!id) {

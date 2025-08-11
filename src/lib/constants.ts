@@ -1,4 +1,55 @@
-export const BRAND_NAME = "Hoodti";
+
+import { getTenantById, getTenantByDomain, getDefaultTenant } from '@/lib/tenants';
+
+function resolveBrandName(): string {
+  try {
+    let resolvedTenant = undefined as ReturnType<typeof getDefaultTenant> | undefined;
+
+    if (typeof window !== 'undefined') {
+      const docTenantId = typeof document !== 'undefined'
+        ? document.documentElement.getAttribute('data-tenant')
+        : null;
+
+      if (docTenantId) {
+        resolvedTenant = getTenantById(docTenantId);
+      }
+
+      const hostname = window.location.hostname;
+
+      // Development: support subdomain on localhost (e.g., hoodti.localhost)
+      const isDevelopment = hostname.includes('localhost') || hostname.includes('127.0.0.1');
+
+      if (!resolvedTenant && isDevelopment) {
+        const subdomain = hostname.split('.')[0];
+        if (subdomain && subdomain !== 'localhost' && subdomain !== '127') {
+          resolvedTenant = getTenantById(subdomain);
+        }
+      }
+
+      if (!resolvedTenant) {
+        resolvedTenant = getTenantByDomain(hostname);
+      }
+
+      if (!resolvedTenant) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tenantParam = urlParams.get('tenant');
+        if (tenantParam) {
+          resolvedTenant = getTenantById(tenantParam);
+        }
+      }
+    }
+
+    if (!resolvedTenant) {
+      resolvedTenant = getDefaultTenant();
+    }
+
+    return resolvedTenant?.name || 'Hoodti';
+  } catch {
+    return 'Hoodti';
+  }
+}
+
+export const BRAND_NAME = resolveBrandName();
 
 export const PRODUCT_TYPE_OPTIONS = [
   "Sweet Pants",

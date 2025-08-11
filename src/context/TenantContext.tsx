@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Tenant, getTenantById, getTenantByDomain, getDefaultTenant } from '@/lib/tenants';
+import { applyTenantThemeFromTenant } from '@/lib/tenant-utils';
 
 interface TenantContextType {
   currentTenant: Tenant;
@@ -64,6 +65,12 @@ export function TenantProvider({ children }: TenantProviderProps) {
 
     determineInitialTenant();
   }, []);
+
+  // Apply CSS variables whenever tenant changes
+  useEffect(() => {
+    if (!currentTenant) return;
+    applyTenantThemeFromTenant(currentTenant);
+  }, [currentTenant]);
 
   const value: TenantContextType = {
     currentTenant,

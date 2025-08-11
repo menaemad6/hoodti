@@ -48,12 +48,12 @@ const ModernCard: React.FC<ModernCardProps> = ({
     <div
       onClick={onClick}
       className={cn(
-        "rounded-lg overflow-hidden transition-all duration-200",
-        border && "border dark:border-gray-800",
-        shadow && "shadow-sm dark:shadow-gray-900/10",
-        isActive && "border-primary dark:border-primary bg-primary/5 dark:bg-primary/10",
+        "rounded-lg overflow-hidden transition-all duration-200 bg-card text-card-foreground",
+        border && "border border-border",
+        shadow && "shadow-sm",
+        isActive && "border-primary bg-primary/5",
         hoverEffect && 
-          "hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-md dark:hover:shadow-gray-900/20",
+          "hover:border-primary/50 hover:shadow-md",
         getPadding(),
         onClick && "cursor-pointer",
         className
@@ -70,7 +70,7 @@ const ModernCard: React.FC<ModernCardProps> = ({
       )}
       <div>{children}</div>
       {footer && (
-        <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t dark:border-gray-800">{footer}</div>
+        <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-border">{footer}</div>
       )}
     </div>
   );

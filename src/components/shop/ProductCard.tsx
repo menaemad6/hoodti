@@ -28,11 +28,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className }) => {
   
   return (
     <div className={cn(
-      "group relative overflow-hidden rounded-lg border p-2 hover:shadow-md transition-all", 
-      "dark:bg-gray-800/60 dark:border-gray-700/50 dark:hover:bg-gray-800/80",
+      "group relative overflow-hidden rounded-lg border border-border bg-card text-card-foreground p-2 hover:bg-card/80 hover:shadow-md transition-all backdrop-blur-sm",
       className
     )}>
-      <div className="aspect-square overflow-hidden rounded-md bg-gray-100 dark:bg-gray-900/50 relative">
+      <div className="aspect-square overflow-hidden rounded-md bg-muted relative">
         <img
           src={Array.isArray(normalizedProduct.images) && normalizedProduct.images.length > 0 ? normalizedProduct.images[0] : "/placeholder.svg"}
           alt={normalizedProduct.name}

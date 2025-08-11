@@ -183,7 +183,7 @@ const OrderConfirmation = () => {
     return (
       <Layout>
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 my-16">
-          <ModernCard className="p-8 text-center">
+            <ModernCard className="p-8 text-center">
             <h1 className="text-2xl font-bold mb-4">Order Not Found</h1>
             <p className="text-muted-foreground mb-6">{error || "Could not find order information"}</p>
             <Button asChild>
@@ -206,11 +206,11 @@ const OrderConfirmation = () => {
   const orderStatus = normalizeStatus(order.status);
   const statusConfig = {
     delivered: { color: 'green', icon: Check },
-    processing: { color: 'blue', icon: Clock },
+    processing: { color: 'primary', icon: Clock },
     shipped: { color: 'purple', icon: Truck },
     pending: { color: 'yellow', icon: Clock },
     cancelled: { color: 'red', icon: Package }
-  };
+  } as const;
 
   const currentStatus = statusConfig[orderStatus as keyof typeof statusConfig] || { color: 'gray', icon: Package };
   const StatusIcon = currentStatus.icon;
@@ -222,13 +222,13 @@ const OrderConfirmation = () => {
           <AnimatedWrapper animation="fade-up" className="space-y-8">
             <div className="text-center relative">
               <div className="absolute inset-0 flex items-center justify-center opacity-5 dark:opacity-10">
-                <div className="w-64 h-64 rounded-full bg-gradient-to-r from-green-300 to-blue-300 dark:from-green-400 dark:to-blue-400 blur-3xl"></div>
+                <div className="w-64 h-64 rounded-full bg-gradient-to-r from-primary/20 to-primary/10 blur-3xl"></div>
               </div>
               <div className="relative">
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950/50 dark:to-blue-950/50 ring-8 ring-background mb-6">
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-r from-primary/10 to-primary/20 ring-8 ring-background mb-6">
                   <StatusIcon className={`h-10 w-10 ${
                     orderStatus === 'delivered' ? 'text-green-600 dark:text-green-400' :
-                    orderStatus === 'processing' ? 'text-blue-600 dark:text-blue-400' :
+                    orderStatus === 'processing' ? 'text-primary dark:text-primary' :
                     orderStatus === 'shipped' ? 'text-purple-600 dark:text-purple-400' :
                     orderStatus === 'pending' ? 'text-yellow-600 dark:text-yellow-400' :
                     orderStatus === 'cancelled' ? 'text-red-600 dark:text-red-400' :
@@ -258,18 +258,18 @@ const OrderConfirmation = () => {
               <div className="bg-gradient-to-r from-gray-50 to-gray-100/50 dark:from-gray-900/50 dark:to-gray-950/50 p-4 sm:p-6 border-b border-border">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <div>
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                <div className="flex flex-wrap items-center gap-2 mb-1">
                       <h2 className="text-xl sm:text-2xl font-bold">Order #{order.id.slice(-8)}</h2>
                       <Badge 
                         variant="outline" 
-                        className={`capitalize border px-2 sm:px-3 py-0.5 sm:py-1 flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm ${
-                          orderStatus === 'delivered' ? 'border-green-800 bg-green-950 text-green-400' :
-                          orderStatus === 'processing' ? 'border-blue-800 bg-blue-950 text-blue-400' :
-                          orderStatus === 'shipped' ? 'border-purple-800 bg-purple-950 text-purple-400' :
-                          orderStatus === 'pending' ? 'border-yellow-800 bg-yellow-950 text-yellow-400' :
-                          orderStatus === 'cancelled' ? 'border-red-800 bg-red-950 text-red-400' :
-                          'border-gray-800 bg-gray-950 text-gray-400'
-                        } dark:border-opacity-50`}
+                    className={`capitalize border px-2 sm:px-3 py-0.5 sm:py-1 flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm ${
+                      orderStatus === 'delivered' ? 'border-green-800 bg-green-950 text-green-400' :
+                      orderStatus === 'processing' ? 'border-primary/40 bg-primary/10 text-primary' :
+                      orderStatus === 'shipped' ? 'border-purple-800 bg-purple-950 text-purple-400' :
+                      orderStatus === 'pending' ? 'border-yellow-800 bg-yellow-950 text-yellow-400' :
+                      orderStatus === 'cancelled' ? 'border-red-800 bg-red-950 text-red-400' :
+                      'border-gray-800 bg-gray-950 text-gray-400'
+                    }`}
                       >
                         <StatusIcon className="h-3 w-3 sm:h-4 sm:w-4" />
                         {orderStatus}
@@ -315,7 +315,7 @@ const OrderConfirmation = () => {
               <div className="px-4 sm:px-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <AnimatedWrapper animation="fade-in" delay="500" className="mt-2">
-                    <div className="bg-gray-50/30 dark:bg-gray-900/30 backdrop-blur-xl rounded-xl p-4 border border-border hover:border-gray-200 dark:hover:border-gray-700 transition-colors h-full">
+                    <div className="bg-muted/30 rounded-xl p-4 border border-border hover:border-border/80 transition-colors h-full">
                       <h3 className="font-medium mb-2 flex items-center text-foreground">
                         <MapPin className="h-4 w-4 mr-2 text-muted-foreground" /> Delivery Address
                       </h3>
@@ -326,7 +326,7 @@ const OrderConfirmation = () => {
                   </AnimatedWrapper>
 
                   <AnimatedWrapper animation="fade-in" delay="600" className="mt-2">
-                    <div className="bg-gray-50/30 dark:bg-gray-900/30 backdrop-blur-xl rounded-xl p-4 border border-border hover:border-gray-200 dark:hover:border-gray-700 transition-colors h-full">
+                    <div className="bg-muted/30 rounded-xl p-4 border border-border hover:border-border/80 transition-colors h-full">
                       <h3 className="font-medium mb-2 flex items-center text-foreground">
                         <Calendar className="h-4 w-4 mr-2 text-muted-foreground" /> Delivery Date
                       </h3>
@@ -343,7 +343,7 @@ const OrderConfirmation = () => {
                   </AnimatedWrapper>
 
                   <AnimatedWrapper animation="fade-in" delay="700" className="mt-2">
-                    <div className="bg-gray-50/30 dark:bg-gray-900/30 backdrop-blur-xl rounded-xl p-4 border border-border hover:border-gray-200 dark:hover:border-gray-700 transition-colors h-full">
+                    <div className="bg-muted/30 rounded-xl p-4 border border-border hover:border-border/80 transition-colors h-full">
                       <h3 className="font-medium mb-2 flex items-center text-foreground">
                         <CreditCard className="h-4 w-4 mr-2 text-muted-foreground" /> Payment Method
                       </h3>
@@ -366,7 +366,7 @@ const OrderConfirmation = () => {
                 <div className="space-y-4">
                   {order.items?.map((item, index) => (
                     <AnimatedWrapper key={item.id} animation="fade-up" delay={index < 7 ? ("100" as const) : ("0" as const)}>
-                      <div className="group relative rounded-xl border border-border bg-background p-3 sm:p-4 hover:bg-gray-50/50 dark:hover:bg-gray-900/50 transition-all duration-200">
+                      <div className="group relative rounded-xl border border-border bg-background p-3 sm:p-4 hover:bg-muted/30 transition-all duration-200">
                         <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
                           <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800 ring-1 ring-border mx-auto sm:mx-0">
                             {item.product?.image ? (
@@ -475,7 +475,7 @@ const OrderConfirmation = () => {
                   ))}
                 </div>
 
-                <div className="mt-8 rounded-xl border border-border p-4 sm:p-6 bg-gray-50/50 dark:bg-gray-900/50">
+                <div className="mt-8 rounded-xl border border-border p-4 sm:p-6 bg-muted/30">
                   <div className="space-y-3">
                     {/* Subtotal - Calculate from items */}
                     <div className="flex justify-between items-center text-xs sm:text-sm">
@@ -538,7 +538,7 @@ const OrderConfirmation = () => {
               <Button 
                 asChild 
                 variant="outline"
-                className="border-2 hover:bg-gray-50 dark:hover:bg-gray-900 dark:border-gray-800 text-sm"
+                className="border-2 hover:bg-muted/40 text-sm"
               >
                 <Link to="/" className="flex items-center gap-2">
                   <ChevronRight className="h-4 w-4" />
@@ -548,7 +548,7 @@ const OrderConfirmation = () => {
 
               <Button 
                 asChild 
-                className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 dark:from-green-500 dark:to-blue-500 dark:hover:from-green-600 dark:hover:to-blue-600 text-white shadow-lg shadow-blue-600/10 dark:shadow-blue-500/10 text-sm"
+                className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-lg shadow-primary/10 text-sm"
               >
                 <Link to="/account/orders" className="flex items-center gap-2">
                   View All Orders

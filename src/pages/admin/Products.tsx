@@ -58,7 +58,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import SEOHead from "@/components/seo/SEOHead";
-import { getSEOConfig } from "@/lib/seo-config";
+import { useSEOConfig } from "@/lib/seo-config";
 import { formatPrice } from "../../lib/utils";
 
 interface DataColumn {
@@ -138,7 +138,7 @@ const ProductsPage = () => {
     color: "",
     gender: ""
   });
-  const seoConfig = getSEOConfig('adminProducts');
+  const seoConfig = useSEOConfig('adminProducts');
 
   const fetchProducts = async () => {
     setIsLoading(true);

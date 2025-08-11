@@ -1,4 +1,5 @@
 import { SEOHeadProps } from '@/components/seo/SEOHead';
+import { useCurrentTenant } from '@/context/TenantContext';
 
 export interface PageSEOConfig {
   [key: string]: SEOHeadProps;
@@ -21,236 +22,250 @@ interface CategorySEO {
   image?: string;
 }
 
-export const seoConfig: PageSEOConfig = {
-  // Home Page
-  home: {
-    title: 'Hoodti | Streetwear for Urban Culture',
-    description: 'Elevate your street game with Hoodti – your plug for exclusive streetwear drops, bold urban fashion, and limited collections. Discover authentic urban apparel for those who define their own path.',
-    keywords: 'streetwear, urban fashion, hype clothing, sneakers, street style, exclusive drops, Hoodti, streetwear ecommerce, urban culture, fashion, clothing, hoodies, t-shirts, streetwear brand, urban apparel',
-    image: '/hoodti-collab.webp',
-    url: 'https://hoodti.com',
-    type: 'website',
-    tags: ['streetwear', 'urban fashion', 'street style', 'fashion', 'clothing']
-  },
+function buildBaseUrl(domain: string): string {
+  if (!domain) return 'https://example.com';
+  const hasProtocol = domain.startsWith('http://') || domain.startsWith('https://');
+  return hasProtocol ? domain : `https://${domain}`;
+}
 
-  // Shop Page
-  shop: {
-    title: 'Shop Streetwear | Hoodti',
-    description: 'Browse our exclusive collection of premium streetwear. From hoodies and t-shirts to sneakers and accessories, find your perfect urban style at Hoodti.',
-    keywords: 'shop streetwear, buy hoodies, urban clothing, street fashion, t-shirts, sneakers, streetwear store, fashion shopping, urban apparel',
-    image: '/hoodti-logo.jpg',
-    url: 'https://hoodti.com/shop',
-    type: 'website',
-    tags: ['shop', 'streetwear', 'clothing', 'fashion', 'urban style']
-  },
+function buildSEOForTenant(tenant: { name: string; domain: string; logo: string; description: string; seoDescription?: string; seoKeywords?: string; }): PageSEOConfig {
+  const baseUrl = buildBaseUrl(tenant.domain);
+  const brand = tenant.name;
+  const defaultDescription = tenant.seoDescription || tenant.description || `${brand} storefront`;
+  const defaultKeywords = tenant.seoKeywords || 'streetwear, urban fashion, clothing, ecommerce, shop';
+  const defaultImage = tenant.logo || '/hoodti-logo.jpg';
 
-  // Categories Page
-  categories: {
-    title: 'Streetwear Categories | Hoodti',
-    description: 'Explore our curated streetwear categories. From hoodies and t-shirts to accessories and footwear, find your perfect urban style.',
-    keywords: 'streetwear categories, hoodies, t-shirts, sneakers, accessories, urban fashion categories, streetwear collections',
-    image: '/hoodti-logo.jpg',
-    url: 'https://hoodti.com/categories',
-    type: 'website',
-    tags: ['categories', 'streetwear', 'collections', 'fashion']
-  },
+  const cfg: PageSEOConfig = {
+    home: {
+      title: `${brand} | Streetwear for Urban Culture`,
+      description: defaultDescription,
+      keywords: defaultKeywords,
+      image: defaultImage,
+      url: baseUrl,
+      type: 'website',
+      tags: ['streetwear', 'urban fashion', 'street style', 'fashion', 'clothing']
+    },
 
-  // Deals Page
-  deals: {
-    title: 'Hot Deals & Discounts | Hoodti',
-    description: 'Don\'t miss out on our exclusive streetwear deals and discounts. Limited time offers on premium urban fashion and accessories.',
-    keywords: 'streetwear deals, fashion discounts, urban clothing sales, streetwear offers, fashion promotions, clothing deals',
-    image: '/hoodti-logo.jpg',
-    url: 'https://hoodti.com/deals',
-    type: 'website',
-    tags: ['deals', 'discounts', 'sales', 'offers', 'streetwear']
-  },
+    shop: {
+      title: `Shop Streetwear | ${brand}`,
+      description: `Browse our exclusive collection of premium streetwear at ${brand}.` ,
+      keywords: `shop streetwear, buy hoodies, urban clothing, street fashion, ${brand}`,
+      image: defaultImage,
+      url: `${baseUrl}/shop`,
+      type: 'website',
+      tags: ['shop', 'streetwear', 'clothing', 'fashion', 'urban style']
+    },
 
-  // Cart Page
-  cart: {
-    title: 'Shopping Cart | Hoodti',
-    description: 'Review your streetwear selections. Secure checkout with fast shipping and easy returns.',
-    keywords: 'shopping cart, streetwear cart, fashion checkout, urban clothing cart',
-    image: '/hoodti-logo.jpg',
-    url: 'https://hoodti.com/cart',
-    type: 'website',
-    noIndex: true,
-    tags: ['cart', 'checkout', 'shopping']
-  },
+    categories: {
+      title: `Streetwear Categories | ${brand}`,
+      description: `Explore our curated streetwear categories at ${brand}.`,
+      keywords: `streetwear categories, hoodies, t-shirts, sneakers, accessories, ${brand}`,
+      image: defaultImage,
+      url: `${baseUrl}/categories`,
+      type: 'website',
+      tags: ['categories', 'streetwear', 'collections', 'fashion']
+    },
 
-  // Checkout Page
-  checkout: {
-    title: 'Checkout | Hoodti',
-    description: 'Complete your streetwear purchase with secure payment and fast delivery options.',
-    keywords: 'checkout, payment, streetwear purchase, fashion checkout',
-    image: '/hoodti-logo.jpg',
-    url: 'https://hoodti.com/checkout',
-    type: 'website',
-    noIndex: true,
-    tags: ['checkout', 'payment', 'purchase']
-  },
+    deals: {
+      title: `Hot Deals & Discounts | ${brand}`,
+      description: `Don't miss out on our exclusive streetwear deals and discounts at ${brand}.`,
+      keywords: `streetwear deals, fashion discounts, clothing sales, ${brand}`,
+      image: defaultImage,
+      url: `${baseUrl}/deals`,
+      type: 'website',
+      tags: ['deals', 'discounts', 'sales', 'offers', 'streetwear']
+    },
 
-  // Account Pages
-  account: {
-    title: 'My Account | Hoodti',
-    description: 'Manage your Hoodti account, view orders, and update your profile.',
-    keywords: 'my account, user profile, order history, account management',
-    image: '/hoodti-logo.jpg',
-    url: 'https://hoodti.com/account',
-    type: 'website',
-    noIndex: true,
-    tags: ['account', 'profile', 'orders']
-  },
+    cart: {
+      title: `Shopping Cart | ${brand}`,
+      description: `Review your selections. Secure checkout with fast shipping and easy returns at ${brand}.`,
+      keywords: `shopping cart, cart, checkout, ${brand}`,
+      image: defaultImage,
+      url: `${baseUrl}/cart`,
+      type: 'website',
+      noIndex: true,
+      tags: ['cart', 'checkout', 'shopping']
+    },
 
-  accountOrders: {
-    title: 'My Orders | Hoodti',
-    description: 'Track your streetwear orders and view order history.',
-    keywords: 'my orders, order tracking, order history, streetwear orders',
-    image: '/hoodti-logo.jpg',
-    url: 'https://hoodti.com/account/orders',
-    type: 'website',
-    noIndex: true,
-    tags: ['orders', 'tracking', 'history']
-  },
+    checkout: {
+      title: `Checkout | ${brand}`,
+      description: `Complete your purchase with secure payment and fast delivery options at ${brand}.`,
+      keywords: `checkout, payment, purchase, ${brand}`,
+      image: defaultImage,
+      url: `${baseUrl}/checkout`,
+      type: 'website',
+      noIndex: true,
+      tags: ['checkout', 'payment', 'purchase']
+    },
 
-  accountWishlist: {
-    title: 'My Wishlist | Hoodti',
-    description: 'Save your favorite streetwear items for later purchase.',
-    keywords: 'wishlist, favorites, saved items, streetwear wishlist',
-    image: '/hoodti-logo.jpg',
-    url: 'https://hoodti.com/account/wishlist',
-    type: 'website',
-    noIndex: true,
-    tags: ['wishlist', 'favorites', 'saved']
-  },
+    account: {
+      title: `My Account | ${brand}`,
+      description: `Manage your ${brand} account, view orders, and update your profile.`,
+      keywords: `my account, user profile, order history, account management, ${brand}`,
+      image: defaultImage,
+      url: `${baseUrl}/account`,
+      type: 'website',
+      noIndex: true,
+      tags: ['account', 'profile', 'orders']
+    },
 
-  accountAddresses: {
-    title: 'My Addresses | Hoodti',
-    description: 'Manage your shipping and billing addresses.',
-    keywords: 'addresses, shipping address, billing address, address management',
-    image: '/hoodti-logo.jpg',
-    url: 'https://hoodti.com/account/addresses',
-    type: 'website',
-    noIndex: true,
-    tags: ['addresses', 'shipping', 'billing']
-  },
+    accountOrders: {
+      title: `My Orders | ${brand}`,
+      description: `Track your orders and view order history at ${brand}.`,
+      keywords: `my orders, order tracking, order history, ${brand}`,
+      image: defaultImage,
+      url: `${baseUrl}/account/orders`,
+      type: 'website',
+      noIndex: true,
+      tags: ['orders', 'tracking', 'history']
+    },
 
-  // Auth Pages
-  signin: {
-    title: 'Sign In | Hoodti',
-    description: 'Sign in to your Hoodti account to access exclusive streetwear and manage your orders.',
-    keywords: 'sign in, login, user login, account access',
-    image: '/hoodti-logo.jpg',
-    url: 'https://hoodti.com/signin',
-    type: 'website',
-    noIndex: true,
-    tags: ['sign in', 'login', 'authentication']
-  },
+    accountWishlist: {
+      title: `My Wishlist | ${brand}`,
+      description: `Save your favorite items for later purchase at ${brand}.`,
+      keywords: `wishlist, favorites, saved items, ${brand}`,
+      image: defaultImage,
+      url: `${baseUrl}/account/wishlist`,
+      type: 'website',
+      noIndex: true,
+      tags: ['wishlist', 'favorites', 'saved']
+    },
 
-  signup: {
-    title: 'Sign Up | Hoodti',
-    description: 'Create your Hoodti account to start shopping exclusive streetwear and get access to member-only deals.',
-    keywords: 'sign up, register, create account, new user registration',
-    image: '/hoodti-logo.jpg',
-    url: 'https://hoodti.com/signup',
-    type: 'website',
-    noIndex: true,
-    tags: ['sign up', 'register', 'new account']
-  },
+    accountAddresses: {
+      title: `My Addresses | ${brand}`,
+      description: `Manage your shipping and billing addresses at ${brand}.`,
+      keywords: `addresses, shipping address, billing address, ${brand}`,
+      image: defaultImage,
+      url: `${baseUrl}/account/addresses`,
+      type: 'website',
+      noIndex: true,
+      tags: ['addresses', 'shipping', 'billing']
+    },
 
-  forgotPassword: {
-    title: 'Forgot Password | Hoodti',
-    description: 'Reset your Hoodti account password to regain access to your account.',
-    keywords: 'forgot password, password reset, account recovery',
-    image: '/hoodti-logo.jpg',
-    url: 'https://hoodti.com/forgot-password',
-    type: 'website',
-    noIndex: true,
-    tags: ['password reset', 'account recovery']
-  },
+    signin: {
+      title: `Sign In | ${brand}`,
+      description: `Sign in to your ${brand} account to access exclusive products and manage your orders.`,
+      keywords: `sign in, login, user login, account access, ${brand}`,
+      image: defaultImage,
+      url: `${baseUrl}/signin`,
+      type: 'website',
+      noIndex: true,
+      tags: ['sign in', 'login', 'authentication']
+    },
 
-  // Admin Pages (noindex for security)
-  adminDashboard: {
-    title: 'Admin Dashboard | Hoodti',
-    description: 'Hoodti admin dashboard for store management.',
-    image: '/hoodti-logo.jpg',
-    url: 'https://hoodti.com/admin/dashboard',
-    type: 'website',
-    noIndex: true,
-    noFollow: true,
-    tags: ['admin', 'dashboard']
-  },
+    signup: {
+      title: `Sign Up | ${brand}`,
+      description: `Create your ${brand} account to start shopping and get access to member-only deals.`,
+      keywords: `sign up, register, create account, new user registration, ${brand}`,
+      image: defaultImage,
+      url: `${baseUrl}/signup`,
+      type: 'website',
+      noIndex: true,
+      tags: ['sign up', 'register', 'new account']
+    },
 
-  adminProducts: {
-    title: 'Manage Products | Hoodti Admin',
-    description: 'Manage streetwear products in the Hoodti admin panel.',
-    image: '/hoodti-logo.jpg',
-    url: 'https://hoodti.com/admin/products',
-    type: 'website',
-    noIndex: true,
-    noFollow: true,
-    tags: ['admin', 'products', 'management']
-  },
+    forgotPassword: {
+      title: `Forgot Password | ${brand}`,
+      description: `Reset your ${brand} account password to regain access to your account.`,
+      keywords: `forgot password, password reset, account recovery, ${brand}`,
+      image: defaultImage,
+      url: `${baseUrl}/forgot-password`,
+      type: 'website',
+      noIndex: true,
+      tags: ['password reset', 'account recovery']
+    },
 
-  adminOrders: {
-    title: 'Manage Orders | Hoodti Admin',
-    description: 'Manage customer orders in the Hoodti admin panel.',
-    image: '/hoodti-logo.jpg',
-    url: 'https://hoodti.com/admin/orders',
-    type: 'website',
-    noIndex: true,
-    noFollow: true,
-    tags: ['admin', 'orders', 'management']
-  },
+    adminDashboard: {
+      title: `Admin Dashboard | ${brand}`,
+      description: `${brand} admin dashboard for store management.`,
+      image: defaultImage,
+      url: `${baseUrl}/admin/dashboard`,
+      type: 'website',
+      noIndex: true,
+      noFollow: true,
+      tags: ['admin', 'dashboard']
+    },
 
-  // 404 Page
-  notFound: {
-    title: 'Page Not Found | Hoodti',
-    description: 'The page you\'re looking for doesn\'t exist. Continue shopping our exclusive streetwear collection.',
-    keywords: '404, page not found, error page',
-    image: '/hoodti-logo.jpg',
-    url: 'https://hoodti.com/404',
-    type: 'website',
-    noIndex: true,
-    tags: ['404', 'error', 'not found']
-  }
+    adminProducts: {
+      title: `Manage Products | ${brand} Admin` ,
+      description: `Manage products in the ${brand} admin panel.`,
+      image: defaultImage,
+      url: `${baseUrl}/admin/products`,
+      type: 'website',
+      noIndex: true,
+      noFollow: true,
+      tags: ['admin', 'products', 'management']
+    },
+
+    adminOrders: {
+      title: `Manage Orders | ${brand} Admin`,
+      description: `Manage customer orders in the ${brand} admin panel.`,
+      image: defaultImage,
+      url: `${baseUrl}/admin/orders`,
+      type: 'website',
+      noIndex: true,
+      noFollow: true,
+      tags: ['admin', 'orders', 'management']
+    },
+
+    notFound: {
+      title: `Page Not Found | ${brand}`,
+      description: `The page you're looking for doesn't exist. Continue shopping our exclusive collection at ${brand}.`,
+      keywords: `404, page not found, error page, ${brand}`,
+      image: defaultImage,
+      url: `${baseUrl}/404`,
+      type: 'website',
+      noIndex: true,
+      tags: ['404', 'error', 'not found']
+    }
+  };
+
+  return cfg;
+}
+
+// Hook: tenant-aware SEO config for a specific page key
+export const useSEOConfig = (pageKey: string): SEOHeadProps => {
+  const tenant = useCurrentTenant();
+  const config = buildSEOForTenant(tenant);
+  return config[pageKey] || config.home;
 };
 
-// Helper function to get SEO config for a specific page
-export const getSEOConfig = (pageKey: string): SEOHeadProps => {
-  return seoConfig[pageKey] || seoConfig.home;
-};
-
-// Helper function to generate product-specific SEO
-export const getProductSEO = (product: ProductSEO | null): SEOHeadProps => {
+// Hook: tenant-aware product-specific SEO
+export const useProductSEO = (product: ProductSEO | null): SEOHeadProps => {
+  const tenant = useCurrentTenant();
+  const baseUrl = buildBaseUrl(tenant.domain);
+  const brand = tenant.name;
   const productName = product?.name || 'Product';
-  const productDescription = product?.description || 'Exclusive streetwear from Hoodti';
-  const productImage = product?.image || '/hoodti-logo.jpg';
+  const productDescription = product?.description || `Exclusive streetwear from ${brand}`;
+  const productImage = product?.image || tenant.logo || '/hoodti-logo.jpg';
   const productPrice = product?.price ? `$${product.price}` : '';
-  
+
   return {
-    title: `${productName} | Hoodti`,
-    description: `${productDescription} ${productPrice ? `Available for ${productPrice}.` : ''} Shop exclusive streetwear at Hoodti.`,
-    keywords: `${productName}, streetwear, urban fashion, ${product?.category_name || 'clothing'}, Hoodti, fashion, urban style`,
+    title: `${productName} | ${brand}`,
+    description: `${productDescription} ${productPrice ? `Available for ${productPrice}.` : ''} Shop exclusive streetwear at ${brand}.`.trim(),
+    keywords: `${productName}, streetwear, urban fashion, ${product?.category_name || 'clothing'}, ${brand}, fashion, urban style`,
     image: productImage,
-    url: `https://hoodti.com/product/${product?.id}`,
+    url: product?.id ? `${baseUrl}/product/${product.id}` : baseUrl,
     type: 'product',
     tags: [productName, 'streetwear', 'urban fashion', product?.category_name || 'clothing']
   };
 };
 
-// Helper function to generate category-specific SEO
-export const getCategorySEO = (category: CategorySEO | null): SEOHeadProps => {
+// Hook: tenant-aware category-specific SEO
+export const useCategorySEO = (category: CategorySEO | null): SEOHeadProps => {
+  const tenant = useCurrentTenant();
+  const baseUrl = buildBaseUrl(tenant.domain);
+  const brand = tenant.name;
   const categoryName = category?.name || 'Category';
   const categoryDescription = category?.description || `Explore our ${categoryName} collection`;
-  
+
   return {
-    title: `${categoryName} Collection | Hoodti`,
-    description: `${categoryDescription}. Shop exclusive ${categoryName.toLowerCase()} streetwear and urban fashion at Hoodti.`,
-    keywords: `${categoryName}, streetwear, urban fashion, ${categoryName.toLowerCase()} collection, Hoodti, fashion`,
-    image: category?.image || '/hoodti-logo.jpg',
-    url: `https://hoodti.com/category/${category?.id}`,
+    title: `${categoryName} Collection | ${brand}`,
+    description: `${categoryDescription}. Shop exclusive ${categoryName.toLowerCase()} streetwear and urban fashion at ${brand}.`,
+    keywords: `${categoryName}, streetwear, urban fashion, ${categoryName.toLowerCase()} collection, ${brand}, fashion`,
+    image: category?.image || tenant.logo || '/hoodti-logo.jpg',
+    url: category?.id ? `${baseUrl}/category/${category.id}` : baseUrl,
     type: 'website',
     tags: [categoryName, 'streetwear', 'collection', 'urban fashion']
   };
-}; 
+};

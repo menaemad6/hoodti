@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/seo/SEOHead";
-import { getSEOConfig } from "@/lib/seo-config";
+import { useSEOConfig } from "@/lib/seo-config";
 import ProductGrid from "@/components/shop/ProductGrid";
 import GlassCard from "@/components/ui/glass-card";
 import { createProductsService } from "@/integrations/supabase/products.service";
@@ -17,7 +17,7 @@ const Deals = () => {
   const currentTenant = useCurrentTenant();
 
   // Get SEO configuration for deals page
-  const seoConfig = getSEOConfig('deals');
+  const seoConfig = useSEOConfig('deals');
 
   useEffect(() => {
     const fetchProducts = async () => {

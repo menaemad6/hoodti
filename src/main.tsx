@@ -1,8 +1,9 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 import './styles/glassmorphism.css'
+import './styles/brand-overrides.css'
 import { ThemeProvider } from './context/ThemeContext'
 import { initializeEmailService } from './integrations/email.init'
 import { debugEmailConfig } from './integrations/email.debug'
@@ -28,3 +29,14 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </ThemeProvider>
   </React.StrictMode>,
 )
+
+// Hide pre-boot loader once React is mounted
+try {
+  const el = document.getElementById('preload-overlay');
+  if (el) {
+    el.classList.add('opacity-0');
+    setTimeout(() => {
+      el.remove();
+    }, 200);
+  }
+} catch {}

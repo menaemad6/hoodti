@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/seo/SEOHead";
-import { getProductSEO } from "@/lib/seo-config";
+import { useProductSEO } from "@/lib/seo-config";
 import ModernCard from "@/components/ui/modern-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -70,14 +70,21 @@ const ProductDetail = () => {
   const [selectedType, setSelectedType] = useState<string | null>(null);
   
   // Get SEO configuration for product page
-  const seoConfig = product ? getProductSEO({
-    id: product.id,
-    name: product.name,
-    description: product.description,
-    image: product.images && product.images.length > 0 ? product.images[0] : product.image || '',
-    price: product.price,
-    category_name: typeof product.category === 'object' ? product.category.name : undefined
-  }) : getProductSEO(null);
+  const productSeoInput = product
+    ? {
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        image:
+          product.images && product.images.length > 0
+            ? product.images[0]
+            : (product.image as string) || "",
+        price: product.price,
+        category_name:
+          typeof product.category === "object" ? product.category.name : undefined,
+      }
+    : null;
+  const seoConfig = useProductSEO(productSeoInput);
   
   // Add utility function to parse array fields (handle either JSON strings or actual arrays)
   const parseArrayField = (field: string | string[] | null | undefined): string[] => {
@@ -97,7 +104,8 @@ const ProductDetail = () => {
   const availableColors = product ? parseArrayField(product.color) : [];
   
   // Parse available sizes for the selected type from nested size object
-  const parseNestedSizes = (sizeField: any, selectedType: string | null): string[] => {
+  type SizeField = string | string[] | Record<string, string[]> | null | undefined;
+  const parseNestedSizes = (sizeField: SizeField, selectedType: string | null): string[] => {
     if (!sizeField || !selectedType) return [];
     if (typeof sizeField === 'string') {
       try {
@@ -170,8 +178,9 @@ const ProductDetail = () => {
       try {
         const parsed = JSON.parse(product.image);
         if (Array.isArray(parsed)) return parsed.filter(Boolean);
-      } catch {}
-      return [product.image];
+      } catch {
+        return [product.image as string];
+      }
     }
     
     // Fallback to placeholder

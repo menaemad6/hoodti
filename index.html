@@ -15,6 +15,7 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://Hoodti.com" />
     <meta property="og:image" content="https://Hoodti.com/og-image.jpg" />
+    <meta property="og:site_name" content="Hoodti" />
 
     <!-- Twitter Meta Tags -->
     <meta name="twitter:card" content="summary_large_image" />
@@ -27,9 +28,218 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+      // Apply tenant colors before first paint to avoid FOUC
+      (function() {
+        try {
+          var hostname = window.location.hostname;
+          var isDev = hostname.includes('localhost') || hostname.includes('127.0.0.1');
+          var tenantId = null;
+
+          if (isDev) {
+            var sub = hostname.split('.')[0];
+            if (sub && sub !== 'localhost' && sub !== '127') tenantId = sub;
+            if (!tenantId) {
+              var params = new URLSearchParams(window.location.search);
+              tenantId = params.get('tenant');
+            }
+          } else {
+            // Map known production domains to tenant ids
+            var domainToTenant = {
+              'hoodti.store': 'hoodti',
+              'ecommerce-v15.netlify.app': 'streetwear',
+              'collab.com': 'collab'
+            };
+            tenantId = domainToTenant[hostname] || null;
+            if (!tenantId) {
+              var params2 = new URLSearchParams(window.location.search);
+              tenantId = params2.get('tenant');
+            }
+          }
+
+          if (!tenantId) tenantId = 'hoodti';
+
+          var tenantColors = {
+            hoodti: { primary: '#DE41FF', secondary: '#f5f5f5' },
+            streetwear: { primary: '#ff6b35', secondary: '#2c3e50' },
+            collab: { primary: '#8e44ad', secondary: '#ecf0f1' }
+          };
+          var tenantLogos = {
+            hoodti: '/hoodti-logo.jpg',
+            streetwear: '/streetwear-logo.jpg',
+            collab: '/collab-collection.jpg'
+          };
+          var tenantMeta = {
+            hoodti: {
+              name: 'Hoodti',
+              domain: 'hoodti.store',
+              description: 'Elevate your street game with Hoodti – exclusive streetwear drops, bold urban fashion, and limited collections.',
+              seoDescription: 'Elevate your street game with Hoodti – exclusive streetwear drops, bold urban fashion, and limited collections.',
+              keywords: 'streetwear, urban fashion, hype clothing, sneakers, street style, exclusive drops, Hoodti, streetwear ecommerce, urban culture, fashion, clothing, hoodies, t-shirts, streetwear brand, urban apparel',
+              twitter: 'https://twitter.com/hoodti'
+            },
+            streetwear: {
+              name: 'StreetWear',
+              domain: 'ecommerce-v15.netlify.app',
+              description: 'Shop authentic streetwear and bold urban fashion. Discover limited drops and everyday essentials.',
+              seoDescription: 'Shop authentic streetwear and bold urban fashion. Discover limited drops and everyday essentials.',
+              keywords: 'streetwear, urban clothing, street style, limited drops, sneakers, hoodies, tees, fashion, StreetWear',
+              twitter: 'https://twitter.com/streetwear'
+            },
+            collab: {
+              name: 'Collab Collection',
+              domain: 'collab.com',
+              description: 'Explore collaborative fashion collections, limited releases, and creative capsules.',
+              seoDescription: 'Explore collaborative fashion collections, limited releases, and creative capsules.',
+              keywords: 'collaboration, limited collection, capsule, fashion, streetwear, artists, creators, Collab Collection',
+              twitter: 'https://twitter.com/collab'
+            }
+          };
+
+          function hexToRgb(hex) {
+            hex = (hex || '').replace('#','');
+            if (hex.length === 3) hex = hex.split('').map(function(c){return c+c}).join('');
+            if (hex.length !== 6) return null;
+            var r = parseInt(hex.slice(0,2), 16);
+            var g = parseInt(hex.slice(2,4), 16);
+            var b = parseInt(hex.slice(4,6), 16);
+            if (isNaN(r) || isNaN(g) || isNaN(b)) return null;
+            return { r:r, g:g, b:b };
+          }
+
+          function rgbToHsl(r, g, b) {
+            r /= 255; g /= 255; b /= 255;
+            var max = Math.max(r, g, b), min = Math.min(r, g, b);
+            var h, s, l = (max + min) / 2;
+            if (max === min) { h = s = 0; }
+            else {
+              var d = max - min;
+              s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+              switch (max) {
+                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                case g: h = (b - r) / d + 2; break;
+                case b: h = (r - g) / d + 4; break;
+              }
+              h /= 6;
+            }
+            return [Math.round(h*360), Math.round(s*100), Math.round(l*100)];
+          }
+
+          function chooseForeground(hex) {
+            var rgb = hexToRgb(hex); if (!rgb) return '0 0% 100%';
+            function toLin(c){ c/=255; return c<=0.03928? c/12.92: Math.pow((c+0.055)/1.055, 2.4); }
+            var L = 0.2126*toLin(rgb.r) + 0.7152*toLin(rgb.g) + 0.0722*toLin(rgb.b);
+            return L > 0.5 ? '222.2 84% 4.9%' : '0 0% 100%';
+          }
+
+          var colors = tenantColors[tenantId] || tenantColors['hoodti'];
+          var logo = tenantLogos[tenantId] || tenantLogos['hoodti'];
+          var meta = tenantMeta[tenantId] || tenantMeta['hoodti'];
+          var pRgb = hexToRgb(colors.primary);
+          var sRgb = hexToRgb(colors.secondary);
+          var pHsl = pRgb ? rgbToHsl(pRgb.r, pRgb.g, pRgb.b) : [225,64,53];
+          var sHsl = sRgb ? rgbToHsl(sRgb.r, sRgb.g, sRgb.b) : [210,10,95];
+
+          var root = document.documentElement;
+          root.style.setProperty('--primary', pHsl.join(' '));
+          root.style.setProperty('--primary-foreground', chooseForeground(colors.primary));
+          root.style.setProperty('--secondary', sHsl.join(' '));
+          root.style.setProperty('--secondary-foreground', chooseForeground(colors.secondary));
+          root.style.setProperty('--accent', sHsl.join(' '));
+          root.style.setProperty('--accent-foreground', chooseForeground(colors.secondary));
+          root.style.setProperty('--ring', pHsl.join(' '));
+          root.setAttribute('data-tenant', tenantId);
+          // Preloader color overrides and logo for immediate render
+          root.style.setProperty('--preload-primary', colors.primary);
+          root.style.setProperty('--preload-secondary', colors.secondary);
+          window.__TENANT_LOGO__ = logo;
+
+          // Dynamically set meta tags and title for browsers (note: most crawlers don't execute JS)
+          var baseUrl = (location.protocol + '//' + location.host);
+          var ogImage = logo.startsWith('http') ? logo : (baseUrl + logo);
+          var title = meta.name + ' | Streetwear for Urban Culture';
+          var description = meta.seoDescription || meta.description;
+          var twitterHandle = (function(tw){
+            try { if (!tw) return ''; var u = new URL(tw); var h = u.pathname.replace('/', '').trim(); return h ? '@' + h : ''; } catch(e){ return ''; }
+          })(meta.twitter);
+
+          document.title = title;
+
+          function setMeta(selector, attrs) {
+            var el = document.querySelector(selector);
+            if (!el) {
+              el = document.createElement('meta');
+              if (attrs.name) el.setAttribute('name', attrs.name);
+              if (attrs.property) el.setAttribute('property', attrs.property);
+              document.head.appendChild(el);
+            }
+            if (attrs.content !== undefined) el.setAttribute('content', attrs.content);
+          }
+
+          // Basic meta
+          setMeta('meta[name="description"]', { name: 'description', content: description });
+          setMeta('meta[name="author"]', { name: 'author', content: meta.name });
+
+          // Open Graph
+          setMeta('meta[property="og:title"]', { property: 'og:title', content: title });
+          setMeta('meta[property="og:description"]', { property: 'og:description', content: description });
+          setMeta('meta[property="og:type"]', { property: 'og:type', content: 'website' });
+          setMeta('meta[property="og:url"]', { property: 'og:url', content: location.href });
+          setMeta('meta[property="og:image"]', { property: 'og:image', content: ogImage });
+          setMeta('meta[property="og:site_name"]', { property: 'og:site_name', content: meta.name });
+
+          // Twitter
+          setMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: 'summary_large_image' });
+          setMeta('meta[name="twitter:site"]', { name: 'twitter:site', content: twitterHandle || undefined });
+          setMeta('meta[name="twitter:title"]', { name: 'twitter:title', content: title });
+          setMeta('meta[name="twitter:description"]', { name: 'twitter:description', content: description });
+          setMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: ogImage });
+
+          // Favicon
+          var linkIcon = document.querySelector('link[rel="icon"]');
+          if (!linkIcon) {
+            linkIcon = document.createElement('link');
+            linkIcon.setAttribute('rel', 'icon');
+            document.head.appendChild(linkIcon);
+          }
+          linkIcon.setAttribute('href', logo);
+        } catch (e) { /* noop */ }
+      })();
+    </script>
   </head>
 
   <body>
+    <!-- Pre-JS loader overlay -->
+    <style>
+      /* Minimal critical CSS for the preloader */
+      #preload-overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.9);backdrop-filter:saturate(140%) blur(8px);z-index:9999;transition:opacity .2s ease}
+      .preload-ring{position:relative;width:96px;height:96px}
+      .preload-ring:before,.preload-ring:after{content:"";position:absolute;inset:0;border-radius:9999px;border:4px solid transparent}
+      .preload-ring:before{border-top-color:var(--preload-primary,#111827);animation:spin .9s linear infinite}
+      .preload-ring:after{inset:8px;border-bottom-color:var(--preload-secondary,rgba(17,24,39,.6));animation:spin 1.4s linear infinite reverse}
+      .preload-logo{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+      .preload-logo img{width:48px;height:48px;border-radius:12px;object-fit:contain;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+      @keyframes spin{to{transform:rotate(360deg)}}
+      @media (prefers-color-scheme: dark){#preload-overlay{background:rgba(10,10,10,0.9)} .preload-ring:before{border-top-color:#fff} .preload-ring:after{border-bottom-color:rgba(255,255,255,.6)}}
+    </style>
+    <div id="preload-overlay" aria-label="Loading" role="status">
+      <div class="preload-ring" aria-hidden="true"></div>
+      <div class="preload-logo" aria-hidden="true">
+        <img id="preload-logo-img" src="/hoodti-logo.jpg" alt="Loading" />
+      </div>
+    </div>
+    <script>
+      // Set dynamic logo src as early as possible
+      (function(){
+        try{
+          var logo = window.__TENANT_LOGO__ || '/hoodti-logo.jpg';
+          var img = document.getElementById('preload-logo-img');
+          if(img && logo){ img.src = logo; }
+        }catch(e){}
+      })();
+    </script>
+
     <div id="root"></div>
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>

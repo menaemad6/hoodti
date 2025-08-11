@@ -212,7 +212,7 @@ const MobileNavbar: React.FC<MobileNavbarProps> = ({ isVisible = true }) => {
           <div className="flex-1 flex justify-start">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <div className="p-1.5 rounded-full hover:bg-accent relative bg-muted/60 border border-border/30">
+                <div className="p-1.5 rounded-full hover:bg-primary/10 dark:hover:bg-primary/20 relative bg-muted/60 border border-border/30">
                   <User className="h-5 w-5 text-primary/80" />
                 </div>
               </DropdownMenuTrigger>
@@ -308,7 +308,7 @@ const MobileNavbar: React.FC<MobileNavbarProps> = ({ isVisible = true }) => {
           
           {/* Right: Cart icon */}
           <div className="flex-1 flex justify-end">
-            <Link to="/cart" className="p-1.5 rounded-full hover:bg-accent relative bg-muted/60 border border-border/30">
+            <Link to="/cart" className="p-1.5 rounded-full hover:bg-primary/10 dark:hover:bg-primary/20 relative bg-muted/60 border border-border/30">
               <ShoppingCart className="h-5 w-5 text-primary/80" />
               {cartItemsCount > 0 && (
                 <Badge 
@@ -345,10 +345,10 @@ const MobileNavbar: React.FC<MobileNavbarProps> = ({ isVisible = true }) => {
                             : "text-muted-foreground hover:text-foreground"
                         )}
                       >
-                        <div className={cn(
-                          "flex flex-col items-center justify-center w-full p-1.5",
-                          active ? "bg-primary rounded-lg" : "hover:bg-accent/50"
-                        )}>
+                          <div className={cn(
+                            "flex flex-col items-center justify-center w-full p-1.5",
+                            active ? "bg-primary rounded-lg" : "hover:bg-primary/10 dark:hover:bg-primary/20 rounded-lg"
+                          )}>
                           <item.icon className="h-5 w-5 mb-0.5" />
                           <span className="text-[10px] font-medium">{item.label}</span>
                         </div>
@@ -410,7 +410,7 @@ const MobileNavbar: React.FC<MobileNavbarProps> = ({ isVisible = true }) => {
                               <Link 
                                 key={item.href}
                                 to={item.href} 
-                                className="flex items-center justify-between p-3 hover:bg-accent/50 rounded-lg transition-colors"
+                                className="flex items-center justify-between p-3 hover:bg-primary/10 dark:hover:bg-primary/20 rounded-lg transition-colors"
                                 onClick={closeMoreMenu}
                               >
                                 <div className="flex items-center">
@@ -432,7 +432,7 @@ const MobileNavbar: React.FC<MobileNavbarProps> = ({ isVisible = true }) => {
                           {isAuthenticated ? (
                             <Link 
                               to="/account" 
-                              className="flex items-center space-x-3 p-3 bg-muted/60 hover:bg-accent/60 rounded-xl transition-colors border border-border/40"
+                              className="flex items-center space-x-3 p-3 bg-muted/60 hover:bg-primary/10 dark:hover:bg-primary/20 rounded-xl transition-colors border border-border/40"
                               onClick={closeMoreMenu}
                             >
                               <Avatar className="h-12 w-12 border-2 border-primary/20">
@@ -521,7 +521,7 @@ const MobileNavbar: React.FC<MobileNavbarProps> = ({ isVisible = true }) => {
                 >
                   <div className={cn(
                     "flex flex-col items-center justify-center w-full p-1.5",
-                    active ? "bg-primary rounded-lg" : "hover:bg-accent/50"
+                    active ? "bg-primary rounded-lg" : "hover:bg-primary/10 dark:hover:bg-primary/20 rounded-lg"
                   )}>
                     <item.icon className="h-5 w-5 mb-0.5" />
                     <span className="text-[10px] font-medium">{item.label}</span>

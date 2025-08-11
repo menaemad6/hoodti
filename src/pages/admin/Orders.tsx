@@ -36,7 +36,7 @@ import StatusBadge from "@/components/ui/status-badge";
 import { useRoleAccess } from "@/hooks/use-role-access";
 import { sendOrderStatusEmail } from "@/integrations/email.service";
 import SEOHead from "@/components/seo/SEOHead";
-import { getSEOConfig } from "@/lib/seo-config";
+import { useSEOConfig } from "@/lib/seo-config";
 import { formatPrice } from "../../lib/utils";
 import { useCurrentTenant } from "@/context/TenantContext";
 
@@ -76,7 +76,7 @@ const OrdersPage = () => {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [customerDetails, setCustomerDetails] = useState<Record<string, any>>({});
-  const seoConfig = getSEOConfig('adminOrders');
+  const seoConfig = useSEOConfig('adminOrders');
   const currentTenant = useCurrentTenant();
 
   useEffect(() => {

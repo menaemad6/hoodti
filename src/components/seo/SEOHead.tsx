@@ -1,5 +1,6 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useCurrentTenant } from '@/context/TenantContext';
 
 export interface SEOHeadProps {
   title?: string;
@@ -34,9 +35,20 @@ const SEOHead: React.FC<SEOHeadProps> = ({
   noFollow = false,
   canonical,
 }) => {
-  const fullTitle = title.includes('Hoodti') ? title : `${title} | Hoodti`;
-  const fullUrl = canonical || url;
-  const fullImage = image.startsWith('http') ? image : `https://hoodti.com${image}`;
+  const tenant = useCurrentTenant();
+  const brandName = tenant?.name || 'Hoodti';
+  const domain = tenant?.domain || 'hoodti.com';
+  const baseUrl = domain.startsWith('http') ? domain : `https://${domain}`;
+  const siteLogo = (tenant?.logo || '/hoodti-logo.jpg').startsWith('http')
+    ? (tenant?.logo || '/hoodti-logo.jpg')
+    : `${baseUrl}${tenant?.logo || '/hoodti-logo.jpg'}`;
+  const siteDescription = tenant?.description || 'Streetwear for Urban Culture';
+
+  const providedTitle = title || brandName;
+  const hasBrand = providedTitle.includes(brandName);
+  const fullTitle = hasBrand ? providedTitle : `${providedTitle} | ${brandName}`;
+  const fullUrl = canonical || url || baseUrl;
+  const fullImage = image.startsWith('http') ? image : `${baseUrl}${image}`;
   
   const robotsContent = [
     noIndex ? 'noindex' : 'index',
@@ -61,16 +73,16 @@ const SEOHead: React.FC<SEOHeadProps> = ({
       <meta property="og:type" content={type} />
       <meta property="og:url" content={fullUrl} />
       <meta property="og:image" content={fullImage} />
-      <meta property="og:site_name" content="Hoodti" />
+      <meta property="og:site_name" content={brandName} />
       <meta property="og:locale" content="en_US" />
       
       {/* Twitter Meta Tags */}
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:site" content="@Hoodti" />
+      <meta name="twitter:site" content={deriveTwitterHandle(tenant?.socialMedia?.twitter)} />
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={fullImage} />
-      <meta name="twitter:creator" content="@Hoodti" />
+      <meta name="twitter:creator" content={deriveTwitterHandle(tenant?.socialMedia?.twitter)} />
       
       {/* Additional Open Graph Tags for Articles/Products */}
       {publishedTime && <meta property="article:published_time" content={publishedTime} />}
@@ -86,13 +98,13 @@ const SEOHead: React.FC<SEOHeadProps> = ({
           {JSON.stringify({
             "@context": "https://schema.org",
             "@type": "Product",
-            "name": title.replace(' | Hoodti', ''),
+            "name": title.replace(` | ${brandName}`, ''),
             "description": description,
             "image": fullImage,
             "url": fullUrl,
             "brand": {
               "@type": "Brand",
-              "name": "Hoodti"
+              "name": brandName
             },
             "offers": {
               "@type": "Offer",
@@ -108,15 +120,11 @@ const SEOHead: React.FC<SEOHeadProps> = ({
         {JSON.stringify({
           "@context": "https://schema.org",
           "@type": "Organization",
-          "name": "Hoodti",
-          "url": "https://hoodti.com",
-          "logo": "https://hoodti.com/hoodti-logo.jpg",
-          "description": "Streetwear for Urban Culture",
-          "sameAs": [
-            "https://twitter.com/Hoodti",
-            "https://instagram.com/hoodti",
-            "https://facebook.com/hoodti"
-          ]
+          "name": brandName,
+          "url": baseUrl,
+          "logo": siteLogo,
+          "description": siteDescription,
+          "sameAs": buildSameAs(tenant)
         })}
       </script>
       
@@ -125,11 +133,11 @@ const SEOHead: React.FC<SEOHeadProps> = ({
         {JSON.stringify({
           "@context": "https://schema.org",
           "@type": "WebSite",
-          "name": "Hoodti",
-          "url": "https://hoodti.com",
+          "name": brandName,
+          "url": baseUrl,
           "potentialAction": {
             "@type": "SearchAction",
-            "target": "https://hoodti.com/shop?search={search_term_string}",
+            "target": `${baseUrl}/shop?search={search_term_string}`,
             "query-input": "required name=search_term_string"
           }
         })}
@@ -137,5 +145,21 @@ const SEOHead: React.FC<SEOHeadProps> = ({
     </Helmet>
   );
 };
+
+function deriveTwitterHandle(twitterUrl?: string): string | undefined {
+  if (!twitterUrl) return undefined;
+  try {
+    const url = new URL(twitterUrl);
+    const handle = url.pathname.replace('/', '').trim();
+    return handle ? `@${handle}` : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function buildSameAs(tenant?: { socialMedia?: Record<string, string | undefined> }): string[] {
+  if (!tenant?.socialMedia) return [];
+  return Object.values(tenant.socialMedia).filter(Boolean) as string[];
+}
 
 export default SEOHead; 
