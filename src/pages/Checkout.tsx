@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 import { BRAND_NAME } from "@/lib/constants";
 import SEOHead from "@/components/seo/SEOHead";
 import { useSEOConfig } from "@/lib/seo-config";
+import PolicyModal from "@/components/policies/PolicyModal";
 
 // Define types for slots and order data
 interface DeliverySlot {
@@ -101,6 +102,8 @@ const Checkout = () => {
   const [useProfileEmail, setUseProfileEmail] = useState(true);
   const [customEmail, setCustomEmail] = useState("");
   const seoConfig = useSEOConfig('checkout');
+  const [policyOpen, setPolicyOpen] = useState(false);
+  const [policyTab, setPolicyTab] = useState<"shipping" | "terms">("terms");
 
   // Load discount from session storage
   useEffect(() => {
@@ -873,12 +876,13 @@ const Checkout = () => {
                     <AlertCircle className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                     <p className="text-muted-foreground">
                       By placing your order, you agree to our 
-                      <a href="/terms" className="text-primary hover:underline mx-1">
+                      <button type="button" onClick={() => { setPolicyTab('terms'); setPolicyOpen(true); }} className="text-primary hover:underline mx-1">
                         Terms of Service
-                      </a> and 
-                      <a href="/privacy" className="text-primary hover:underline ml-1">
-                        Privacy Policy
-                      </a>
+                      </button>
+                      and 
+                      <button type="button" onClick={() => { setPolicyTab('shipping'); setPolicyOpen(true); }} className="text-primary hover:underline ml-1">
+                        Shipping & Returns
+                      </button>
                     </p>
                   </div>
                 </GlassCard>
@@ -887,6 +891,7 @@ const Checkout = () => {
           </div>
         </div>
       </div>
+      <PolicyModal open={policyOpen} onOpenChange={setPolicyOpen} defaultTab={policyTab} />
     </Layout>
   );
 };

@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Minus, Plus, ShoppingCart, ChevronLeft, Truck, Shield, 
   Star, Package, Check, ArrowRight, Share2, Leaf, 
-  ChevronRight, Camera, Globe, X
+  ChevronRight, Camera, Globe, X, CircleHelp
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import ProductGrid from "@/components/shop/ProductGrid";
@@ -32,6 +32,7 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import PolicyModal from "@/components/policies/PolicyModal";
 import {
   Table,
   TableBody,
@@ -65,6 +66,8 @@ const ProductDetail = () => {
   
   // Add state for image modal
   const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [policyOpen, setPolicyOpen] = useState(false);
+  const [policyTab, setPolicyTab] = useState<"shipping" | "terms">("shipping");
   
   // Add state for selected type
   const [selectedType, setSelectedType] = useState<string | null>(null);
@@ -358,7 +361,7 @@ const ProductDetail = () => {
     {
       icon: <Truck className="w-5 h-5" />,
       title: "Fast Shipping",
-      description: "Expedited delivery within 24-48 hours"
+      description: "Expedited delivery"
     },
     {
       icon: <Shield className="w-5 h-5" />,
@@ -845,6 +848,17 @@ const ProductDetail = () => {
                   ))}
                 </div>
               </div>
+               {/* Shipping & Returns link (after benefits) */}
+               <div className="-mt-2">
+                 <a
+                   href="#"
+                   onClick={(e) => { e.preventDefault(); setPolicyTab("shipping"); setPolicyOpen(true); }}
+                   className="inline-flex items-center text-sm text-muted-foreground hover:text-primary underline underline-offset-4"
+                 >
+                   <CircleHelp className="h-4 w-4 mr-1.5" />
+                   Shipping & returns
+                 </a>
+               </div>
                   
               {/* Add to cart section - Premium Redesign */}
               <div className="space-y-5">
@@ -870,6 +884,7 @@ const ProductDetail = () => {
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
+
                       
                   <motion.div
                     className="w-full"
@@ -911,6 +926,8 @@ const ProductDetail = () => {
                   />
                 )}
               </div>
+
+              <PolicyModal open={policyOpen} onOpenChange={setPolicyOpen} defaultTab={policyTab} />
                 
               {/* Product information tabs - Premium Redesign */}
               <div className="mt-10">

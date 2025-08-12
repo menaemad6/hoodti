@@ -13,9 +13,12 @@ import {
 import { BRAND_NAME } from "@/lib/constants";
 import { useCurrentTenant } from "@/context/TenantContext";
 import { Button } from "@/components/ui/button";
+import PolicyModal from "@/components/policies/PolicyModal";
 
 const Footer = () => {
   const tenant = useCurrentTenant();
+  const [policyOpen, setPolicyOpen] = React.useState(false);
+  const [policyTab, setPolicyTab] = React.useState<"shipping" | "terms">("shipping");
   return (
     <footer className="pt-16 pb-24 md:pb-8 bg-background">
       {/* Main Footer Content */}
@@ -115,16 +118,24 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/shipping" className="text-muted-foreground hover:text-primary transition-colors flex items-center">
+                <button
+                  type="button"
+                  className="text-left w-full text-muted-foreground hover:text-primary transition-colors flex items-center"
+                  onClick={() => { setPolicyTab("shipping"); setPolicyOpen(true); }}
+                >
                   <ChevronRight className="h-3.5 w-3.5 mr-1 text-primary/50" />
                   Shipping & Returns
-                </Link>
+                </button>
               </li>
               <li>
-                <Link to="/terms" className="text-muted-foreground hover:text-primary transition-colors flex items-center">
+                <button
+                  type="button"
+                  className="text-left w-full text-muted-foreground hover:text-primary transition-colors flex items-center"
+                  onClick={() => { setPolicyTab("terms"); setPolicyOpen(true); }}
+                >
                   <ChevronRight className="h-3.5 w-3.5 mr-1 text-primary/50" />
                   Terms & Conditions
-                </Link>
+                </button>
               </li>
             </ul>
           </div>
@@ -175,6 +186,7 @@ const Footer = () => {
           </div>
         </div>
       </div>
+      <PolicyModal open={policyOpen} onOpenChange={setPolicyOpen} defaultTab={policyTab} />
     </footer>
   );
 };

@@ -14,6 +14,8 @@ import { useAuth } from "@/context/AuthContext";
 import SEOHead from "@/components/seo/SEOHead";
 import { useToast } from "@/hooks/use-toast";
 import { useSEOConfig } from "@/lib/seo-config";
+import PolicyModal from "@/components/policies/PolicyModal";
+import { AlertCircle as Info } from "lucide-react";
 
 // Custom styles for animations and effects
 import "./cart.css";
@@ -33,6 +35,8 @@ const Cart = () => {
   const seoConfig = useSEOConfig('cart');
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
+  const [policyOpen, setPolicyOpen] = useState(false);
+  const [policyTab, setPolicyTab] = useState<"shipping" | "terms">("terms");
   
   const handleApplyPromo = (code: string, percent: number, id: string) => {
     setDiscountCode(code);
@@ -479,6 +483,16 @@ const Cart = () => {
                 />
                 
                 <div className="px-4 pb-4">
+                  <div className="mb-3 text-xs text-muted-foreground flex items-start gap-2">
+                    <Info className="h-4 w-4 mt-0.5" />
+                    <button
+                      type="button"
+                      className="underline underline-offset-4 hover:text-primary"
+                      onClick={() => { setPolicyTab("terms"); setPolicyOpen(true); }}
+                    >
+                      By continuing you agree to our Terms of Service and Shipping & Returns
+                    </button>
+                  </div>
                   <Button className="w-full rounded-full" onClick={() => {
                     const next = '/checkout';
                     if (isAuthenticated) {
@@ -506,6 +520,7 @@ const Cart = () => {
             </div>
           </div>
         </div>
+        <PolicyModal open={policyOpen} onOpenChange={setPolicyOpen} defaultTab={policyTab} />
       </div>
     </Layout>
   );
