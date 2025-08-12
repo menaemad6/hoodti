@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
+import { useCurrentTenant } from "@/context/TenantContext";
 import { ProfileRow } from "@/integrations/supabase/types.service";
 import { Separator } from "@/components/ui/separator";
 import { updateProfile } from "@/integrations/supabase/profiles.service";
@@ -24,6 +25,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
 }) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const currentTenant = useCurrentTenant();
   const [isLoading, setIsLoading] = useState(false);
   const [name, setName] = useState(profile?.name || "");
   const [avatar, setAvatar] = useState(profile?.avatar || "");
@@ -61,7 +63,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
       setIsLoading(true);
       
       // Use the updateProfile function instead of direct Supabase call
-      const success = await updateProfile(user.id, {
+      const success = await updateProfile(user.id, currentTenant.id, {
         name,
         avatar,
         phone_number: phoneNumber ? String(phoneNumber) : null,

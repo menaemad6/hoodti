@@ -1,5 +1,6 @@
 import { supabase } from "./client";
 import type { ProfileRow } from "./types.service";
+import type { TablesInsert } from "./types";
 import { createTenantEmail } from "@/lib/tenant-utils";
 
 /**
@@ -11,7 +12,8 @@ export async function getOrCreateProfile(userId: string, tenantId?: string): Pro
 
   try {
     // Get tenant ID from metadata or use provided tenant ID
-    const { data: userData } = await supabase.auth.getUser(userId);
+    // Note: getUser() reads from the current auth session; passing userId is invalid
+    const { data: userData } = await supabase.auth.getUser();
     if (!userData?.user) {
       console.error("No user data found for profile lookup");
       return null;
@@ -31,6 +33,25 @@ export async function getOrCreateProfile(userId: string, tenantId?: string): Pro
     // If profile exists with the correct tenant, return it
     if (data) {
       console.log(`Found existing profile for user ${userId} with tenant ${profileTenantId}`);
+      // Ensure name is populated if missing
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        const metaName = (userData?.user?.user_metadata?.name as string) || null;
+        if (!data.name && metaName) {
+          await supabase
+            .from("profiles")
+            .update({
+              name: metaName,
+              updated_at: new Date().toISOString(),
+              tenant_id: profileTenantId,
+            })
+            .eq("id", userId)
+            .eq("tenant_id", profileTenantId);
+          return { ...data, name: metaName } as ProfileRow;
+        }
+      } catch (e) {
+        console.warn("Could not backfill missing profile name:", e);
+      }
       return data;
     }
 
@@ -66,7 +87,7 @@ export async function getOrCreateProfile(userId: string, tenantId?: string): Pro
       console.log(`Creating profile with email: ${tenantEmail}, tenant: ${profileTenantId}`);
       
       // Create a new profile
-      const newProfile: Partial<ProfileRow> = {
+      const newProfile: TablesInsert<"profiles"> = {
         id: userId,
         email: tenantEmail, // Use tenant-specific email
         name: userData.user.user_metadata?.name as string || null,
@@ -91,7 +112,7 @@ export async function getOrCreateProfile(userId: string, tenantId?: string): Pro
             id: userId,
             email: tenantEmail, // Use tenant-specific email here too
             tenant_id: profileTenantId,
-          })
+          } as TablesInsert<"profiles">)
           .select("*")
           .single();
         
@@ -119,7 +140,7 @@ export async function getOrCreateProfile(userId: string, tenantId?: string): Pro
             tenant_id: tenantId || 'hoodti',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
-          })
+          } as any)
           .select("*")
           .single();
         
@@ -176,7 +197,7 @@ export async function ensureProfileExists(userId: string, tenantId: string): Pro
     console.log(`🔄 Creating new profile for user ${userId} with tenant ${tenantId}`);
     
     // Get user data to extract email and name
-    const { data: userData } = await supabase.auth.getUser(userId);
+      const { data: userData } = await supabase.auth.getUser();
     if (!userData?.user) {
       console.error("❌ No user data found for profile creation");
       return null;
@@ -223,6 +244,16 @@ export async function ensureProfileExists(userId: string, tenantId: string): Pro
         console.error("❌ Simple database function failed:", simpleError);
       } else if (simpleProfile) {
         console.log(`✅ Successfully created profile using simple database function`);
+        // If name exists in metadata but not in created profile, backfill it
+        const metaName = (userData.user.user_metadata?.name as string) || null;
+        if (metaName && !(simpleProfile as ProfileRow).name) {
+          await supabase
+            .from("profiles")
+            .update({ name: metaName, updated_at: new Date().toISOString(), tenant_id: tenantId })
+            .eq("id", userId)
+            .eq("tenant_id", tenantId);
+          return { ...(simpleProfile as ProfileRow), name: metaName } as ProfileRow;
+        }
         return simpleProfile as ProfileRow;
       }
     } catch (simpleException) {
@@ -231,7 +262,7 @@ export async function ensureProfileExists(userId: string, tenantId: string): Pro
     
     // Fallback to direct insert
     console.log(`🔄 Trying direct insert as fallback...`);
-    const newProfile: Partial<ProfileRow> = {
+    const newProfile: TablesInsert<"profiles"> = {
       id: userId,
       email: tenantEmail,
       name: userData.user.user_metadata?.name as string || null,
@@ -252,7 +283,7 @@ export async function ensureProfileExists(userId: string, tenantId: string): Pro
       // Try minimal insert as last resort
       try {
         console.log(`🔄 Trying minimal insert as last resort...`);
-        const minimalProfile = {
+        const minimalProfile: TablesInsert<"profiles"> = {
           id: userId,
           email: tenantEmail,
           tenant_id: tenantId,
@@ -260,7 +291,7 @@ export async function ensureProfileExists(userId: string, tenantId: string): Pro
 
         const { data: minimalData, error: minimalError } = await supabase
           .from("profiles")
-          .insert(minimalProfile as any)
+          .insert(minimalProfile)
           .select("*")
           .single();
 
@@ -396,16 +427,19 @@ export async function forceCreateProfile(userId: string, tenantId: string): Prom
  */
 export async function updateProfile(
   userId: string,
-  profile: Partial<Omit<ProfileRow, "id" | "created_at">>
+  tenantId: string,
+  profile: Partial<Omit<ProfileRow, "id" | "created_at" | "tenant_id">>
 ): Promise<boolean> {
   try {
     const { error } = await supabase
       .from("profiles")
       .update({
         ...profile,
+        tenant_id: tenantId,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", userId);
+      .eq("id", userId)
+      .eq("tenant_id", tenantId);
 
     if (error) {
       console.error("Error updating profile:", error);

@@ -16,7 +16,7 @@ interface AuthContextType {
   userRole: UserRole | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  signUp: (email: string, password: string, userData?: Record<string, any>) => Promise<void>;
+  signUp: (email: string, password: string, userData?: Record<string, unknown>) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -103,7 +103,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const signUp = async (email: string, password: string, userData?: Record<string, any>) => {
+  const signUp = async (email: string, password: string, userData?: Record<string, unknown>) => {
     setIsLoading(true);
     try {
       // Set tenant context in database BEFORE creating user
@@ -127,16 +127,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (error) throw error;
       
-      // Explicitly create profile after signup for reliability
-      if (data?.user?.id) {
+      // After sign up, only attempt profile/role creation if we have a session
+      if (data?.user?.id && data?.session) {
         try {
-          // Small delay to ensure auth signup is completed
-          setTimeout(async () => {
-            console.log("Creating profile for new user:", data.user?.id);
-            await ensureProfileExists(data.user?.id, currentTenant.id);
-            console.log("Creating role for new user:", data.user?.id);
-            await getOrCreateUserRole(data.user?.id);
-          }, 1000);
+          console.log("Creating profile for new user:", data.user?.id);
+          await ensureProfileExists(data.user?.id, currentTenant.id);
+          console.log("Creating role for new user:", data.user?.id);
+          await getOrCreateUserRole(data.user?.id);
         } catch (profileError) {
           console.error("Error creating profile after signup:", profileError);
           // Continue - we don't want to fail signup if this fails
@@ -149,11 +146,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       
       navigate("/auth/signin");
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       toast({
         variant: "destructive",
         title: "Error creating account",
-        description: error.message,
+        description: message,
       });
     } finally {
       setIsLoading(false);
@@ -196,11 +194,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       // Fallback: Redirect based on role
       redirectBasedOnRole(data.user?.id);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       toast({
         variant: "destructive",
         title: "Sign in failed",
-        description: error.message,
+        description: message,
       });
     } finally {
       setIsLoading(false);
@@ -225,11 +224,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       if (error) throw error;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       toast({
         variant: "destructive",
         title: "Google sign in failed",
-        description: error.message,
+        description: message,
       });
       setIsLoading(false);
     }
@@ -243,11 +243,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         description: "You've been successfully signed out",
       });
       navigate("/");
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       toast({
         variant: "destructive",
         title: "Sign out failed",
-        description: error.message,
+        description: message,
       });
     }
   };
@@ -268,11 +269,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: "Password reset email sent",
         description: "Check your email for the password reset link",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       toast({
         variant: "destructive",
         title: "Password reset failed",
-        description: error.message,
+        description: message,
       });
     } finally {
       setIsLoading(false);
