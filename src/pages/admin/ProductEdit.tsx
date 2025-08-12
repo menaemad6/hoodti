@@ -9,6 +9,8 @@ import ProductForm from "@/components/admin/ProductForm";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import SEOHead from "@/components/seo/SEOHead";
+import { useSEOConfig } from "@/lib/seo-config";
 
 const ProductEditPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,6 +22,7 @@ const ProductEditPage = () => {
   const [isLoading, setIsLoading] = useState<boolean>(!isNewProduct); // Only start loading if editing
   const [productName, setProductName] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const seoConfig = useSEOConfig('adminProductEdit');
 
   useEffect(() => {
     // Only fetch product details if it's an existing product
@@ -71,6 +74,7 @@ const ProductEditPage = () => {
     return (
       <ProtectedRoute requiredRole={["admin", "super_admin"]}>
         <AdminLayout>
+          <SEOHead {...seoConfig} />
           <div className="flex flex-col items-center justify-center h-[70vh]">
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
             <p className="mt-4 text-muted-foreground">Loading product information...</p>
@@ -85,6 +89,7 @@ const ProductEditPage = () => {
     return (
       <ProtectedRoute requiredRole={["admin", "super_admin"]}>
         <AdminLayout>
+          <SEOHead {...seoConfig} />
           <div className="flex flex-col gap-6">
             <div className="flex items-center gap-2">
               <Button variant="outline" size="icon" onClick={() => navigate("/admin/products")}>
@@ -114,6 +119,7 @@ const ProductEditPage = () => {
   return (
     <ProtectedRoute requiredRole={["admin", "super_admin"]}>
       <AdminLayout>
+        <SEOHead {...seoConfig} />
         <div className="flex flex-col gap-6">
           <Breadcrumb className="mb-2">
             <BreadcrumbList>

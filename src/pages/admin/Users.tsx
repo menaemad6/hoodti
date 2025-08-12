@@ -38,6 +38,8 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Search, Users as UsersIcon, ShieldCheck, Shield } from "lucide-react";
+import SEOHead from "@/components/seo/SEOHead";
+import { useSEOConfig } from "@/lib/seo-config";
 
 interface UserWithRole {
   id: string;
@@ -56,6 +58,7 @@ const UserManagement = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const currentTenant = useCurrentTenant();
+  const seoConfig = useSEOConfig('adminUsers');
 
   // Fetch users and their roles
   useEffect(() => {
@@ -189,6 +192,7 @@ const UserManagement = () => {
   return (
     <ProtectedRoute requiredRole="super_admin">
       <Layout>
+        <SEOHead {...seoConfig} />
         <div className="space-y-6 mt-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h1 className="text-3xl font-bold">User Management</h1>

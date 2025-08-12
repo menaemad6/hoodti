@@ -41,6 +41,8 @@ import {
 } from "@/integrations/supabase/categories.service";
 import { CategoryRow } from "@/integrations/supabase/types.service";
 import { useCurrentTenant } from "@/context/TenantContext";
+import SEOHead from "@/components/seo/SEOHead";
+import { useSEOConfig } from "@/lib/seo-config";
 
 interface CategoryFormData {
   id?: string;
@@ -70,6 +72,7 @@ const ContentPage = () => {
   // Image preview state
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const currentTenant = useCurrentTenant();
+  const seoConfig = useSEOConfig('adminContent');
 
   const fetchCategories = async () => {
     console.log('Fetching categories...');
@@ -364,6 +367,7 @@ const ContentPage = () => {
   return (
     <ProtectedRoute requiredRole={["admin", "super_admin"]}>
       <AdminLayout>
+        <SEOHead {...seoConfig} />
         <div className="flex flex-col gap-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h1 className="text-3xl font-bold">Content Management</h1>

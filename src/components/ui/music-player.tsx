@@ -13,34 +13,112 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ className, src = "/house-musi
   const currentTenant = useCurrentTenant();
   const autoPlayMusic = currentTenant?.autoPlayMusic === true;
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const suppressAutoplayRef = useRef<boolean>(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isUserToggled, setIsUserToggled] = useState(false);
 
-  useEffect(() => {
-    if (!audioRef.current) return;
-
-    // Respect tenant autoPlay flag, but browsers often block autoplay without interaction
-    if (autoPlayMusic && !isUserToggled) {
-      const playAttempt = audioRef.current.play();
-      if (playAttempt && typeof (playAttempt as Promise<void>).then === "function") {
-        (playAttempt as Promise<void>)
-          .then(() => setIsPlaying(true))
-          .catch(() => {
-            // Autoplay blocked; show paused state until user clicks
-            setIsPlaying(false);
-          });
+  // Ensure we don't load the audio file until we actually intend to play
+  const ensureSrcLoaded = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (!audio.src) {
+      audio.src = src;
+      // Hint the browser to start fetching now that we've set src
+      try {
+        audio.load();
+      } catch {
+        // no-op
       }
     }
-  }, [autoPlayMusic, isUserToggled]);
+  };
+
+  // Keep UI state in sync with the audio element
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
+    audio.addEventListener("play", handlePlay);
+    audio.addEventListener("pause", handlePause);
+    return () => {
+      // Stop playback and fully detach source to avoid ghost playback on unmount/StrictMode re-mounts
+      try {
+        audio.pause();
+        audio.removeAttribute("src");
+        audio.load();
+      } catch {}
+      audio.removeEventListener("play", handlePlay);
+      audio.removeEventListener("pause", handlePause);
+    };
+  }, []);
+
+  // Attempt autoplay; if blocked, start on first user interaction
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (!autoPlayMusic || isUserToggled) return;
+
+    const tryPlay = async () => {
+      if (suppressAutoplayRef.current) return false;
+      ensureSrcLoaded();
+      try {
+        await audio.play();
+        setIsPlaying(true);
+        return true;
+      } catch {
+        setIsPlaying(false);
+        return false;
+      }
+    };
+
+    let cleaned = false;
+    const events: Array<keyof WindowEventMap> = [
+      "pointerdown",
+      "keydown",
+      "touchstart",
+    ];
+    const cleanup = () => {
+      if (cleaned) return;
+      events.forEach((evt) => window.removeEventListener(evt, unlock, listenerOptions));
+      cleaned = true;
+    };
+    const unlock = async (event: Event) => {
+      // Ignore interactions originating inside the player UI (e.g., clicking the toggle)
+      const targetNode = event.target as Node | null;
+      if (targetNode && containerRef.current && containerRef.current.contains(targetNode)) {
+        cleanup();
+        return;
+      }
+      await tryPlay();
+      cleanup();
+    };
+    const listenerOptions: AddEventListenerOptions = { once: true, passive: true };
+
+    // Kick off an autoplay attempt; if blocked, wait for first interaction
+    tryPlay().then((success) => {
+      if (!success) {
+        events.forEach((evt) => window.addEventListener(evt, unlock, listenerOptions));
+      }
+    });
+
+    return cleanup;
+  }, [autoPlayMusic, isUserToggled, src]);
 
   const toggle = () => {
     setIsUserToggled(true);
     if (!audioRef.current) return;
-    if (isPlaying) {
-      audioRef.current.pause();
+    const audio = audioRef.current;
+    const currentlyPlaying = !audio.paused;
+    if (currentlyPlaying) {
+      // User chose to pause; prevent any pending autoplay resume from overriding this
+      suppressAutoplayRef.current = true;
+      audio.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current
+      suppressAutoplayRef.current = false;
+      ensureSrcLoaded();
+      audio
         .play()
         .then(() => setIsPlaying(true))
         .catch(() => setIsPlaying(false));
@@ -49,6 +127,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ className, src = "/house-musi
 
   return (
     <div
+      ref={containerRef}
       className={cn(
         "fixed left-3 z-[60] md:bottom-3 bottom-24",
         "bg-background/80 backdrop-blur-md border border-border/60",
@@ -58,7 +137,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ className, src = "/house-musi
       )}
       aria-label="Background music player"
     >
-      <audio ref={audioRef} src={src} loop preload="auto" />
+      <audio ref={audioRef} loop preload="none" playsInline />
       <button
         onClick={toggle}
         className={cn(

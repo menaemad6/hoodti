@@ -307,7 +307,7 @@ const StreetHero: React.FC = () => {
             
             {/* CTA Button */}
             <Button 
-              className="h-12 sm:h-14 px-6 sm:px-8 rounded-none text-base group border-2 border-primary 
+              className="h-12 sm:h-14 px-6 sm:px-8 rounded-none text-base group border-2 border-white 
                        hover:bg-primary/20 hover:border-primary bg-transparent text-white 
                        transition-all duration-300 overflow-hidden relative"
               size="lg" 

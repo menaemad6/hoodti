@@ -109,6 +109,13 @@ export const SIZING_OPTIONS = [
     ],
   },
   {
+    type: "Boxy T-shirt",
+    sizes: [
+      { size: "L", length: 63, width: 60 },
+      { size: "XXL", length: 67, width: 64 },
+    ],
+  },
+  {
     type: "Polo Baskota",
     sizes: [
       { size: "M", length: 72, width: 56 },

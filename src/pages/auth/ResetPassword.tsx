@@ -19,6 +19,8 @@ import GlassCard from "@/components/ui/glass-card";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/layout/Navbar";
 import MobileNavbar from "@/components/layout/MobileNavbar";
+import SEOHead from "@/components/seo/SEOHead";
+import { useSEOConfig } from "@/lib/seo-config";
 
 const resetPasswordSchema = z.object({
   password: z.string().min(8, { message: "Password must be at least 8 characters" })
@@ -40,6 +42,7 @@ const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [success, setSuccess] = useState(false);
+  const seoConfig = useSEOConfig('resetPassword');
   
   useEffect(() => {
     // Check if we have the hash in the URL
@@ -95,6 +98,7 @@ const ResetPassword = () => {
   
   return (
     <div className="min-h-screen flex flex-col">
+      <SEOHead {...seoConfig} />
       {/* Sticky navbar container */}
       <div className="sticky top-0 z-50 w-full">
         {/* Desktop Navbar - hidden on mobile */}

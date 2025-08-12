@@ -15,6 +15,8 @@ import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Order, OrderItem } from "@/integrations/supabase/types.service";
 import { formatPrice } from "../../lib/utils";
+import SEOHead from "@/components/seo/SEOHead";
+import { useSEOConfig } from "@/lib/seo-config";
 
 interface DeliverySlot {
   date: string;
@@ -138,6 +140,7 @@ const OrderDetail = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const seoConfig = useSEOConfig('accountOrders');
   
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -173,6 +176,7 @@ const OrderDetail = () => {
     return (
       <ProtectedRoute>
         <Layout>
+          <SEOHead {...seoConfig} />
           <div className="container mx-auto max-w-5xl px-3 sm:px-4 lg:px-6 mb-12">
             <div className="flex justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -187,6 +191,7 @@ const OrderDetail = () => {
     return (
       <ProtectedRoute>
         <Layout>
+          <SEOHead {...seoConfig} />
           <div className="container mx-auto max-w-5xl px-3 sm:px-4 lg:px-6 mb-12">
             <AnimatedWrapper animation="fade-in">
               <ModernCard className="p-4 sm:p-6 text-center">
@@ -230,6 +235,7 @@ const OrderDetail = () => {
   return (
     <ProtectedRoute>
       <Layout>
+        <SEOHead {...seoConfig} />
         <div className="min-h-screen bg-gradient-to-b from-background to-background/50 dark:from-background dark:to-background/80">
           <div className="container mx-auto max-w-5xl px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4 sm:gap-4 sm:mb-6 lg:mb-8">

@@ -10,6 +10,8 @@ import { getShippingFee, getTaxRate, getShippingFeeForGovernment } from '../inte
 import OrderSummary from '@/components/checkout/OrderSummary';
 import { formatPrice } from "../lib/utils";
 import { useCurrentTenant } from "@/context/TenantContext";
+import SEOHead from "@/components/seo/SEOHead";
+import { useSEOConfig } from "@/lib/seo-config";
 
 // Custom styles for animations and effects
 import "./cart.css";
@@ -26,6 +28,7 @@ const Cart = () => {
   const [cityShippingFee, setCityShippingFee] = useState<number>(0);
   const navigate = useNavigate();
   const currentTenant = useCurrentTenant();
+  const seoConfig = useSEOConfig('cart');
   
   const handleApplyPromo = (code: string, percent: number, id: string) => {
     setDiscountCode(code);
@@ -128,6 +131,7 @@ const Cart = () => {
   if (cart.length === 0) {
     return (
       <Layout>
+        <SEOHead {...seoConfig} />
         <div className="container mx-auto px-4 py-16">
           <div className="max-w-3xl mx-auto text-center">
             <div className="relative mb-8">
@@ -204,6 +208,7 @@ const Cart = () => {
   
   return (
     <Layout>
+      <SEOHead {...seoConfig} />
       <div className="mb-12">
         {/* Ultra-modern hero section with 3D effects and animations */}
         <div className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-primary/20 pt-20 pb-14 mb-8">

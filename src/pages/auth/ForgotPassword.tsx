@@ -18,6 +18,8 @@ import { Input } from "@/components/ui/input";
 import GlassCard from "@/components/ui/glass-card";
 import Navbar from "@/components/layout/Navbar";
 import MobileNavbar from "@/components/layout/MobileNavbar";
+import SEOHead from "@/components/seo/SEOHead";
+import { useSEOConfig } from "@/lib/seo-config";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -28,6 +30,7 @@ type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 const ForgotPassword = () => {
   const { resetPassword, isLoading } = useAuth();
   const [submitted, setSubmitted] = React.useState(false);
+  const seoConfig = useSEOConfig('forgotPassword');
   
   const form = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -47,6 +50,7 @@ const ForgotPassword = () => {
   
   return (
     <div className="min-h-screen flex flex-col">
+      <SEOHead {...seoConfig} />
       {/* Sticky navbar container */}
       <div className="sticky top-0 z-50 w-full">
         {/* Desktop Navbar - hidden on mobile */}

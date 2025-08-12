@@ -81,6 +81,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { TopProduct } from "@/components/admin/dashboard/TopProductsList";
 import { formatPrice } from "../../lib/utils";
+import SEOHead from "@/components/seo/SEOHead";
+import { useSEOConfig } from "@/lib/seo-config";
 
 interface TopProduct {
   id: number;
@@ -135,6 +137,7 @@ const ReportsPage = () => {
     repeatPurchaseRate: 0,
     customerLifetimeValue: 0
   });
+  const seoConfig = useSEOConfig('adminReports');
 
   // Fetch real data from Supabase
   useEffect(() => {
@@ -343,6 +346,7 @@ const ReportsPage = () => {
   return (
     <ProtectedRoute requiredRole={["admin", "super_admin"]}>
       <AdminLayout>
+        <SEOHead {...seoConfig} />
         <div className="flex flex-col gap-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h1 className="text-3xl font-bold">Reports & Analytics</h1>

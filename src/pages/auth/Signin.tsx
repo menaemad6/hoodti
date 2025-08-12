@@ -20,6 +20,8 @@ import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/layout/Navbar";
 import MobileNavbar from "@/components/layout/MobileNavbar";
 import { BRAND_NAME } from "@/lib/constants";
+import SEOHead from "@/components/seo/SEOHead";
+import { useSEOConfig } from "@/lib/seo-config";
 
 const signinSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -34,6 +36,7 @@ const Signin = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [showPassword, setShowPassword] = React.useState(false);
+  const seoConfig = useSEOConfig('signin');
   
   // Redirect if already authenticated
   React.useEffect(() => {
@@ -61,6 +64,7 @@ const Signin = () => {
   
   return (
     <div className="min-h-screen flex flex-col">
+      <SEOHead {...seoConfig} />
       {/* Sticky navbar container */}
       <div className="sticky top-0 z-50 w-full">
         {/* Desktop Navbar - hidden on mobile */}

@@ -6,9 +6,12 @@ import Navbar from "@/components/layout/Navbar";
 import { ensureProfileExists, debugUserProfiles, checkDatabaseSchema, forceCreateProfile } from "@/integrations/supabase/profiles.service";
 import { getOrCreateUserRole } from "@/integrations/supabase/roles.service";
 import { createTenantEmail } from "@/lib/tenant-utils";
+import SEOHead from "@/components/seo/SEOHead";
+import { useSEOConfig } from "@/lib/seo-config";
 
 const Callback = () => {
   const navigate = useNavigate();
+  const seoConfig = useSEOConfig('signin');
   
   useEffect(() => {
     const handleOAuthCallback = async () => {
@@ -122,6 +125,7 @@ const Callback = () => {
   
   return (
     <div className="min-h-screen flex flex-col">
+      <SEOHead {...seoConfig} />
       <Navbar />
       <div className="flex-1 relative">
         {/* Background pattern */}

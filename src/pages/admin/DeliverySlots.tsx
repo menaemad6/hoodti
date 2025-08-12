@@ -27,6 +27,8 @@ import { Clock, Plus, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrentTenant } from "@/context/TenantContext";
+import SEOHead from "@/components/seo/SEOHead";
+import { useSEOConfig } from "@/lib/seo-config";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -63,6 +65,7 @@ const DeliverySlots = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const currentTenant = useCurrentTenant();
+  const seoConfig = useSEOConfig('adminDeliverySlots');
 
   useEffect(() => {
     fetchSlots();
@@ -204,6 +207,7 @@ const DeliverySlots = () => {
 
   return (
     <AdminLayout>
+      <SEOHead {...seoConfig} />
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>

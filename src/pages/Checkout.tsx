@@ -29,6 +29,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { BRAND_NAME } from "@/lib/constants";
+import SEOHead from "@/components/seo/SEOHead";
+import { useSEOConfig } from "@/lib/seo-config";
 
 // Define types for slots and order data
 interface DeliverySlot {
@@ -98,6 +100,7 @@ const Checkout = () => {
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [useProfileEmail, setUseProfileEmail] = useState(true);
   const [customEmail, setCustomEmail] = useState("");
+  const seoConfig = useSEOConfig('checkout');
 
   // Load discount from session storage
   useEffect(() => {
@@ -574,6 +577,7 @@ const Checkout = () => {
   if (cart.length === 0 && !isSubmitting && !createdOrderId) {
     return (
       <Layout>
+        <SEOHead {...seoConfig} />
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-12 pt-8">
           <GlassCard className="p-8 text-center my-12">
             <h1 className="text-2xl font-bold mb-4">Your cart is empty</h1>
@@ -589,6 +593,7 @@ const Checkout = () => {
   
   return (
     <Layout>
+      <SEOHead {...seoConfig} />
       <div className="pt-8 sm:pt-12 mb-12">
         <h1 className="text-2xl sm:text-3xl font-bold mb-8 text-center animate-fade-in">Checkout</h1>
         

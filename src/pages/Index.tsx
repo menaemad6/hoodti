@@ -363,7 +363,7 @@ const Index = () => {
                       />
                       <div className="absolute inset-0 flex flex-col justify-end p-5 z-20">
                         <div className="transform group-hover:translate-y-0 transition-transform duration-300">
-                          <h3 className="text-xl font-bold mb-1 group-hover:text-primary transition-colors">
+                          <h3 className="text-xl font-bold mb-1 group-hover:text-primary transition-colors text-primary">
                             {category?.name || ["SNEAKERS", "HOODIES", "TEES", "ACCESSORIES"][index] || "Category"}
                           </h3>
                           <div className="flex items-center mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -471,9 +471,9 @@ const Index = () => {
           ) : (
             <div className="space-y-12">
               {/* Product Carousel - modern sliding carousel with auto-scroll */}
-              <div className="relative group">
+              <div className="relative group/carousel">
                 {/* Carousel Navigation Buttons - enhanced styling */}
-                <div className="absolute -left-2 md:-left-4 top-1/2 transform -translate-y-1/2 z-20 opacity-80 group-hover:opacity-100 transition-opacity">
+                <div className="absolute -left-2 md:-left-4 top-1/2 transform -translate-y-1/2 z-20 opacity-80 group-hover/carousel:opacity-100 transition-opacity">
                   <button 
                     className="h-10 w-10 md:h-12 md:w-12 rounded-full flex items-center justify-center bg-background/80 backdrop-blur-sm shadow-lg border border-border hover:bg-primary hover:text-primary-foreground transition-all hover:scale-110 active:scale-95"
                     onClick={() => {
@@ -486,7 +486,7 @@ const Index = () => {
                     <ChevronLeft className="h-5 w-5" />
                   </button>
                 </div>
-                <div className="absolute -right-2 md:-right-4 top-1/2 transform -translate-y-1/2 z-20 opacity-80 group-hover:opacity-100 transition-opacity">
+                <div className="absolute -right-2 md:-right-4 top-1/2 transform -translate-y-1/2 z-20 opacity-80 group-hover/carousel:opacity-100 transition-opacity">
                   <button 
                     className="h-10 w-10 md:h-12 md:w-12 rounded-full flex items-center justify-center bg-background/80 backdrop-blur-sm shadow-lg border border-border hover:bg-primary hover:text-primary-foreground transition-all hover:scale-110 active:scale-95"
                     onClick={() => {
@@ -501,7 +501,7 @@ const Index = () => {
                 </div>
                 
                 {/* Carousel Progress Indicators */}
-                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-20 flex items-center gap-1.5 bg-background/50 backdrop-blur-sm rounded-full px-2 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-20 flex items-center gap-1.5 bg-background/50 backdrop-blur-sm rounded-full px-2 py-1.5 opacity-0 group-hover/carousel:opacity-100 transition-opacity">
                   {newArrivalsProducts.length > 0 ? 
                     newArrivalsProducts.map((_, index) => (
                     <button
@@ -830,9 +830,9 @@ const Index = () => {
           ) : (
             <div className="space-y-12">
               {/* Featured Products Carousel */}
-              <div className="relative group">
+              <div className="relative group/carousel">
                 {/* Carousel Navigation Buttons */}
-                <div className="absolute -left-2 md:-left-4 top-1/2 transform -translate-y-1/2 z-20 opacity-80 group-hover:opacity-100 transition-opacity">
+                <div className="absolute -left-2 md:-left-4 top-1/2 transform -translate-y-1/2 z-20 opacity-80 group-hover/carousel:opacity-100 transition-opacity">
                   <button 
                     className="h-10 w-10 md:h-12 md:w-12 rounded-full flex items-center justify-center bg-background/80 backdrop-blur-sm shadow-lg border border-border hover:bg-amber-500 hover:text-amber-50 transition-all hover:scale-110 active:scale-95"
                     onClick={() => {
@@ -845,7 +845,7 @@ const Index = () => {
                     <ChevronLeft className="h-5 w-5" />
                   </button>
                 </div>
-                <div className="absolute -right-2 md:-right-4 top-1/2 transform -translate-y-1/2 z-20 opacity-80 group-hover:opacity-100 transition-opacity">
+                <div className="absolute -right-2 md:-right-4 top-1/2 transform -translate-y-1/2 z-20 opacity-80 group-hover/carousel:opacity-100 transition-opacity">
                   <button 
                     className="h-10 w-10 md:h-12 md:w-12 rounded-full flex items-center justify-center bg-background/80 backdrop-blur-sm shadow-lg border border-border hover:bg-amber-500 hover:text-amber-50 transition-all hover:scale-110 active:scale-95"
                     onClick={() => {
@@ -860,7 +860,7 @@ const Index = () => {
                 </div>
                 
                 {/* Carousel Progress Indicators */}
-                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-20 flex items-center gap-1.5 bg-background/50 backdrop-blur-sm rounded-full px-2 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-20 flex items-center gap-1.5 bg-background/50 backdrop-blur-sm rounded-full px-2 py-1.5 opacity-0 group-hover/carousel:opacity-100 transition-opacity">
                   {featuredProducts.length > 0 ? 
                     featuredProducts.map((_, index) => (
                     <button

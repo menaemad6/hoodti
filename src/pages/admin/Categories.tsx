@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { Button, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
 import { Edit, Delete } from "lucide-react";
+import SEOHead from "@/components/seo/SEOHead";
+import { useSEOConfig } from "@/lib/seo-config";
 
 const AdminCategories = () => {
   const [categories, setCategories] = useState<any[]>([]);
@@ -11,6 +13,7 @@ const AdminCategories = () => {
   const [error, setError] = useState<string | null>(null);
 
   const currentTenant = useCurrentTenant();
+  const seoConfig = useSEOConfig('adminCategories');
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -28,16 +31,27 @@ const AdminCategories = () => {
   }, [currentTenant]);
 
   if (isLoading) {
-    return <Typography>Loading categories...</Typography>;
+    return (
+      <>
+        <SEOHead {...seoConfig} />
+        <Typography>Loading categories...</Typography>
+      </>
+    );
   }
 
   if (error) {
-    return <Typography color="error">{error}</Typography>;
+    return (
+      <>
+        <SEOHead {...seoConfig} />
+        <Typography color="error">{error}</Typography>
+      </>
+    );
   }
 
   if (categories.length === 0) {
     return (
       <div>
+        <SEOHead {...seoConfig} />
         <Typography variant="h6">No categories found for this tenant.</Typography>
         <Button
           variant="contained"
@@ -57,6 +71,7 @@ const AdminCategories = () => {
 
   return (
     <div>
+      <SEOHead {...seoConfig} />
       <Typography variant="h4" gutterBottom>
         Categories
       </Typography>

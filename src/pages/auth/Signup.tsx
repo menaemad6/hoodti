@@ -19,6 +19,8 @@ import GlassCard from "@/components/ui/glass-card";
 import Navbar from "@/components/layout/Navbar";
 import MobileNavbar from "@/components/layout/MobileNavbar";
 import { BRAND_NAME } from "@/lib/constants";
+import SEOHead from "@/components/seo/SEOHead";
+import { useSEOConfig } from "@/lib/seo-config";
 
 const signupSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
@@ -40,6 +42,7 @@ const Signup = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+  const seoConfig = useSEOConfig('signup');
   
   // Redirect if already authenticated
   React.useEffect(() => {
@@ -70,6 +73,7 @@ const Signup = () => {
   
   return (
     <div className="min-h-screen flex flex-col">
+      <SEOHead {...seoConfig} />
       {/* Sticky navbar container */}
       <div className="sticky top-0 z-50 w-full">
         {/* Desktop Navbar - hidden on mobile */}

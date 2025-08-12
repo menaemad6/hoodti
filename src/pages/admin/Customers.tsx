@@ -36,6 +36,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatPrice } from "../../lib/utils";
+import SEOHead from "@/components/seo/SEOHead";
+import { useSEOConfig } from "@/lib/seo-config";
 
 interface Customer {
   id: string;
@@ -134,6 +136,7 @@ const CustomersPage = () => {
   const [totalPages, setTotalPages] = useState(0);
   const { toast } = useToast();
   const currentTenant = useCurrentTenant();
+  const seoConfig = useSEOConfig('adminCustomers');
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -557,6 +560,7 @@ const CustomersPage = () => {
   return (
     <ProtectedRoute requiredRole={["admin", "super_admin"]}>
       <AdminLayout>
+        <SEOHead {...seoConfig} />
         <div className="flex flex-col gap-6">
           <div className="flex justify-between items-center">
             <h1 className="text-3xl font-bold">Customers</h1>

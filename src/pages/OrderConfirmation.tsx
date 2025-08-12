@@ -16,6 +16,8 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Badge } from "@/components/ui/badge";
 import { OrderItem as SupabaseOrderItem } from "@/integrations/supabase/types.service";
 import { formatPrice } from "../lib/utils";
+import SEOHead from "@/components/seo/SEOHead";
+import { useSEOConfig } from "@/lib/seo-config";
 
 interface LocalOrderItem {
   id: string;
@@ -60,6 +62,7 @@ const OrderConfirmation = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const { toast } = useToast();
+  const seoConfig = useSEOConfig('orderConfirmation');
   
   const orderId = searchParams.get("orderId");
   
@@ -170,6 +173,7 @@ const OrderConfirmation = () => {
   if (isLoading) {
     return (
       <Layout>
+        <SEOHead {...seoConfig} />
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 my-16">
           <div className="flex justify-center items-center h-64">
             <Spinner size="lg" />
@@ -182,6 +186,7 @@ const OrderConfirmation = () => {
   if (error || !order) {
     return (
       <Layout>
+        <SEOHead {...seoConfig} />
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 my-16">
             <ModernCard className="p-8 text-center">
             <h1 className="text-2xl font-bold mb-4">Order Not Found</h1>
@@ -217,6 +222,7 @@ const OrderConfirmation = () => {
 
   return (
     <Layout>
+      <SEOHead {...seoConfig} />
       <div className="min-h-screen bg-gradient-to-b from-background to-background/50 dark:from-background dark:to-background/80">
         <div className="container mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-16">
           <AnimatedWrapper animation="fade-up" className="space-y-8">

@@ -175,6 +175,17 @@ function buildSEOForTenant(tenant: { name: string; domain: string; logo: string;
       tags: ['password reset', 'account recovery']
     },
 
+    resetPassword: {
+      title: `Reset Password | ${brand}`,
+      description: `Create a new password to secure your ${brand} account.`,
+      keywords: `reset password, update password, account security, ${brand}`,
+      image: defaultImage,
+      url: `${baseUrl}/reset-password`,
+      type: 'website',
+      noIndex: true,
+      tags: ['reset password', 'security']
+    },
+
     adminDashboard: {
       title: `Admin Dashboard | ${brand}`,
       description: `${brand} admin dashboard for store management.`,
@@ -184,6 +195,17 @@ function buildSEOForTenant(tenant: { name: string; domain: string; logo: string;
       noIndex: true,
       noFollow: true,
       tags: ['admin', 'dashboard']
+    },
+
+    adminCategories: {
+      title: `Manage Categories | ${brand} Admin`,
+      description: `View and manage product categories in the ${brand} admin panel.`,
+      image: defaultImage,
+      url: `${baseUrl}/admin/categories`,
+      type: 'website',
+      noIndex: true,
+      noFollow: true,
+      tags: ['admin', 'categories', 'management']
     },
 
     adminProducts: {
@@ -208,6 +230,72 @@ function buildSEOForTenant(tenant: { name: string; domain: string; logo: string;
       tags: ['admin', 'orders', 'management']
     },
 
+    adminCustomers: {
+      title: `Customers | ${brand} Admin`,
+      description: `View and manage customers in the ${brand} admin panel.`,
+      image: defaultImage,
+      url: `${baseUrl}/admin/customers`,
+      type: 'website',
+      noIndex: true,
+      noFollow: true,
+      tags: ['admin', 'customers']
+    },
+
+    adminUsers: {
+      title: `Users | ${brand} Admin`,
+      description: `Manage user roles and permissions in the ${brand} admin panel.`,
+      image: defaultImage,
+      url: `${baseUrl}/admin/users`,
+      type: 'website',
+      noIndex: true,
+      noFollow: true,
+      tags: ['admin', 'users']
+    },
+
+    adminReports: {
+      title: `Reports & Analytics | ${brand} Admin`,
+      description: `Analyze sales and performance metrics for ${brand}.`,
+      image: defaultImage,
+      url: `${baseUrl}/admin/reports`,
+      type: 'website',
+      noIndex: true,
+      noFollow: true,
+      tags: ['admin', 'reports', 'analytics']
+    },
+
+    adminContent: {
+      title: `Content Management | ${brand} Admin`,
+      description: `Manage content such as categories and banners for ${brand}.`,
+      image: defaultImage,
+      url: `${baseUrl}/admin/content`,
+      type: 'website',
+      noIndex: true,
+      noFollow: true,
+      tags: ['admin', 'content']
+    },
+
+    adminDeliverySlots: {
+      title: `Delivery Slots | ${brand} Admin`,
+      description: `Configure delivery time slots for ${brand}.`,
+      image: defaultImage,
+      url: `${baseUrl}/admin/delivery-slots`,
+      type: 'website',
+      noIndex: true,
+      noFollow: true,
+      tags: ['admin', 'delivery', 'slots']
+    },
+
+    adminProductEdit: {
+      title: `Product Editor | ${brand} Admin`,
+      description: `Create or edit products in the ${brand} admin panel.`,
+      image: defaultImage,
+      url: `${baseUrl}/admin/products/new`,
+      type: 'website',
+      noIndex: true,
+      noFollow: true,
+      tags: ['admin', 'products', 'edit']
+    },
+
     notFound: {
       title: `Page Not Found | ${brand}`,
       description: `The page you're looking for doesn't exist. Continue shopping our exclusive collection at ${brand}.`,
@@ -217,6 +305,17 @@ function buildSEOForTenant(tenant: { name: string; domain: string; logo: string;
       type: 'website',
       noIndex: true,
       tags: ['404', 'error', 'not found']
+    }
+    ,
+    orderConfirmation: {
+      title: `Order Confirmation | ${brand}`,
+      description: `Your ${brand} order was placed successfully. Review your order details and delivery information.`,
+      keywords: `order confirmation, order status, purchase complete, ${brand}`,
+      image: defaultImage,
+      url: `${baseUrl}/order-confirmation`,
+      type: 'website',
+      noIndex: true,
+      tags: ['order', 'confirmation']
     }
   };
 

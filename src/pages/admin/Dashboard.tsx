@@ -23,6 +23,8 @@ const TopSellingProducts = lazy(() => import("@/components/admin/dashboard/TopSe
 import ShopPerformance from "@/components/admin/dashboard/ShopPerformance";
 import RecentActivity from "@/components/admin/dashboard/RecentActivity";
 import LowStockProducts from "@/components/admin/dashboard/LowStockProducts";
+import SEOHead from "@/components/seo/SEOHead";
+import { useSEOConfig } from "@/lib/seo-config";
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -107,6 +109,7 @@ const AdminDashboard = () => {
   const [topSellingProducts, setTopSellingProducts] = useState<TopProduct[]>([]);
   const [lowStockProducts, setLowStockProducts] = useState<LowStockProduct[]>([]);
   const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
+  const seoConfig = useSEOConfig('adminDashboard');
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -340,6 +343,7 @@ const AdminDashboard = () => {
 
   return (
     <AdminLayout>
+      <SEOHead {...seoConfig} />
       <div className="flex flex-col gap-4 md:gap-6 max-w-full overflow-hidden">
         <div className="flex flex-col sm:flex-row justify-between gap-4 sm:items-center">
           <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>

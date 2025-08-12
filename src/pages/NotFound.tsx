@@ -3,9 +3,12 @@ import React, { useEffect } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Home, Search } from "lucide-react";
+import SEOHead from "@/components/seo/SEOHead";
+import { useSEOConfig } from "@/lib/seo-config";
 
 const NotFound: React.FC = () => {
   const location = useLocation();
+  const seoConfig = useSEOConfig('notFound');
 
   useEffect(() => {
     console.error(
@@ -16,6 +19,7 @@ const NotFound: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+      <SEOHead {...seoConfig} />
       <div className="max-w-md w-full text-center">
         <div className="mb-8">
           <div className="flex justify-center mb-6">
