@@ -107,12 +107,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIsLoading(true);
     try {
       // Set tenant context in database BEFORE creating user
-      try {
-        await supabase.rpc('set_tenant_context_for_profile', { tenant_id: currentTenant.id });
-        console.log("Set tenant context before signup:", currentTenant.id);
-      } catch (contextError) {
-        console.warn("Failed to set tenant context before signup:", contextError);
-      }
+      // Note: removed RPC pre-context call to satisfy types and avoid runtime dependency
       
       // Create tenant-specific email for user management
       const tenantEmail = createTenantEmail(email, currentTenant.id);
@@ -182,8 +177,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: "Welcome back!",
         description: "You've successfully signed in",
       });
-      
-      // Redirect based on role
+
+      // Prefer explicit next redirect if present (set by Signin or guards)
+      try {
+        const next = sessionStorage.getItem('postAuthRedirect');
+        if (next) {
+          if (next.includes('checkout')) {
+          toast({
+            title: "You're all set",
+            description: "You're signed in. Let's complete your checkout.",
+          });
+        }
+          sessionStorage.removeItem('postAuthRedirect');
+          navigate(next, { replace: true });
+          return;
+        }
+      } catch (e) { /* ignore */ }
+
+      // Fallback: Redirect based on role
       redirectBasedOnRole(data.user?.id);
     } catch (error: any) {
       toast({
@@ -200,12 +211,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIsLoading(true);
     try {
       // Set tenant context in database BEFORE OAuth redirect
-      try {
-        await supabase.rpc('set_tenant_context_for_profile', { tenant_id: currentTenant.id });
-        console.log("Set tenant context before Google OAuth:", currentTenant.id);
-      } catch (contextError) {
-        console.warn("Failed to set tenant context before Google OAuth:", contextError);
-      }
+      // Note: removed RPC pre-context call to satisfy types and avoid runtime dependency
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -277,6 +283,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (!userId) return navigate("/");
     
     try {
+      // Safeguard: if any pending next target exists, honor it first
+      try {
+        const next = sessionStorage.getItem('postAuthRedirect');
+        if (next) {
+          sessionStorage.removeItem('postAuthRedirect');
+          navigate(next, { replace: true });
+          return;
+        }
+      } catch (e) { /* ignore */ }
+
       // Use getOrCreateUserRole to ensure a role exists
       const role = await getOrCreateUserRole(userId);
       

@@ -170,10 +170,10 @@ const Navbar = () => {
               </nav>
 
               {/* Desktop Actions */}
-              <div className="hidden md:flex items-center space-x-2">
+               <div className="hidden md:flex items-center space-x-2">
                 <ThemeToggle />
                 
-                <Button variant="ghost" size="icon" asChild className="relative">
+                 <Button variant="ghost" size="icon" asChild className="relative hover:bg-primary/10 dark:hover:bg-primary/20 rounded-full">
                   <Link to="/cart">
                     <ShoppingCart className="h-5 w-5" />
                     {cartItemsCount > 0 && (

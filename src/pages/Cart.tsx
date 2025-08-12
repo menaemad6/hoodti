@@ -10,7 +10,9 @@ import { getShippingFee, getTaxRate, getShippingFeeForGovernment } from '../inte
 import OrderSummary from '@/components/checkout/OrderSummary';
 import { formatPrice } from "../lib/utils";
 import { useCurrentTenant } from "@/context/TenantContext";
+import { useAuth } from "@/context/AuthContext";
 import SEOHead from "@/components/seo/SEOHead";
+import { useToast } from "@/hooks/use-toast";
 import { useSEOConfig } from "@/lib/seo-config";
 
 // Custom styles for animations and effects
@@ -29,6 +31,8 @@ const Cart = () => {
   const navigate = useNavigate();
   const currentTenant = useCurrentTenant();
   const seoConfig = useSEOConfig('cart');
+  const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
   
   const handleApplyPromo = (code: string, percent: number, id: string) => {
     setDiscountCode(code);
@@ -300,14 +304,25 @@ const Cart = () => {
               
               {/* Action buttons */}
               <div className="flex flex-col sm:flex-row items-center gap-4">
-                <Button 
-                  asChild 
+                <Button
                   className="rounded-full px-8 h-12 bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 text-white shadow-lg shadow-primary/20 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30"
+                  onClick={() => {
+                    const next = '/checkout';
+                    if (isAuthenticated) {
+                      navigate(next);
+                    } else {
+                      const nextFull = next; // include query if any later
+                      toast({
+                        title: "Sign in required",
+                        description: "Please sign in to continue to checkout.",
+                      });
+                      try { sessionStorage.setItem('postAuthRedirect', nextFull); } catch (e) { /* ignore */ }
+                      navigate(`/signin?next=${encodeURIComponent(nextFull)}`, { replace: false, state: { from: { pathname: nextFull } } });
+                    }
+                  }}
                 >
-                  <Link to="/checkout" className="flex items-center gap-2">
-                    <span>Proceed to Checkout</span>
-                    <ArrowRight className="h-5 w-5" />
-                  </Link>
+                  <span>Proceed to Checkout</span>
+                  <ArrowRight className="h-5 w-5 ml-2" />
                 </Button>
                 
                 <Link 
@@ -464,11 +479,21 @@ const Cart = () => {
                 />
                 
                 <div className="px-4 pb-4">
-                  <Button className="w-full rounded-full" asChild>
-                    <Link to="/checkout">
-                      Proceed to Checkout
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
+                  <Button className="w-full rounded-full" onClick={() => {
+                    const next = '/checkout';
+                    if (isAuthenticated) {
+                      navigate(next);
+                    } else {
+                      toast({
+                        title: "Sign in required",
+                        description: "Please sign in to continue to checkout.",
+                      });
+                      try { sessionStorage.setItem('postAuthRedirect', next); } catch (e) { /* ignore */ }
+                      navigate(`/signin?next=${encodeURIComponent(next)}`, { replace: false, state: { from: { pathname: next } } });
+                    }
+                  }}>
+                    Proceed to Checkout
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                   
                   <div className="mt-4 text-center">

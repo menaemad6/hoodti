@@ -15,7 +15,7 @@ const ThemeToggle = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
+        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-primary/10 dark:hover:bg-primary/20">
           {resolvedTheme === 'dark' ? (
             <Moon className="h-[18px] w-[18px]" />
           ) : resolvedTheme === 'light' ? (

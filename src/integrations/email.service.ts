@@ -21,6 +21,7 @@ interface OrderStatusEmailProps {
   customerPhone?: string;   // Customer's phone number (optional)
   customerEmail?: string;   // Customer's email (might be different from recipient)
   brandName?: string;       // Store/brand name (optional)
+  domain?: string;          // Tenant domain (optional)
 }
 
 interface OrderConfirmationEmailProps {
@@ -40,6 +41,7 @@ interface OrderConfirmationEmailProps {
   customerPhone?: string;  // Customer's phone number (optional)
   customerEmail?: string;  // Customer's email (might be different from recipient)
   brandName?: string;      // Store/brand name (optional)
+  domain?: string;         // Tenant domain (optional)
 }
 
 // Define an interface for order item structure
@@ -193,7 +195,8 @@ export const sendOrderConfirmationEmail = async (emailData: OrderConfirmationEma
       // Customer contact information
       customer_email: emailData.customerEmail || emailData.userEmail,
       customer_phone: emailData.customerPhone || "Not provided",
-      brand_name: emailData.brandName || BRAND_NAME
+      brand_name: emailData.brandName || BRAND_NAME,
+      domain: emailData.domain || (typeof window !== 'undefined' ? window.location.hostname : '')
     };
 
     console.log('Sending order confirmation email with params:', {
@@ -324,7 +327,8 @@ export const sendOrderStatusEmail = async (emailData: OrderStatusEmailProps) => 
       // Customer contact information
       customer_email: recipientEmail, // Show same email in the email body
       customer_phone: emailData.customerPhone || "Not provided",
-      brand_name: emailData.brandName || BRAND_NAME
+      brand_name: emailData.brandName || BRAND_NAME,
+      domain: emailData.domain || (typeof window !== 'undefined' ? window.location.hostname : '')
     };
 
     // Send the email using credentials from config

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Pause, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useCurrentTenant } from "@/context/TenantContext";
+import { useTenant } from "@/context/TenantContext";
 
 type MusicPlayerProps = {
   className?: string;
@@ -10,8 +10,9 @@ type MusicPlayerProps = {
 
 // Global background music player with sticky bottom-left control
 const MusicPlayer: React.FC<MusicPlayerProps> = ({ className, src = "/house-music-1.mp3" }) => {
-  const currentTenant = useCurrentTenant();
-  const autoPlayMusic = currentTenant?.autoPlayMusic === true;
+  const { currentTenant, isLoading } = useTenant();
+  // Only decide autoplay after tenant is fully resolved to avoid using the default tenant temporarily
+  const autoPlayMusic = !isLoading && currentTenant?.autoPlayMusic === true;
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const suppressAutoplayRef = useRef<boolean>(false);
@@ -57,6 +58,8 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ className, src = "/house-musi
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
+    // Do not attach global listeners or attempt to play until tenant has loaded
+    if (isLoading) return;
     if (!autoPlayMusic || isUserToggled) return;
 
     const tryPlay = async () => {
@@ -103,7 +106,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ className, src = "/house-musi
     });
 
     return cleanup;
-  }, [autoPlayMusic, isUserToggled, src]);
+  }, [autoPlayMusic, isUserToggled, src, isLoading]);
 
   const toggle = () => {
     setIsUserToggled(true);

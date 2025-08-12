@@ -108,8 +108,18 @@ const Callback = () => {
             }
           }
           
-          // Navigate to home page
-          navigate("/", { replace: true });
+          // Navigate to intended page if present
+          try {
+            const next = sessionStorage.getItem('postAuthRedirect');
+            if (next) {
+              sessionStorage.removeItem('postAuthRedirect');
+              navigate(next, { replace: true });
+            } else {
+              navigate("/", { replace: true });
+            }
+          } catch {
+            navigate("/", { replace: true });
+          }
         } else {
           // If auth failed, send back to sign in
           navigate("/auth/signin", { replace: true });

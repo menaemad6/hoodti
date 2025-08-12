@@ -29,7 +29,7 @@ const ProfileButton = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 hover:bg-accent">
+        <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 hover:bg-primary/10 dark:hover:bg-primary/20">
           <User className="h-7 w-7" />
           <span className="sr-only">Profile menu</span>
         </Button>

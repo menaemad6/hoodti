@@ -243,6 +243,7 @@ const OrdersPage = () => {
             taxAmount: `$${orderTax.toFixed(2)}`,
             discountAmount: orderDiscount > 0 ? `-$${orderDiscount.toFixed(2)}` : '$0.00',
             customerPhone: selectedOrder.phone_number || customerProfile.phone || 'Not provided',
+            domain: currentTenant.domain,
           });
           
           toast({

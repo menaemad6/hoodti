@@ -38,11 +38,26 @@ const Signin = () => {
   const [showPassword, setShowPassword] = React.useState(false);
   const seoConfig = useSEOConfig('signin');
   
+  // Capture next from query or state and store for OAuth-safe redirect
+  React.useEffect(() => {
+    try {
+      const params = new URLSearchParams(location.search);
+      const next = params.get('next') || location.state?.from?.pathname;
+      if (next) {
+        sessionStorage.setItem('postAuthRedirect', next);
+      }
+    } catch {}
+  }, [location.search, location.state]);
+
   // Redirect if already authenticated
   React.useEffect(() => {
     if (isAuthenticated) {
-      const from = location.state?.from?.pathname || "/";
-      navigate(from, { replace: true });
+      let target: string | undefined;
+      try { target = sessionStorage.getItem('postAuthRedirect') || undefined; } catch {}
+      const fallback = location.state?.from?.pathname || "/";
+      const dest = target || fallback;
+      if (target) { try { sessionStorage.removeItem('postAuthRedirect'); } catch {} }
+      navigate(dest, { replace: true });
     }
   }, [isAuthenticated, navigate, location]);
   

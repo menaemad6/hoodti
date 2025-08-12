@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth, UserRole } from "@/context/AuthContext";
 import { useRoleAccess } from "@/hooks/use-role-access";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProtectedRouteProps {
   children?: React.ReactNode;
@@ -15,6 +16,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { isAuthenticated, isLoading, userRole } = useAuth();
   const { hasAccess } = useRoleAccess();
   const location = useLocation();
+  const { toast } = useToast();
+  const hasToastedRef = React.useRef(false);
 
   // Show loading state while checking authentication and role
   if (isLoading || (isAuthenticated && !userRole)) {
@@ -27,7 +30,18 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   
   // Redirect to sign in if not authenticated
   if (!isAuthenticated) {
-    return <Navigate to="/signin" state={{ from: location }} replace />;
+    const next = `${location.pathname}${location.search || ''}`;
+    if (!hasToastedRef.current) {
+      hasToastedRef.current = true;
+      const hasNextIntent = next && next !== "/";
+      if (hasNextIntent) {
+        toast({
+          title: "Please sign in",
+          description: "You need to sign in to continue.",
+        });
+      }
+    }
+    return <Navigate to={`/signin?next=${encodeURIComponent(next)}`} state={{ from: location }} replace />;
   }
   
   // Wait for role to be loaded before checking access

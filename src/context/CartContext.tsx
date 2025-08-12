@@ -1,10 +1,12 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Product } from "@/types";
 import { Product as SupabaseProduct } from "@/integrations/supabase/types.service";
 import { ensureProductTypeCompatibility, mapSupabaseProductToAppProduct } from "@/types/supabase-types";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/context/AuthContext";
+import { useCurrentTenant } from "@/context/TenantContext";
 
 export interface CartItem {
   product: Product | SupabaseProduct;
@@ -19,6 +21,7 @@ export interface CartContextProps {
   cart: CartItem[];
   cartItemsCount: number;
   cartTotal: number;
+  isCartInitialized: boolean;
   addItem: (product: Product | SupabaseProduct, quantity?: number, selectedColor?: string, selectedSize?: string, selected_type?: string) => void;
   addToCart: (product: Product | SupabaseProduct, quantity?: number, selectedColor?: string, selectedSize?: string, selected_type?: string) => void;
   removeItem: (productId: string, selectedColor?: string, selectedSize?: string, selected_type?: string) => void;
@@ -29,7 +32,15 @@ export interface CartContextProps {
   getItemQuantity: (productId: string) => number;
 }
 
-const CART_STORAGE_KEY = 'glassgrocer_cart_v2';
+// Base key; actual storage key is per-tenant and per-user for robust persistence
+const CART_STORAGE_KEY_BASE = 'glassgrocer_cart_v3';
+const LEGACY_CART_KEY_V2 = 'glassgrocer_cart_v2';
+
+function buildCartStorageKey(tenantId: string, userId?: string | null) {
+  const safeTenant = tenantId || 'default';
+  const suffix = userId ? `user_${userId}` : 'guest';
+  return `${CART_STORAGE_KEY_BASE}_${safeTenant}_${suffix}`;
+}
 
 const CartContext = createContext<CartContextProps | undefined>(undefined);
 
@@ -39,12 +50,91 @@ const truncateProductName = (name: string, maxLength: number = 30) => {
   return name.substring(0, maxLength) + '...';
 };
 
+// Types for persisted storage (narrow, stable)
+interface StoredProduct {
+  id: string;
+  name: string;
+  price: number;
+  images?: string[];
+  description?: string;
+  category_id?: string;
+  featured?: boolean;
+  is_new?: boolean;
+  discount?: number;
+  category?: Record<string, unknown> | string;
+  unit?: string;
+  stock?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface StoredCartItem {
+  product: StoredProduct;
+  quantity: number;
+  selectedColor?: string;
+  selectedSize?: string;
+  selected_type?: string;
+}
+
+interface CommonProductFields {
+  id: string;
+  name: string;
+  price: number;
+  images?: string[];
+  image?: string;
+  description?: string;
+  category_id?: string;
+  featured?: boolean;
+  is_new?: boolean;
+  discount?: number;
+  category?: Record<string, unknown> | string;
+  unit?: string;
+  stock?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+function serializeProductForStorage(product: Product | SupabaseProduct): StoredProduct {
+  const p = product as unknown as CommonProductFields;
+  const images: string[] | undefined = Array.isArray(p.images)
+    ? p.images
+    : p.image
+      ? [p.image]
+      : undefined;
+
+  return {
+    id: p.id,
+    name: p.name,
+    price: p.price,
+    images,
+    description: p.description,
+    category_id: p.category_id,
+    featured: p.featured,
+    is_new: p.is_new,
+    discount: p.discount,
+    category: p.category,
+    unit: p.unit,
+    stock: p.stock,
+    created_at: p.created_at,
+    updated_at: p.updated_at,
+  };
+}
+
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [isCartInitialized, setIsCartInitialized] = useState<boolean>(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const currentTenant = useCurrentTenant();
+  const previousUserIdRef = useRef<string | null>(null);
+  const skipNextSaveRef = useRef<boolean>(false);
+
+  const currentStorageKey = useMemo(() => {
+    return buildCartStorageKey(currentTenant.id, user?.id ?? null);
+  }, [currentTenant.id, user?.id]);
 
   const cartItemsCount = items.reduce((total, item) => total + item.quantity, 0);
 
@@ -57,81 +147,157 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const cartTotal = getTotal();
 
-  // Load cart from localStorage on initial render
+  // Utility: validate and normalize stored cart payload
+  const normalizeStoredCart = (raw: unknown): CartItem[] => {
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .filter((item) =>
+        item &&
+        item.product &&
+        typeof item.product === 'object' &&
+        item.product.id &&
+        typeof item.quantity === 'number' &&
+        item.quantity > 0
+      )
+      .map((item: StoredCartItem) => ({
+        product: mapSupabaseProductToAppProduct(item.product as unknown as SupabaseProduct),
+        quantity: item.quantity,
+        selectedColor: item.selectedColor,
+        selectedSize: item.selectedSize,
+        selected_type: item.selected_type,
+      }));
+  };
+
+  // Load cart from localStorage whenever tenant/user scope changes
   useEffect(() => {
-    const loadCart = () => {
-      try {
-        const savedCart = localStorage.getItem(CART_STORAGE_KEY);
-        if (savedCart) {
-          const parsedCart = JSON.parse(savedCart);
-          if (Array.isArray(parsedCart)) {
-            const validatedCart = parsedCart
-              .filter(item => {
-                return item && 
-                  item.product && 
-                  typeof item.product === 'object' &&
-                  item.product.id &&
-                  typeof item.quantity === 'number' &&
-                  item.quantity > 0;
-              })
-              .map(item => ({
-                product: mapSupabaseProductToAppProduct(item.product),
-                quantity: item.quantity
-              }));
-            
-            if (validatedCart.length > 0) {
-              setItems(validatedCart);
-            }
+    setIsCartInitialized(false);
+    try {
+      const savedCart = localStorage.getItem(currentStorageKey);
+      if (savedCart) {
+        const parsed = JSON.parse(savedCart);
+        const validated = normalizeStoredCart(parsed);
+        setItems(validated);
+        setIsCartInitialized(true);
+        return;
+      }
+
+      // Fallback: migrate legacy key (guest only) once
+      if (!user?.id) {
+        const legacy = localStorage.getItem(LEGACY_CART_KEY_V2);
+        if (legacy) {
+          const parsed = JSON.parse(legacy);
+          const validated = normalizeStoredCart(parsed);
+          if (validated.length > 0) {
+            setItems(validated);
+            localStorage.setItem(currentStorageKey, JSON.stringify(parsed));
           }
         }
-      } catch (error) {
-        console.error("Failed to load cart:", error);
-        localStorage.removeItem(CART_STORAGE_KEY);
+        setIsCartInitialized(true);
       }
-    };
+    } catch (error) {
+      console.error("Failed to load cart:", error);
+      localStorage.removeItem(currentStorageKey);
+      setIsCartInitialized(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStorageKey]);
 
-    loadCart();
-  }, []);
+  // Merge guest cart into user cart on sign-in (per tenant), like big ecommerces
+  // Place BEFORE save effect to avoid race where guest items are saved to user key
+  useEffect(() => {
+    const currentUserId = user?.id || null;
+    const previousUserId = previousUserIdRef.current;
 
-  // Save cart to localStorage whenever it changes
+    // Detect sign-in or user change
+    if (currentUserId && previousUserId !== currentUserId) {
+      try {
+        // Prevent save effect from copying guest items into the new user key before merge
+        skipNextSaveRef.current = true;
+        const guestKey = buildCartStorageKey(currentTenant.id, null);
+        const userKey = buildCartStorageKey(currentTenant.id, currentUserId);
+
+        const guestRaw = localStorage.getItem(guestKey);
+        const userRaw = localStorage.getItem(userKey);
+        const guestCart = guestRaw ? normalizeStoredCart(JSON.parse(guestRaw)) : [];
+        const userCart = userRaw ? normalizeStoredCart(JSON.parse(userRaw)) : [];
+
+        // Merge by product id + variant attributes
+        const mergedMap = new Map<string, CartItem>();
+        const addToMerged = (ci: CartItem) => {
+          const normalizedProduct = ensureProductTypeCompatibility(ci.product);
+          const key = `${normalizedProduct.id}|${ci.selectedColor || ''}|${ci.selectedSize || ''}|${ci.selected_type || ''}`;
+          const existing = mergedMap.get(key);
+          const availableStock = typeof normalizedProduct.stock === 'number' ? normalizedProduct.stock : undefined;
+          const mergedQuantity = (existing?.quantity || 0) + (ci.quantity || 0);
+          const finalQuantity = availableStock !== undefined ? Math.max(0, Math.min(mergedQuantity, availableStock)) : mergedQuantity;
+          if (finalQuantity <= 0) return;
+          mergedMap.set(key, {
+            product: normalizedProduct,
+            quantity: finalQuantity,
+            selectedColor: ci.selectedColor,
+            selectedSize: ci.selectedSize,
+            selected_type: ci.selected_type,
+          });
+        };
+
+        userCart.forEach(addToMerged);
+        guestCart.forEach(addToMerged);
+
+        const merged = Array.from(mergedMap.values());
+        setItems(merged);
+
+        // Persist merged to user key and clear guest key
+        const payload: StoredCartItem[] = merged.map(item => ({
+          product: serializeProductForStorage(item.product as Product),
+          quantity: item.quantity,
+          selectedColor: item.selectedColor,
+          selectedSize: item.selectedSize,
+          selected_type: item.selected_type,
+        }));
+
+        localStorage.setItem(userKey, JSON.stringify(payload));
+        localStorage.removeItem(guestKey);
+      } catch (error) {
+        console.error('Failed to merge guest cart into user cart:', error);
+      } finally {
+        previousUserIdRef.current = currentUserId;
+        // Allow future saves (next render cycle)
+        setTimeout(() => { skipNextSaveRef.current = false; }, 0);
+        setIsCartInitialized(true);
+      }
+    }
+  }, [user?.id, currentTenant.id]);
+
+  // Save cart to localStorage whenever it changes (scoped to user/tenant)
   useEffect(() => {
     const saveCart = () => {
       try {
-        const cartToSave = items.map(item => ({
-          product: {
-            id: item.product.id,
-            name: item.product.name,
-            price: item.product.price,
-            image: item.product.image,
-            description: item.product.description,
-            category_id: item.product.category_id,
-            featured: item.product.featured,
-            is_new: item.product.is_new,
-            discount: item.product.discount,
-            category: item.product.category,
-            unit: item.product.unit,
-            stock: item.product.stock,
-            created_at: item.product.created_at,
-            updated_at: item.product.updated_at,
-          },
+        const cartToSave: StoredCartItem[] = items.map(item => ({
+          product: serializeProductForStorage(item.product as Product),
           quantity: item.quantity,
           selectedColor: item.selectedColor,
           selectedSize: item.selectedSize,
           selected_type: item.selected_type
         }));
-        
-        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartToSave));
+
+        localStorage.setItem(currentStorageKey, JSON.stringify(cartToSave));
       } catch (error) {
         console.error("Failed to save cart:", error);
       }
     };
 
+    if (skipNextSaveRef.current) {
+      // Skip one save cycle after auth scope change to avoid duplicating into user key before merge
+      skipNextSaveRef.current = false;
+      return;
+    }
+
     if (items.length > 0) {
       saveCart();
     } else {
-      localStorage.removeItem(CART_STORAGE_KEY);
+      localStorage.removeItem(currentStorageKey);
     }
-  }, [items]);
+  }, [items, currentStorageKey]);
 
   const addItem = (
     product: Product | SupabaseProduct,
@@ -227,7 +393,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const clearCart = () => {
     setItems([]);
-    localStorage.removeItem(CART_STORAGE_KEY);
+    localStorage.removeItem(currentStorageKey);
     toast({
       title: "Cart cleared",
       description: "All items have been removed from your cart",
@@ -246,6 +412,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         cart: items,
         cartItemsCount,
         cartTotal,
+        isCartInitialized,
         addItem,
         addToCart,
         removeItem,

@@ -66,7 +66,7 @@ interface OrderData {
 }
 
 const Checkout = () => {
-  const { cart, cartTotal, clearCart } = useCart();
+  const { cart, cartTotal, clearCart, isCartInitialized } = useCart();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -238,12 +238,14 @@ const Checkout = () => {
   }, [selectedAddressId, addresses, shippingFee]);
   
   useEffect(() => {
+    if (!isCartInitialized) return;
     if (cart.length === 0 && !createdOrderId) {
       navigate("/cart");
     }
-  }, [cart, navigate, createdOrderId]);
+  }, [isCartInitialized, cart, navigate, createdOrderId]);
   
   useEffect(() => {
+    if (!isCartInitialized) return;
     if (cart.length === 0) {
       navigate("/cart");
     }
@@ -520,7 +522,8 @@ const Checkout = () => {
           taxAmount: `$${tax.toFixed(2)}`,
           discountAmount: discount > 0 ? `-$${discount.toFixed(2)}` : '$0.00',
           customerPhone: formData.phone, // Add the customer's phone number
-          brandName: BRAND_NAME // Add brand name for the email template
+          brandName: BRAND_NAME, // Add brand name for the email template
+          domain: currentTenant.domain
         });
         
         console.log('Order confirmation email sent successfully');
@@ -574,7 +577,7 @@ const Checkout = () => {
   const tax = calculateTax();
   const total = subtotal + cityShippingFee + tax - discount;
   
-  if (cart.length === 0 && !isSubmitting && !createdOrderId) {
+  if (isCartInitialized && cart.length === 0 && !isSubmitting && !createdOrderId) {
     return (
       <Layout>
         <SEOHead {...seoConfig} />
