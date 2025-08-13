@@ -9,12 +9,14 @@ import { Product, CategoryRow } from "@/integrations/supabase/types.service";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, ArrowRight, ExternalLink, Tag, Check, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import AnimatedWrapper from "@/components/ui/animated-wrapper";
-import StreetHero from "@/components/home/StreetHero";
+// import StreetHero from "@/components/home/StreetHero";
+import ModernHero from "@/components/home/ModernHero";
 import ModernCategoryCard from "@/components/home/ModernCategoryCard";
 import { useTheme } from "@/context/ThemeContext";
 import { useCart } from "@/context/CartContext";
 import { formatPrice } from "../lib/utils";
 import { useCurrentTenant } from "@/context/TenantContext";
+import StreetHero from "@/components/home/StreetHero";
 
 const Index = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -276,12 +278,24 @@ const Index = () => {
     fetchCategories();
   }, [currentTenant.id]);
 
+  const renderHero = () => {
+    switch(currentTenant.id){
+      case "hoodti":
+        return <StreetHero />
+        break;
+      default:
+        return <ModernHero products={newArrivalsProducts} />
+        break;
+    }
+  }
+
   return (
     <HomeLayout>
       <SEOHead {...seoConfig} />
       
+      
       {/* Hero Section */}
-      <StreetHero />
+      {renderHero()}
 
       {/* Category Section */}
       <section className="py-24 relative overflow-hidden border-t border-b border-border/10">
@@ -1110,6 +1124,7 @@ const Index = () => {
       </section>
 
       {/* Collaboration Section - Modernized */}
+      {currentTenant.id === "hoodti" && (
       <section className="py-32 relative overflow-hidden">
         {/* Immersive background effects */}
         <div className="absolute inset-0 bg-gradient-to-br from-black via-[#090909] to-[#111] z-0"></div>
@@ -1303,6 +1318,7 @@ const Index = () => {
           </div>
         </div>
       </section>
+      )}
 
       {/* Brand Story Section - Modernized with better light/dark mode support */}
       <section className="py-32 relative overflow-hidden border-t border-border/20">
@@ -1349,11 +1365,11 @@ const Index = () => {
                 
                 <h2 className="text-5xl sm:text-6xl lg:text-7xl font-black mb-6">
                   <span className="block mb-2 bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/80 dark:from-white dark:to-white/80">
-                    BUILT FOR THE STREETS.
+                    MADE FOR YOU.
                   </span>
                   <span className="relative inline-block">
                     <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80 dark:from-primary dark:to-primary/90">
-                      DESIGNED FOR EXPRESSION.
+                      DESIGNED AROUND YOU.
                     </span>
                     <svg className="absolute -bottom-4 left-0 w-full h-2 text-primary/40" viewBox="0 0 100 10" preserveAspectRatio="none">
                       <path d="M0,0 C25,8 75,8 100,0 L100,5 C75,13 25,13 0,5 Z" fill="currentColor" />
@@ -1368,9 +1384,9 @@ const Index = () => {
                 </div>
                 
                 <p className="text-xl sm:text-2xl leading-relaxed text-foreground/90 dark:text-white/90 font-medium">
-                  Born in the urban landscape, our brand celebrates individuality and authenticity. 
-                  We create more than just clothing—we craft identity. Each piece tells a story 
-                  of rebellion, creativity, and the raw energy of street culture.
+                  Shopping should be simple, enjoyable, and trustworthy. We focus on quality products,
+                  clear details, and fast, reliable service—so you can discover what you love and check out
+                  with confidence.
                 </p>
                 
                 <div className="absolute -bottom-5 -right-3">

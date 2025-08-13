@@ -8,6 +8,8 @@ export interface Tenant {
   description: string;
   // Background music autoplay per tenant
   autoPlayMusic?: boolean;
+  // Background music autoplay per tenant
+  hideInitialNavbar?: boolean;
   // Optional tenant-specific marketing/SEO fields
   footerDescription?: string;
   seoDescription?: string;
@@ -52,6 +54,7 @@ export const tenants: Tenant[] = [
     secondaryColor: "#f5f5f5",
     description: "Premium streetwear and urban fashion",
     autoPlayMusic: true,
+    hideInitialNavbar: true,
     footerDescription:
       "Discover curated streetwear collections built for urban culture. Quality, comfort, and bold designs that elevate your everyday style.",
     seoDescription:
@@ -87,6 +90,50 @@ export const tenants: Tenant[] = [
     },
   },
   {
+    id: "diamond",
+    name: "Diamond",
+    domain: "diamond-covers.netlify.app",
+    logo: "/diamond-logo.jpg",
+    primaryColor: "#ff0000",
+    secondaryColor: "#f5f5f5",
+    description: "Premium phone cases",
+    autoPlayMusic: true,
+    hideInitialNavbar: false,
+    footerDescription:
+      "Discover premium phone cases. Quality, and bold designs that elevate your everyday style.",
+    seoDescription:
+      "Elevate your street game with Hoodti – exclusive streetwear drops, bold urban fashion, and limited collections.",
+    seoKeywords:
+      "streetwear, urban fashion, hype clothing, sneakers, street style, exclusive drops, Hoodti, streetwear ecommerce, urban culture, fashion, clothing, hoodies, t-shirts, streetwear brand, urban apparel",
+    currency: "EGP",
+    currencySymbol: "E£",
+    defaultLanguage: "en",
+    contactEmail: "info@diamond-covers.com",
+    contactPhone: "+201234567890",
+    address: "Sohag, Egypt",
+    socialMedia: {
+      facebook: "https://facebook.com/diamond",
+      instagram: "https://instagram.com/diamond_covers_1",
+      twitter: "https://twitter.com/diamond",
+    },
+    features: {
+      wishlist: true,
+      reviews: true,
+      loyalty: true,
+      liveChat: false,
+    },
+    shipping: {
+      freeShippingThreshold: 500,
+      defaultShippingFee: 30,
+      expressShippingFee: 50,
+    },
+    payment: {
+      cashOnDelivery: true,
+      onlinePayment: false,
+      bankTransfer: false,
+    },
+  },
+  {
     id: "streetwear",
     name: "StreetWear",
     domain: "ecommerce-v15.netlify.app",
@@ -95,6 +142,7 @@ export const tenants: Tenant[] = [
     secondaryColor: "#2c3e50",
     description: "Urban fashion and street culture",
     autoPlayMusic: false,
+    hideInitialNavbar: false,
     footerDescription:
       "Explore trend-forward urban fits and statement pieces inspired by street culture.",
     seoDescription:
@@ -138,6 +186,7 @@ export const tenants: Tenant[] = [
     secondaryColor: "#ecf0f1",
     description: "Collaborative fashion collections",
     autoPlayMusic: false,
+    hideInitialNavbar: false,
     footerDescription:
       "Limited collaborative capsules with artists and creators – crafted in small batches.",
     seoDescription:

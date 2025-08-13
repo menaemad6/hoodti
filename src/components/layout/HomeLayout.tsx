@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Navbar from "./Navbar";
 import MobileNavbar from "./MobileNavbar";
 import Footer from "./Footer";
+import { useCurrentTenant } from "@/context/TenantContext";
 
 interface HomeLayoutProps {
   children: React.ReactNode;
@@ -9,11 +10,19 @@ interface HomeLayoutProps {
 
 const HomeLayout: React.FC<HomeLayoutProps> = ({ children }) => {
   const [showNavbar, setShowNavbar] = useState(false);
+  const currentTenant = useCurrentTenant();
 
   useEffect(() => {
+    // Only hide the navbar initially if the tenant explicitly enables it
+    const shouldHideInitially = Boolean(currentTenant?.hideInitialNavbar);
+
+    if (!shouldHideInitially) {
+      setShowNavbar(true);
+      return;
+    }
+
     const handleScroll = () => {
-      // Show navbar when user scrolls past 90% of viewport height
-      const scrollThreshold = window.innerHeight * 0.9;
+      const scrollThreshold = window.innerHeight; // full viewport height
       if (window.scrollY > scrollThreshold) {
         setShowNavbar(true);
       } else {
@@ -21,11 +30,14 @@ const HomeLayout: React.FC<HomeLayoutProps> = ({ children }) => {
       }
     };
 
+    // Sync on mount
+    handleScroll();
+
     window.addEventListener("scroll", handleScroll);
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
-  }, []);
+  }, [currentTenant?.hideInitialNavbar]);
 
   return (
     <div className="flex flex-col min-h-screen w-full m-0 p-0 overflow-x-hidden relative">

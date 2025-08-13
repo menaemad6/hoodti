@@ -5,21 +5,31 @@ export interface CategoryInput {
   name: string;
   description?: string;
   image?: string;
+  tenant_id?: string;
 }
+
+// Loosen Supabase generics locally to avoid deep type instantiation errors in tooling
+const sb: any = supabase;
 
 export async function getCategories(tenantId: string) {
   console.log('Fetching categories for tenant:', tenantId);
   try {
-    const { data, error } = await supabase
+    const { data, error } = await sb
       .from('categories')
-      .select('*')
+      // Narrow select to simple primitives to avoid deep type instantiation
+      .select('id,name,description,image,created_at', { head: false })
       .eq('tenant_id', tenantId)
       .order('name');
     if (error) {
       console.error('Error fetching categories:', error);
       throw error;
     }
-    return data as CategoryRow[];
+    // Normalize image: if backend returns array, map to first string for convenience
+    const normalized = (data || []).map((cat: any) => ({
+      ...cat,
+      image: Array.isArray(cat.image) ? (cat.image[0] || '') : cat.image,
+    })) as CategoryRow[];
+    return normalized;
   } catch (error) {
     console.error('Exception in getCategories:', error);
     throw error;
@@ -36,7 +46,7 @@ export async function getCategoryById(id: string) {
   }
   
   try {
-    const { data, error } = await supabase
+    const { data, error } = await sb
       .from('categories')
       .select('*')
       .eq('id', id)
@@ -70,7 +80,7 @@ export async function createCategory(category: CategoryInput) {
   }
   
   // Check if a category with this name already exists
-  const { data: existingCategory, error: checkError } = await supabase
+  const { data: existingCategory, error: checkError } = await sb
     .from('categories')
     .select('id')
     .ilike('name', category.name.trim())
@@ -85,17 +95,18 @@ export async function createCategory(category: CategoryInput) {
     throw new Error('A category with this name already exists');
   }
   
-  // Create the category with required fields
-  const categoryData = {
+  // Prepare insert payload with relaxed typing to fit DB shape
+  const categoryData: any = {
     name: category.name.trim(),
     description: category.description || '',
-    image: category.image || ''
+    image: category.image || null,
+    tenant_id: category.tenant_id,
   };
   
   console.log('Inserting category with data:', categoryData);
   
   // Create the category
-  const { data, error } = await supabase
+  const { data, error } = await sb
     .from('categories')
     .insert([categoryData])
     .select();
@@ -124,7 +135,7 @@ export async function updateCategory(id: string, category: CategoryInput) {
   
   // First check if the category exists
   console.log('Checking if category exists...');
-  const { data: existingCategory, error: checkError } = await supabase
+  const { data: existingCategory, error: checkError } = await sb
     .from('categories')
     .select('*')
     .eq('id', id)
@@ -143,17 +154,17 @@ export async function updateCategory(id: string, category: CategoryInput) {
   
   console.log('Found existing category:', existingCategory);
   
-  // Prepare update data
-  const updateData = {
+  // Prepare update data (store single string, not array)
+  const updateData: any = {
     name: category.name.trim(),
     description: category.description?.trim() || existingCategory.description || '',
-    image: category.image || existingCategory.image || ''
+    image: category.image ?? (Array.isArray(existingCategory.image) ? (existingCategory.image[0] || null) : existingCategory.image || null),
   };
   
   console.log('Performing update with data:', updateData);
   
   // Then perform the update
-  const { data, error } = await supabase
+  const { data, error } = await sb
     .from('categories')
     .update(updateData)
     .eq('id', id)
@@ -183,7 +194,7 @@ export async function updateCategory(id: string, category: CategoryInput) {
 
 export async function deleteCategory(id: string) {
   // First check if the category exists
-  const { data: existingCategory, error: checkError } = await supabase
+  const { data: existingCategory, error: checkError } = await sb
     .from('categories')
     .select('id')
     .eq('id', id)
@@ -199,7 +210,7 @@ export async function deleteCategory(id: string) {
   }
   
   // Check if the category is being used by any products
-  const { count, error: countError } = await supabase
+  const { count, error: countError } = await sb
     .from('products')
     .select('*', { count: 'exact', head: true })
     .eq('category_id', id);
@@ -214,7 +225,7 @@ export async function deleteCategory(id: string) {
   }
   
   // Now perform the delete
-  const { error } = await supabase
+  const { error } = await sb
     .from('categories')
     .delete()
     .eq('id', id);
@@ -234,7 +245,7 @@ export async function uploadCategoryImage(file: File): Promise<string> {
   
   console.log(`Uploading image to bucket 'website-images', path: ${filePath}`);
   
-  const { error } = await supabase.storage
+  const { error } = await sb.storage
     .from('website-images')
     .upload(filePath, file, {
       cacheControl: '3600',
@@ -247,7 +258,7 @@ export async function uploadCategoryImage(file: File): Promise<string> {
   }
   
   console.log(`Image uploaded successfully, getting public URL`);
-  const { data } = supabase.storage.from('website-images').getPublicUrl(filePath);
+  const { data } = sb.storage.from('website-images').getPublicUrl(filePath);
   console.log(`Public URL: ${data.publicUrl}`);
   return data.publicUrl;
 } 

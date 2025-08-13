@@ -8,6 +8,7 @@ export default async function handler(request: Request) {
   // Map hostname to tenant id
   const domainToTenant: Record<string, string> = {
     'hoodti.store': 'hoodti',
+    'diamond-covers.netlify.app': 'diamond',
     'ecommerce-v15.netlify.app': 'streetwear',
     'collab.com': 'collab',
     'localhost': 'hoodti',
@@ -30,6 +31,13 @@ export default async function handler(request: Request) {
       description: 'Elevate your street game with Hoodti – exclusive streetwear drops, bold urban fashion, and limited collections.',
       image: '/hoodti-logo.jpg',
       twitter: 'https://twitter.com/hoodti'
+    },
+    diamond: {
+      name: 'Diamond',
+      domain: 'diamond-covers.netlify.app',
+      description: 'Discover exclusive collaborative phone case collections, limited-edition designs, and creative partnerships with top brands and artists.',
+      image: '/diamond-logo.jpg',
+      twitter: 'https://twitter.com/diamond'
     },
     streetwear: {
       name: 'StreetWear',

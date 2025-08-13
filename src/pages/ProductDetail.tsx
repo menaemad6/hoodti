@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/seo/SEOHead";
@@ -129,35 +129,32 @@ const ProductDetail = () => {
     return [];
   };
   
-  // Custom fallback: get first available size from product if fallback is needed
-  const getFallbackSizes = () => {
-    if (product && product.size) {
-      // Try to parse all sizes from product.size
-      if (typeof product.size === 'string') {
-        try {
-          const parsed = JSON.parse(product.size);
-          if (Array.isArray(parsed)) return parsed;
-          if (typeof parsed === 'object') {
-            // Flatten all values
-            return Object.values(parsed).flat();
-          }
-        } catch {
-          return [product.size];
-        }
-      }
-      if (Array.isArray(product.size)) return product.size;
-      if (typeof product.size === 'object') {
-        return Object.values(product.size).flat();
+  // Flatten sizes from product.size only if present
+  const flattenAllSizes = (sizeField: SizeField): string[] => {
+    if (!sizeField) return [];
+    if (typeof sizeField === 'string') {
+      try {
+        const parsed = JSON.parse(sizeField);
+        if (Array.isArray(parsed)) return parsed;
+        if (parsed && typeof parsed === 'object') return Object.values(parsed).flat();
+        return [sizeField];
+      } catch {
+        return [sizeField];
       }
     }
-    // fallback to static SIZING_OPTIONS if product.size is not available
-    const otherSizing = SIZING_OPTIONS.find(opt => opt.type === 'Other');
-    return otherSizing ? otherSizing.sizes.map(s => s.size) : [];
+    if (Array.isArray(sizeField)) return sizeField;
+    if (typeof sizeField === 'object') return Object.values(sizeField).flat();
+    return [];
   };
-  
-  const availableSizes = product ? (parseNestedSizes(product.size, selectedType).length > 0
-    ? parseNestedSizes(product.size, selectedType)
-    : getFallbackSizes()) : [];
+
+  const availableSizes = useMemo(() => {
+    if (!product) return [];
+    // Try type-specific sizes first
+    const typed = parseNestedSizes(product.size as SizeField, selectedType);
+    if (typed.length > 0) return typed;
+    // Otherwise, flatten whatever sizes exist
+    return flattenAllSizes(product.size as SizeField);
+  }, [product, selectedType]);
   
   // Parse available types
   const availableTypes = product ? parseArrayField(product.type) : [];
@@ -978,15 +975,7 @@ const ProductDetail = () => {
                           </div>
                         )}
                         
-                        {/* Display single size if not an array */}
-                        {product.size && availableSizes.length <= 1 && (
-                          <div className="grid grid-cols-2 items-center border-b border-border/20 dark:border-border/10">
-                            <div className="p-4 font-medium bg-gradient-to-r from-muted/70 to-muted/40 dark:from-muted/40 dark:to-muted/20 text-muted-foreground dark:text-muted-foreground/90">
-                              Size
-                            </div>
-                            <div className="p-4">{product.size}</div>
-                          </div>
-                        )}
+                        {/* Hide size info completely if no sizes */}
                         
                         {/* Display colors as a list if it's an array */}
                         {availableColors.length > 0 && (

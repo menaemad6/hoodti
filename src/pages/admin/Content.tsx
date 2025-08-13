@@ -81,14 +81,14 @@ const ContentPage = () => {
       const data = await getCategories(currentTenant.id);
       console.log('Categories fetched successfully:', data);
       setCategories(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching categories:", error);
       // Only show the toast if it's not the initial load
       if (!isLoading) {
         toast({
           variant: "destructive",
           title: "Error",
-          description: error.message || "Failed to load categories.",
+          description: (error as Error)?.message || "Failed to load categories.",
         });
       }
     } finally {
@@ -100,7 +100,8 @@ const ContentPage = () => {
     if (activeTab === "categories") {
       fetchCategories();
     }
-  }, [activeTab, currentTenant]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, currentTenant.id]);
 
   const handleDeleteCategory = async (categoryId: string) => {
     console.log(`Attempting to delete category with ID: ${categoryId}`);
@@ -119,12 +120,12 @@ const ContentPage = () => {
         title: "Category Deleted",
         description: "The category has been deleted successfully.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error deleting category:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to delete category. It may be in use by products.",
+        description: (error as Error)?.message || "Failed to delete category. It may be in use by products.",
       });
     }
   };
@@ -136,16 +137,16 @@ const ContentPage = () => {
         id: category.id,
         name: category.name,
         description: category.description || "",
-        image: category.image || "",
+        image: Array.isArray(category.image) ? (category.image[0] || "") : (category.image as unknown as string) || "",
       });
       setFormData({
         id: category.id,
         name: category.name,
         description: category.description || "",
-        image: category.image || "",
+        image: Array.isArray(category.image) ? (category.image[0] || "") : (category.image as unknown as string) || "",
         imageFile: null
       });
-      setImagePreview(category.image || null);
+      setImagePreview(Array.isArray(category.image) ? (category.image[0] || null) : (category.image as unknown as string) || null);
     } else {
       // Adding a new category
       setEditingCategory(null);
@@ -195,16 +196,18 @@ const ContentPage = () => {
       if (formData.imageFile) {
         try {
           imageUrl = await uploadCategoryImage(formData.imageFile);
-        } catch (uploadError: any) {
+        } catch (uploadError: unknown) {
           console.error('Image upload error:', uploadError);
-          throw new Error(`Image upload failed: ${uploadError.message || 'Unknown error'}`);
+          const msg = uploadError instanceof Error ? uploadError.message : 'Unknown error';
+          throw new Error(`Image upload failed: ${msg}`);
         }
       }
       
       const categoryData: CategoryInput = {
         name: formData.name,
         description: formData.description,
-        image: imageUrl
+        image: imageUrl,
+        tenant_id: currentTenant.id,
       };
       
       if (editingCategory?.id) {
@@ -242,9 +245,10 @@ const ContentPage = () => {
           // Refresh categories list
           fetchCategories();
           
-        } catch (updateError: any) {
+        } catch (updateError: unknown) {
           console.error('Update category error:', updateError);
-          throw new Error(`Failed to update category: ${updateError.message || 'Unknown error'}`);
+          const msg = updateError instanceof Error ? updateError.message : 'Unknown error';
+          throw new Error(`Failed to update category: ${msg}`);
         }
       } else {
         // Create new category
@@ -274,31 +278,32 @@ const ContentPage = () => {
           // Refresh categories list
           fetchCategories();
           
-        } catch (createError: any) {
+        } catch (createError: unknown) {
           console.error('Create category error:', createError);
-          throw new Error(`Failed to create category: ${createError.message || 'Unknown error'}`);
+          const msg = createError instanceof Error ? createError.message : 'Unknown error';
+          throw new Error(`Failed to create category: ${msg}`);
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error saving category:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to save category due to an unknown error.",
+        description: (error as Error)?.message || "Failed to save category due to an unknown error.",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const categoryColumns = [
+  const categoryColumns: Array<{ id: string; header: string; accessorKey?: string; cell?: ({ row }: { row: { original: CategoryRow } }) => JSX.Element; }> = [
     {
       id: "image",
       header: "Image",
-      cell: ({ row }: { row: any }) => (
+      cell: ({ row }: { row: { original: CategoryRow } }) => (
         <div className="h-10 w-10 rounded-md overflow-hidden">
           <img
-            src={row.original.image}
+            src={Array.isArray(row.original.image) ? (row.original.image[0] || '/placeholder.svg') : (row.original.image as unknown as string)}
             alt={row.original.name}
             className="h-full w-full object-cover"
             onError={(e) => {
@@ -317,14 +322,14 @@ const ContentPage = () => {
       id: "description",
       header: "Description",
       accessorKey: "description",
-      cell: ({ row }: { row: any }) => (
+      cell: ({ row }: { row: { original: CategoryRow } }) => (
         <div className="max-w-xs truncate">{row.original.description}</div>
       ),
     },
     {
       id: "actions",
       header: "",
-      cell: ({ row }: { row: any }) => (
+      cell: ({ row }: { row: { original: CategoryRow } }) => (
         <div className="flex justify-end">
           <Button 
             variant="ghost" 

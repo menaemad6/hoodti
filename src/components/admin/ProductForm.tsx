@@ -14,6 +14,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
+import { useCurrentTenant } from "@/context/TenantContext";
 import { useNavigate } from "react-router-dom";
 import { Loader2, Image as ImageIcon, X, Trash2, AlertCircle, Plus, ChevronDown, Check } from "lucide-react";
 import { Product, Category } from "@/integrations/supabase/types.service";
@@ -226,6 +227,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
   
   const { toast } = useToast();
   const navigate = useNavigate();
+  const currentTenant = useCurrentTenant();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const uploadInProgressRef = React.useRef<boolean>(false);
   
@@ -251,7 +253,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
       try {
         const { data, error } = await supabase
           .from("categories")
-          .select("*");
+          .select("*")
+          .eq('tenant_id', currentTenant.id);
         
         if (error) throw error;
         setCategories(data || []);
@@ -338,7 +341,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
     if (productId) {
       fetchProduct();
     }
-  }, [productId, toast]);
+  }, [productId, toast, currentTenant.id]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -508,12 +511,14 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
       if (allImages.length === 0) {
         allImages = ["/placeholder.svg"];
       }
-      // Save selected sizes and colors as JSON strings
+      // Save selected sizes and colors as JSON strings (optional)
       const colorsJson = selectedColors.length ? JSON.stringify(selectedColors) : null;
-      // Save selected types as JSON string
+      // Save selected types as JSON string (optional)
       const typesJson = selectedTypes.length ? JSON.stringify(selectedTypes) : null;
-      // Build the nested sizes object
-      const sizesJson = JSON.stringify(selectedSizesByType);
+      // Build the nested sizes object (optional)
+      const sizesJson = Object.keys(selectedSizesByType || {}).length
+        ? JSON.stringify(selectedSizesByType)
+        : null;
       // Prepare productData for insert/update
       const productData = {
         ...formData,
@@ -523,6 +528,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
         price: formData.price,
         stock: formData.stock,
         category_id: formData.category_id,
+        tenant_id: currentTenant.id,
         unit: formData.unit || "item",
         featured: formData.featured || false,
         is_new: formData.is_new || false,
@@ -530,9 +536,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
         original_price: formData.original_price,
         size: sizesJson,
         color: colorsJson,
-        material: formData.material,
-        brand: formData.brand,
-        gender: formData.gender,
+        material: formData.material && formData.material.trim() !== "" ? formData.material.trim() : null,
+        brand: formData.brand && formData.brand.trim() !== "" ? formData.brand.trim() : null,
+        gender: formData.gender && formData.gender.trim() !== "" ? formData.gender.trim() : null,
         type: typesJson
       };
       // Save to DB
