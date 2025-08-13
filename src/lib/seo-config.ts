@@ -31,50 +31,50 @@ function buildBaseUrl(domain: string): string {
 function buildSEOForTenant(tenant: { name: string; domain: string; logo: string; description: string; seoDescription?: string; seoKeywords?: string; }): PageSEOConfig {
   const baseUrl = buildBaseUrl(tenant.domain);
   const brand = tenant.name;
-  const defaultDescription = tenant.seoDescription || tenant.description || `${brand} storefront`;
-  const defaultKeywords = tenant.seoKeywords || 'streetwear, urban fashion, clothing, ecommerce, shop';
-  const defaultImage = tenant.logo || '/hoodti-logo.jpg';
+	const defaultDescription = tenant.seoDescription || tenant.description || `${brand} online store`;
+	const defaultKeywords = tenant.seoKeywords || 'shop, store, online shopping, deals, new arrivals, best sellers, fast delivery, easy returns';
+	const defaultImage = tenant.logo || '/hoodti-logo.jpg';
 
   const cfg: PageSEOConfig = {
-    home: {
-      title: `${brand} | Streetwear for Urban Culture`,
-      description: defaultDescription,
-      keywords: defaultKeywords,
-      image: defaultImage,
-      url: baseUrl,
-      type: 'website',
-      tags: ['streetwear', 'urban fashion', 'street style', 'fashion', 'clothing']
-    },
+		home: {
+			title: `${brand} | ${tenant.description}`,
+			description: defaultDescription,
+			keywords: defaultKeywords,
+			image: defaultImage,
+			url: baseUrl,
+			type: 'website',
+			tags: ['shop', 'store', 'online shopping', 'new arrivals', 'best sellers']
+		},
 
-    shop: {
-      title: `Shop Streetwear | ${brand}`,
-      description: `Browse our exclusive collection of premium streetwear at ${brand}.` ,
-      keywords: `shop streetwear, buy hoodies, urban clothing, street fashion, ${brand}`,
-      image: defaultImage,
-      url: `${baseUrl}/shop`,
-      type: 'website',
-      tags: ['shop', 'streetwear', 'clothing', 'fashion', 'urban style']
-    },
+		shop: {
+			title: `${brand} | Shop`,
+			description: `Browse curated products and new arrivals at ${brand}. Fast delivery and easy returns.` ,
+			keywords: `shop, buy online, new arrivals, best sellers, ${brand}`,
+			image: defaultImage,
+			url: `${baseUrl}/shop`,
+			type: 'website',
+			tags: ['shop', 'store', 'online', 'deals', 'new arrivals']
+		},
 
-    categories: {
-      title: `Streetwear Categories | ${brand}`,
-      description: `Explore our curated streetwear categories at ${brand}.`,
-      keywords: `streetwear categories, hoodies, t-shirts, sneakers, accessories, ${brand}`,
-      image: defaultImage,
-      url: `${baseUrl}/categories`,
-      type: 'website',
-      tags: ['categories', 'streetwear', 'collections', 'fashion']
-    },
+		categories: {
+			title: `Shop Categories | ${brand}`,
+			description: `Explore popular categories at ${brand}. Find what you need, fast.`,
+			keywords: `categories, collections, browse, ${brand}`,
+			image: defaultImage,
+			url: `${baseUrl}/categories`,
+			type: 'website',
+			tags: ['categories', 'collections', 'browse', 'shop']
+		},
 
-    deals: {
-      title: `Hot Deals & Discounts | ${brand}`,
-      description: `Don't miss out on our exclusive streetwear deals and discounts at ${brand}.`,
-      keywords: `streetwear deals, fashion discounts, clothing sales, ${brand}`,
-      image: defaultImage,
-      url: `${baseUrl}/deals`,
-      type: 'website',
-      tags: ['deals', 'discounts', 'sales', 'offers', 'streetwear']
-    },
+		deals: {
+			title: `Deals & Discounts | ${brand}`,
+			description: `Latest deals at ${brand}. Save on favorites with limited-time offers.`,
+			keywords: `deals, discounts, sales, offers, ${brand}`,
+			image: defaultImage,
+			url: `${baseUrl}/deals`,
+			type: 'website',
+			tags: ['deals', 'discounts', 'sales', 'offers']
+		},
 
     cart: {
       title: `Shopping Cart | ${brand}`,
@@ -335,18 +335,18 @@ export const useProductSEO = (product: ProductSEO | null): SEOHeadProps => {
   const baseUrl = buildBaseUrl(tenant.domain);
   const brand = tenant.name;
   const productName = product?.name || 'Product';
-  const productDescription = product?.description || `Exclusive streetwear from ${brand}`;
+  const productDescription = product?.description || `Discover ${productName} at ${brand}`;
   const productImage = product?.image || tenant.logo || '/hoodti-logo.jpg';
   const productPrice = product?.price ? `$${product.price}` : '';
 
   return {
     title: `${productName} | ${brand}`,
-    description: `${productDescription} ${productPrice ? `Available for ${productPrice}.` : ''} Shop exclusive streetwear at ${brand}.`.trim(),
-    keywords: `${productName}, streetwear, urban fashion, ${product?.category_name || 'clothing'}, ${brand}, fashion, urban style`,
+    description: `${productDescription}. ${productPrice ? `Available for ${productPrice}. ` : ''}Fast delivery and easy returns at ${brand}.`.trim(),
+    keywords: `${productName}, ${product?.category_name || 'product'}, shop, buy online, ${brand}`,
     image: productImage,
     url: product?.id ? `${baseUrl}/product/${product.id}` : baseUrl,
     type: 'product',
-    tags: [productName, 'streetwear', 'urban fashion', product?.category_name || 'clothing']
+    tags: [productName, product?.category_name || 'product', 'shop']
   };
 };
 
@@ -356,15 +356,15 @@ export const useCategorySEO = (category: CategorySEO | null): SEOHeadProps => {
   const baseUrl = buildBaseUrl(tenant.domain);
   const brand = tenant.name;
   const categoryName = category?.name || 'Category';
-  const categoryDescription = category?.description || `Explore our ${categoryName} collection`;
+  const categoryDescription = category?.description || `Explore ${categoryName} at ${brand}`;
 
   return {
-    title: `${categoryName} Collection | ${brand}`,
-    description: `${categoryDescription}. Shop exclusive ${categoryName.toLowerCase()} streetwear and urban fashion at ${brand}.`,
-    keywords: `${categoryName}, streetwear, urban fashion, ${categoryName.toLowerCase()} collection, ${brand}, fashion`,
+    title: `${categoryName} | ${brand}`,
+    description: `${categoryDescription}. Find popular picks with fast delivery and easy returns.`,
+    keywords: `${categoryName}, shop, online, ${brand}`,
     image: category?.image || tenant.logo || '/hoodti-logo.jpg',
     url: category?.id ? `${baseUrl}/category/${category.id}` : baseUrl,
     type: 'website',
-    tags: [categoryName, 'streetwear', 'collection', 'urban fashion']
+    tags: [categoryName, 'shop', 'browse']
   };
 };
