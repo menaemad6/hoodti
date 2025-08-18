@@ -25,8 +25,17 @@ interface LocalOrderItem {
     id: string;
     name: string;
     price: number;
-    image: string;
+    images: string[];
     unit?: string;
+  } | null;
+  customization: {
+    id: string;
+    base_product_type: string;
+    base_product_size: string;
+    base_product_color: string;
+    design_data: unknown; // Handle Json type from Supabase
+    total_customization_cost: number;
+    preview_image_url?: string; // Add this field for the generated design image
   } | null;
   price_at_time: number;
   quantity: number;
@@ -100,8 +109,8 @@ const OrderConfirmation = () => {
             time_slot: timeSlot || "Standard Delivery" // Use the time slot if available
           };
         } 
-        // Fallback to delivery_slot_id (old format)
-        else if (orderData.delivery_slot_id) {
+        // Fallback to delivery_slot_id (old format) - check if it exists in the data
+        else if ('delivery_slot_id' in orderData && orderData.delivery_slot_id && typeof orderData.delivery_slot_id === 'string') {
           try {
             deliverySlotData = await getDeliverySlotByDateAndTime(orderData.delivery_slot_id);
           } catch (error) {
@@ -136,8 +145,17 @@ const OrderConfirmation = () => {
               id: item.product.id || '',
               name: item.product.name || '',
               price: typeof item.product.price === 'number' ? item.product.price : 0,
-              image: Array.isArray(item.product.images) && item.product.images.length > 0 ? item.product.images[0] : "/placeholder.svg",
+              images: item.product.images || [],
               unit: item.product.unit
+            } : null,
+            customization: item.customization ? {
+              id: item.customization.id,
+              base_product_type: item.customization.base_product_type,
+              base_product_size: item.customization.base_product_size,
+              base_product_color: item.customization.base_product_color,
+              design_data: item.customization.design_data,
+              total_customization_cost: item.customization.total_customization_cost,
+              preview_image_url: item.customization.preview_image_url
             } : null,
             price_at_time: item.price_at_time,
             quantity: item.quantity,
@@ -375,9 +393,67 @@ const OrderConfirmation = () => {
                       <div className="group relative rounded-xl border border-border bg-background p-3 sm:p-4 hover:bg-muted/30 transition-all duration-200">
                         <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
                           <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800 ring-1 ring-border mx-auto sm:mx-0">
-                            {item.product?.image ? (
+                            {item.customization ? (
+                              // For customized products, try to show the design preview image
+                              (() => {
+                                try {
+                                  // First, check if there's a preview image from the customizations table
+                                  if (item.customization.preview_image_url) {
+                                    return (
+                                      <img
+                                        src={item.customization.preview_image_url}
+                                        alt={`Custom ${item.customization.base_product_type} design`}
+                                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                      />
+                                    );
+                                  }
+                                  
+                                  // Fallback: Parse design data to extract design image URL
+                                  let designData: Record<string, unknown> = {};
+                                  if (typeof item.customization.design_data === 'string') {
+                                    designData = JSON.parse(item.customization.design_data);
+                                  } else if (typeof item.customization.design_data === 'object' && item.customization.design_data !== null) {
+                                    designData = item.customization.design_data as Record<string, unknown>;
+                                  }
+                                  
+                                  // Check if there's a design image URL in the metadata
+                                  if (designData?.designImageUrl && typeof designData.designImageUrl === 'string') {
+                                    return (
+                                      <img
+                                        src={designData.designImageUrl}
+                                        alt={`Custom ${item.customization.base_product_type} design`}
+                                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                      />
+                                    );
+                                  }
+                                  // Fallback to background image if available
+                                  if (designData?.backgroundImage && typeof designData.backgroundImage === 'string') {
+                                    return (
+                                      <img
+                                        src={designData.backgroundImage}
+                                        alt={`${item.customization.base_product_type} template`}
+                                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                      />
+                                    );
+                                  }
+                                  // Final fallback to package icon
+                                  return (
+                                    <div className="h-full w-full flex items-center justify-center bg-gray-200 dark:bg-gray-800">
+                                      <Package className="h-8 w-8 text-gray-400 dark:text-gray-600" />
+                                    </div>
+                                  );
+                                } catch (error) {
+                                  // Fallback to package icon if there's an error parsing design data
+                                  return (
+                                    <div className="h-full w-full flex items-center justify-center bg-gray-200 dark:bg-gray-800">
+                                      <Package className="h-8 w-8 text-gray-400 dark:text-gray-600" />
+                                    </div>
+                                  );
+                                }
+                              })()
+                            ) : item.product?.images && Array.isArray(item.product.images) && item.product.images.length > 0 ? (
                               <img
-                                src={item.product.image}
+                                src={item.product.images[0]}
                                 alt={item.product.name}
                                 className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                               />
@@ -392,15 +468,59 @@ const OrderConfirmation = () => {
                             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                               <div>
                                 <h4 className="font-medium text-sm sm:text-base truncate group-hover:text-primary transition-colors text-center sm:text-left">
-                                  {item.product?.name || "Product unavailable"}
+                                  {item.customization ? (
+                                    <span className="flex items-center gap-2">
+                                      Custom {item.customization.base_product_type}
+                                      <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                                        Custom
+                                      </Badge>
+                                    </span>
+                                  ) : (
+                                    item.product?.name || "Product unavailable"
+                                  )}
                                 </h4>
-                                {item.product?.unit && (
+                                
+                                {item.customization && (
+                                  <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 text-center sm:text-left">
+                                    Customized product with design elements
+                                  </p>
+                                )}
+                                
+                                {item.product?.unit && !item.customization && (
                                   <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 text-center sm:text-left">
                                     Per {item.product.unit}
                                   </p>
                                 )}
-                                {/* Display selected type, size, and color if available */}
-                                {(item.selected_type || item.selected_size || item.selected_color) && (
+                                
+                                {/* Display customization details if available */}
+                                {item.customization && (
+                                  <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-2">
+                                    <Badge 
+                                      variant="outline" 
+                                      className="text-xs px-2 py-0.5 bg-background border-border/50">
+                                      Type: {item.customization.base_product_type}
+                                    </Badge>
+                                    <Badge 
+                                      variant="outline" 
+                                      className="text-xs px-2 py-0.5 bg-background border-border/50">
+                                      Size: {item.customization.base_product_size}
+                                    </Badge>
+                                    <Badge 
+                                      variant="outline" 
+                                      className="text-xs px-2 py-0.5 bg-background border-border/50 flex items-center">
+                                      <span 
+                                        className="w-2 h-2 rounded-full mr-1"
+                                        style={{ 
+                                          backgroundColor: item.customization.base_product_color
+                                        }}
+                                      ></span>
+                                      {item.customization.base_product_color}
+                                    </Badge>
+                                  </div>
+                                )}
+                                
+                                {/* Display selected type, size, and color if available (for non-customized products) */}
+                                {!item.customization && (item.selected_type || item.selected_size || item.selected_color) && (
                                   <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-2">
                                     {item.selected_type && (
                                       <Badge 

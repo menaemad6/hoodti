@@ -37,6 +37,7 @@ export async function getOrdersWithItems(userId?: string, forAdminView: boolean 
           quantity, 
           price_at_time,
           product_id,
+          customization_id,
           selected_color,
           selected_size,
           selected_type,
@@ -44,7 +45,18 @@ export async function getOrdersWithItems(userId?: string, forAdminView: boolean 
             id,
             name,
             price,
-            images
+            images,
+            unit,
+            description
+          ),
+          customization:customizations!order_items_customization_id_fkey(
+            id,
+            base_product_type,
+            base_product_size,
+            base_product_color,
+            design_data,
+            total_customization_cost,
+            preview_image_url
           )
         )
       `);
@@ -101,6 +113,8 @@ export async function getOrderItemsWithProducts(orderId: string, tenantId?: stri
         id,
         quantity,
         price_at_time,
+        product_id,
+        customization_id,
         selected_color,
         selected_size,
         selected_type,
@@ -108,7 +122,18 @@ export async function getOrderItemsWithProducts(orderId: string, tenantId?: stri
           id,
           name,
           price,
-          images
+          images,
+          unit,
+          description
+        ),
+        customization:customizations!order_items_customization_id_fkey(
+          id,
+          base_product_type,
+          base_product_size,
+          base_product_color,
+          design_data,
+          total_customization_cost,
+          preview_image_url
         )
       `)
       .eq('order_id', orderId);
@@ -278,7 +303,8 @@ export async function createOrder(orderData: {
   full_name?: string;
   tenant_id?: string; // Add tenant_id parameter
   items: {
-    product_id: string;
+    product_id: string | null; // Make nullable for customized products
+    customization_id?: string | null; // Add this field
     quantity: number;
     price_at_time: number;
     selected_color?: string;
@@ -330,7 +356,8 @@ export async function createOrder(orderData: {
     // Create order items
     const orderItems = orderData.items.map(item => ({
       order_id: order.id,
-      product_id: item.product_id,
+      product_id: item.product_id, // This can be null for customized products
+      customization_id: item.customization_id, // Add this field
       quantity: item.quantity,
       price_at_time: item.price_at_time,
       selected_color: item.selected_color,

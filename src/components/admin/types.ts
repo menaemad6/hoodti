@@ -6,7 +6,7 @@ export interface MenuItem {
   name: string;
   icon: LucideIcon;
   path: string;
-  badge?: number;
+  badge?: number | string;
 }
 
 export interface ProfileData {

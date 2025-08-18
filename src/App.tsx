@@ -43,6 +43,7 @@ const Content = lazy(() => import("@/pages/admin/Content"));
 const Users = lazy(() => import("@/pages/admin/Users"));
 const DeliverySlots = lazy(() => import("@/pages/admin/DeliverySlots"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
+const CustomizeProduct = lazy(() => import("@/pages/customize/CustomizeProduct"));
 
 // Loading fallback
 const LoadingFallback = () => (
@@ -71,6 +72,7 @@ function App() {
                   <Route path="/categories" element={<Categories />} />
                   <Route path="/deals" element={<Deals />} />
                   <Route path="/cart" element={<Cart />} />
+                  <Route path="/customize" element={<CustomizeProduct />} />
                   
                   {/* Auth routes */}
                   <Route element={<AuthRoute />}>

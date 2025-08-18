@@ -31,6 +31,7 @@ export interface Tenant {
     reviews: boolean;
     loyalty: boolean;
     liveChat: boolean;
+    customization?: boolean; // New feature flag
   };
   shipping: {
     freeShippingThreshold: number;
@@ -41,6 +42,15 @@ export interface Tenant {
     cashOnDelivery: boolean;
     onlinePayment: boolean;
     bankTransfer: boolean;
+  };
+  // New customization settings
+  customization?: {
+    textPrice: number;
+    imagePrice: number;
+    baseProductPrices: {
+      [key: string]: number;
+    };
+    enabled: boolean;
   };
 }
 
@@ -77,6 +87,7 @@ export const tenants: Tenant[] = [
       reviews: true,
       loyalty: true,
       liveChat: false,
+      customization: true,
     },
     shipping: {
       freeShippingThreshold: 500,
@@ -87,6 +98,21 @@ export const tenants: Tenant[] = [
       cashOnDelivery: true,
       onlinePayment: false,
       bankTransfer: false,
+    },
+    customization: {
+      textPrice: 5.00,
+      imagePrice: 30.00,
+      baseProductPrices: {
+        "Hoodie": 150.00,
+        "Sweatshirt": 120.00,
+        "Regular T-shirt": 80.00,
+        "Boxy T-shirt": 85.00,
+        "Oversized T-shirt": 90.00,
+        "Slim-Fit T-shirt": 75.00,
+        "Polo Shirt": 95.00,
+        "Polo Baskota": 100.00,
+      },
+      enabled: true,
     },
   },
   {
@@ -121,6 +147,7 @@ export const tenants: Tenant[] = [
       reviews: true,
       loyalty: true,
       liveChat: false,
+      customization: false, // Phone cases don't need clothing customization
     },
     shipping: {
       freeShippingThreshold: 500,
@@ -165,6 +192,7 @@ export const tenants: Tenant[] = [
       reviews: true,
       loyalty: false,
       liveChat: false,
+      customization: true,
     },
     shipping: {
       freeShippingThreshold: 300,
@@ -175,6 +203,21 @@ export const tenants: Tenant[] = [
       cashOnDelivery: true,
       onlinePayment: true,
       bankTransfer: false,
+    },
+    customization: {
+      textPrice: 7.00, // Higher pricing for premium brand
+      imagePrice: 35.00,
+      baseProductPrices: {
+        "Hoodie": 180.00,
+        "Sweatshirt": 140.00,
+        "Regular T-shirt": 95.00,
+        "Boxy T-shirt": 100.00,
+        "Oversized T-shirt": 105.00,
+        "Slim-Fit T-shirt": 90.00,
+        "Polo Shirt": 110.00,
+        "Polo Baskota": 115.00,
+      },
+      enabled: true,
     },
   },
   {
@@ -208,6 +251,7 @@ export const tenants: Tenant[] = [
       reviews: false,
       loyalty: true,
       liveChat: true,
+      customization: true,
     },
     shipping: {
       freeShippingThreshold: 400,
@@ -218,6 +262,21 @@ export const tenants: Tenant[] = [
       cashOnDelivery: false,
       onlinePayment: true,
       bankTransfer: true,
+    },
+    customization: {
+      textPrice: 10.00, // Premium pricing for collaborative brand
+      imagePrice: 50.00,
+      baseProductPrices: {
+        "Hoodie": 200.00,
+        "Sweatshirt": 160.00,
+        "Regular T-shirt": 110.00,
+        "Boxy T-shirt": 115.00,
+        "Oversized T-shirt": 120.00,
+        "Slim-Fit T-shirt": 105.00,
+        "Polo Shirt": 125.00,
+        "Polo Baskota": 130.00,
+      },
+      enabled: true,
     },
   },
 ];

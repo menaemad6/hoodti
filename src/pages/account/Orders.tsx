@@ -12,7 +12,21 @@ import { useToast } from "@/hooks/use-toast";
 import SEOHead from "@/components/seo/SEOHead";
 import { useSEOConfig } from "@/lib/seo-config";
 import type { Order as SupabaseOrder, OrderItem as SupabaseOrderItem } from "@/integrations/supabase/types.service";
-type AccountOrder = SupabaseOrder & { order_items?: SupabaseOrderItem[] };
+
+interface Customization {
+  id: string;
+  base_product_type: string;
+  base_product_size: string;
+  base_product_color: string;
+  design_data: Record<string, unknown>;
+  total_customization_cost: number;
+}
+
+interface ExtendedOrderItem extends SupabaseOrderItem {
+  customization?: Customization | null;
+}
+
+type AccountOrder = SupabaseOrder & { order_items?: ExtendedOrderItem[] };
 
 const Orders = () => {
   const { user } = useAuth();

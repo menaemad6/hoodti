@@ -13,6 +13,7 @@ interface OrderItem {
   product_id: string;
   quantity: number;
   price_at_time: number;
+  customization_id?: string;
   selected_color?: string;
   selected_size?: string;
   selected_type?: string;
@@ -21,6 +22,15 @@ interface OrderItem {
     name: string;
     images: string[]; // Fixed: Changed from string to string[]
     unit?: string;
+  } | null;
+  customization?: {
+    id: string;
+    base_product_type: string;
+    base_product_size: string;
+    base_product_color: string;
+    design_data: Record<string, unknown>;
+    total_customization_cost: number;
+    preview_image_url?: string; // Add this field for the generated design image
   } | null;
 }
 
@@ -214,13 +224,29 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, status, withItems = false,
             {order.order_items.slice(0, 3).map((item) => (
               <div key={item.id} className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl border border-border hover:border-border/80 transition-colors bg-muted/30">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden bg-background flex-shrink-0 border border-border">
-                  {item.product && Array.isArray(item.product.images) && item.product.images.length > 0 ? (
+                  {item.customization ? (
+                    // For customized products, show the preview image if available
+                    item.customization.preview_image_url ? (
+                      <img 
+                        src={item.customization.preview_image_url} 
+                        alt={`Custom ${item.customization.base_product_type}`} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      // Fallback to package icon if no preview image
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-500" />
+                      </div>
+                    )
+                  ) : item.product && Array.isArray(item.product.images) && item.product.images.length > 0 ? (
+                    // For regular products, show the product image
                     <img 
                       src={item.product.images[0]} 
                       alt={item.product.name} 
                       className="w-full h-full object-cover"
                     />
                   ) : (
+                    // Fallback to package icon
                     <div className="w-full h-full flex items-center justify-center">
                       <Package className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-500" />
                     </div>
@@ -230,17 +256,48 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, status, withItems = false,
                 <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <div className="text-xs sm:text-sm font-medium truncate">
-                      {item.product ? item.product.name : "Product unavailable"}
+                      {item.customization ? (
+                        <span className="flex items-center gap-1">
+                          Custom {item.customization.base_product_type}
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                            Custom
+                          </span>
+                        </span>
+                      ) : (
+                        item.product ? item.product.name : "Product unavailable"
+                      )}
                     </div>
                     <div className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1">
                       <span>{formatPrice(item.price_at_time)}</span>
                       <span>×</span>
                       <span>{item.quantity}</span>
-                      {item.product?.unit && <span>({item.product.unit})</span>}
+                      {item.product?.unit && !item.customization && <span>({item.product.unit})</span>}
                     </div>
                     
-                    {/* Product variations (type, size and color) */}
-                    {(item.selected_type || item.selected_size || item.selected_color) && (
+                    {/* Customization details */}
+                    {item.customization && (
+                      <div className="mt-1 flex flex-wrap gap-1 sm:gap-2">
+                        <div className="text-[10px] sm:text-xs flex items-center rounded-full bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5">
+                          <Ruler className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
+                          <span>{item.customization.base_product_type}</span>
+                        </div>
+                        <div className="text-[10px] sm:text-xs flex items-center rounded-full bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5">
+                          <Ruler className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
+                          <span>{item.customization.base_product_size}</span>
+                        </div>
+                        <div className="text-[10px] sm:text-xs flex items-center rounded-full bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5">
+                          <Paintbrush className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
+                          <span 
+                            className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full mr-0.5 sm:mr-1 border border-gray-300"
+                            style={{ backgroundColor: item.customization.base_product_color }}
+                          ></span>
+                          <span>{item.customization.base_product_color}</span>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Product variations (type, size and color) for non-customized products */}
+                    {!item.customization && (item.selected_type || item.selected_size || item.selected_color) && (
                       <div className="mt-1 flex flex-wrap gap-1 sm:gap-2">
                         {item.selected_type && (
                           <div className="text-[10px] sm:text-xs flex items-center rounded-full bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5">

@@ -13,10 +13,22 @@ import { useToast } from "@/hooks/use-toast";
 import AnimatedWrapper from "@/components/ui/animated-wrapper";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Order, OrderItem } from "@/integrations/supabase/types.service";
+import { Order, OrderItem as SupabaseOrderItem } from "@/integrations/supabase/types.service";
 import { formatPrice } from "../../lib/utils";
 import SEOHead from "@/components/seo/SEOHead";
 import { useSEOConfig } from "@/lib/seo-config";
+
+interface OrderItem extends SupabaseOrderItem {
+  customization?: {
+    id: string;
+    base_product_type: string;
+    base_product_size: string;
+    base_product_color: string;
+    design_data: Record<string, unknown>;
+    total_customization_cost: number;
+    preview_image_url?: string; // Add this field for the generated design image
+  } | null;
+}
 
 interface DeliverySlot {
   date: string;
@@ -153,6 +165,9 @@ const OrderDetail = () => {
         
         if (orderData) {
           const items = await getOrderItemsWithProducts(id);
+          
+          console.log('Order data:', orderData);
+          console.log('Order items:', items);
           
           setOrder(orderData);
           setOrderItems(items as OrderItem[]);
@@ -387,6 +402,20 @@ const OrderDetail = () => {
                                           alt={item.product.name} 
                                           className="h-full w-full object-cover"
                                         />
+                                      ) : item.customization ? (
+                                        // For customized products, show the preview image if available
+                                        item.customization.preview_image_url ? (
+                                          <img 
+                                            src={item.customization.preview_image_url} 
+                                            alt={`Custom ${item.customization.base_product_type}`} 
+                                            className="h-full w-full object-cover"
+                                          />
+                                        ) : (
+                                          // Fallback to paintbrush icon if no preview image
+                                          <div className="h-full w-full flex items-center justify-center bg-primary/10">
+                                            <Paintbrush className="h-6 w-6 sm:h-8 sm:w-8 text-primary/60" />
+                                          </div>
+                                        )
                                       ) : (
                                         <div className="h-full w-full flex items-center justify-center">
                                           <Package className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground/40" />
@@ -395,19 +424,50 @@ const OrderDetail = () => {
                                     </div>
                                   </TableCell>
                                   <TableCell className="font-medium p-2 sm:p-4">
-                                    {item.product ? (
+                                    {(item.product || item.customization) ? (
                                       <>
                                         <Link 
-                                          to={`/product/${item.product_id}`}
+                                          to={item.product ? `/product/${item.product_id}` : '#'}
                                           className="hover:text-primary dark:hover:text-primary/90 transition-colors line-clamp-1 text-sm sm:text-base"
                                         >
-                                          {item.product.name}
+                                          {item.customization ? (
+                                            <span className="flex items-center gap-2">
+                                              Custom {item.customization.base_product_type}
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] sm:text-xs bg-primary/10 text-primary border border-primary/20">
+                                                Custom
+                                              </span>
+                                            </span>
+                                          ) : (
+                                            item.product?.name || "Product unavailable"
+                                          )}
                                         </Link>
                                         <div className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground/90 mt-1">
-                                          {item.product.unit && `Per ${item.product.unit}`}
+                                          {item.product?.unit && !item.customization && `Per ${item.product.unit}`}
                                           
-                                          {/* Display type, color and size if available */}
-                                          {(item.selected_type || item.selected_color || item.selected_size) && (
+                                          {/* Display customization details if available */}
+                                          {item.customization && (
+                                            <div className="flex flex-wrap gap-1 sm:gap-2 mt-1">
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] sm:text-xs bg-primary/10 text-primary border border-primary/20">
+                                                <Ruler className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
+                                                Type: {item.customization.base_product_type}
+                                              </span>
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] sm:text-xs bg-primary/10 text-primary border border-primary/20">
+                                                <Ruler className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
+                                                Size: {item.customization.base_product_size}
+                                              </span>
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] sm:text-xs bg-primary/10 text-primary border border-primary/20">
+                                                <Paintbrush className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
+                                                <span 
+                                                  className="w-2 h-2 rounded-full mr-0.5 sm:mr-1 border border-gray-300"
+                                                  style={{ backgroundColor: item.customization.base_product_color }}
+                                                ></span>
+                                                {item.customization.base_product_color}
+                                              </span>
+                                            </div>
+                                          )}
+                                          
+                                          {/* Display type, color and size if available (for non-customized products) */}
+                                          {!item.customization && (item.selected_type || item.selected_color || item.selected_size) && (
                                             <div className="flex flex-wrap gap-1 sm:gap-2 mt-1">
                                               {item.selected_type && (
                                                 <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] sm:text-xs bg-muted/50">

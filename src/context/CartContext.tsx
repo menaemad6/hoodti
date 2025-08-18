@@ -14,6 +14,7 @@ export interface CartItem {
   selectedColor?: string;
   selectedSize?: string;
   selected_type?: string;
+  customizationId?: string; // Add this field for customized products
 }
 
 export interface CartContextProps {
@@ -22,8 +23,8 @@ export interface CartContextProps {
   cartItemsCount: number;
   cartTotal: number;
   isCartInitialized: boolean;
-  addItem: (product: Product | SupabaseProduct, quantity?: number, selectedColor?: string, selectedSize?: string, selected_type?: string) => void;
-  addToCart: (product: Product | SupabaseProduct, quantity?: number, selectedColor?: string, selectedSize?: string, selected_type?: string) => void;
+  addItem: (product: Product | SupabaseProduct, quantity?: number, selectedColor?: string, selectedSize?: string, selected_type?: string, customizationId?: string) => void;
+  addToCart: (product: Product | SupabaseProduct, quantity?: number, selectedColor?: string, selectedSize?: string, selected_type?: string, customizationId?: string) => void;
   removeItem: (productId: string, selectedColor?: string, selectedSize?: string, selected_type?: string) => void;
   removeFromCart: (productId: string, selectedColor?: string, selectedSize?: string, selected_type?: string) => void;
   updateQuantity: (productId: string, quantity: number, selectedColor?: string, selectedSize?: string, selected_type?: string) => void;
@@ -74,6 +75,7 @@ interface StoredCartItem {
   selectedColor?: string;
   selectedSize?: string;
   selected_type?: string;
+  customizationId?: string; // Add this field
 }
 
 interface CommonProductFields {
@@ -165,6 +167,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         selectedColor: item.selectedColor,
         selectedSize: item.selectedSize,
         selected_type: item.selected_type,
+        customizationId: item.customizationId, // Add this field
       }));
   };
 
@@ -225,7 +228,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         const mergedMap = new Map<string, CartItem>();
         const addToMerged = (ci: CartItem) => {
           const normalizedProduct = ensureProductTypeCompatibility(ci.product);
-          const key = `${normalizedProduct.id}|${ci.selectedColor || ''}|${ci.selectedSize || ''}|${ci.selected_type || ''}`;
+          const key = `${normalizedProduct.id}|${ci.selectedColor || ''}|${ci.selectedSize || ''}|${ci.selected_type || ''}|${ci.customizationId || ''}`;
           const existing = mergedMap.get(key);
           const availableStock = typeof normalizedProduct.stock === 'number' ? normalizedProduct.stock : undefined;
           const mergedQuantity = (existing?.quantity || 0) + (ci.quantity || 0);
@@ -237,6 +240,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
             selectedColor: ci.selectedColor,
             selectedSize: ci.selectedSize,
             selected_type: ci.selected_type,
+            customizationId: ci.customizationId, // Add this field
           });
         };
 
@@ -253,6 +257,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
           selectedColor: item.selectedColor,
           selectedSize: item.selectedSize,
           selected_type: item.selected_type,
+          customizationId: item.customizationId, // Add this field
         }));
 
         localStorage.setItem(userKey, JSON.stringify(payload));
@@ -277,7 +282,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
           quantity: item.quantity,
           selectedColor: item.selectedColor,
           selectedSize: item.selectedSize,
-          selected_type: item.selected_type
+          selected_type: item.selected_type,
+          customizationId: item.customizationId // Add this field
         }));
 
         localStorage.setItem(currentStorageKey, JSON.stringify(cartToSave));
@@ -304,18 +310,20 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     quantity = 1,
     selectedColor?: string,
     selectedSize?: string,
-    selected_type?: string
+    selected_type?: string,
+    customizationId?: string
   ) => {
     const normalizedProduct = mapSupabaseProductToAppProduct(product);
     setItems((prevItems) => {
-      // Create a unique identifier including color, size, and type to distinguish variations
-      const productVariantId = `${normalizedProduct.id}-${selectedColor || ''}-${selectedSize || ''}-${selected_type || ''}`;
-      // Find item with same id AND same color/size/type combination
+      // Create a unique identifier including color, size, type, and customizationId to distinguish variations
+      const productVariantId = `${normalizedProduct.id}-${selectedColor || ''}-${selectedSize || ''}-${selected_type || ''}-${customizationId || ''}`;
+      // Find item with same id AND same color/size/type/customizationId combination
       const existingItemIndex = prevItems.findIndex(
         (item) => item.product.id === normalizedProduct.id && 
                  item.selectedColor === selectedColor && 
                  item.selectedSize === selectedSize &&
-                 item.selected_type === selected_type
+                 item.selected_type === selected_type &&
+                 item.customizationId === customizationId
       );
       if (existingItemIndex >= 0) {
         const updatedItems = [...prevItems];
@@ -358,7 +366,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
           quantity,
           selectedColor,
           selectedSize,
-          selected_type
+          selected_type,
+          customizationId
         }];
       }
     });

@@ -374,10 +374,22 @@ const Cart = () => {
                           <div className="flex flex-col sm:flex-row sm:justify-between">
                             <div>
                               <h3 className="text-base sm:text-lg font-medium">
-                                <Link to={`/product/${item.product.id}`} className="hover:text-primary transition-colors duration-200 flex items-center gap-1">
-                                  {item.product.name}
-                                  <div className="w-4 h-px bg-primary/30 animate-pulse hidden sm:block"></div>
-                                </Link>
+                                {item.customizationId ? (
+                                  // For customized products, don't make it a link
+                                  <span className="flex items-center gap-1">
+                                    {item.product.name}
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                                      Custom
+                                    </span>
+                                    <div className="w-4 h-px bg-primary/30 animate-pulse hidden sm:block"></div>
+                                  </span>
+                                ) : (
+                                  // For regular products, make it a link
+                                  <Link to={`/product/${item.product.id}`} className="hover:text-primary transition-colors duration-200 flex items-center gap-1">
+                                    {item.product.name}
+                                    <div className="w-4 h-px bg-primary/30 animate-pulse hidden sm:block"></div>
+                                  </Link>
+                                )}
                               </h3>
                               <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
                                 <span className="text-primary/80">{formatPrice(item.product.price)}</span> per item
@@ -433,7 +445,7 @@ const Cart = () => {
                               <Button 
                                 variant="ghost" 
                                 size="icon" 
-                                onClick={() => updateQuantity(item.product.id, item.quantity - 1, item.selectedColor, item.selectedSize)}
+                                onClick={() => updateQuantity(item.product.id, item.quantity - 1, item.selectedColor, item.selectedSize, item.selected_type)}
                                 disabled={item.quantity <= 1}
                                 className="rounded-none h-6 w-6 sm:h-8 sm:w-8"
                               >
@@ -443,8 +455,8 @@ const Cart = () => {
                               <Button 
                                 variant="ghost" 
                                 size="icon" 
-                                onClick={() => updateQuantity(item.product.id, item.quantity + 1, item.selectedColor, item.selectedSize)}
-                                disabled={item.quantity >= item.product.stock}
+                                onClick={() => updateQuantity(item.product.id, item.quantity + 1, item.selectedColor, item.selectedSize, item.selected_type)}
+                                disabled={item.customizationId ? false : item.quantity >= (item.product.stock || 0)}
                                 className="rounded-none h-6 w-6 sm:h-8 sm:w-8"
                               >
                                 <Plus className="h-3 w-3" />

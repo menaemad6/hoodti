@@ -32,6 +32,7 @@ import { BRAND_NAME } from "@/lib/constants";
 import SEOHead from "@/components/seo/SEOHead";
 import { useSEOConfig } from "@/lib/seo-config";
 import PolicyModal from "@/components/policies/PolicyModal";
+import { CustomizationService } from "@/integrations/supabase/customization.service";
 
 // Define types for slots and order data
 interface DeliverySlot {
@@ -53,7 +54,8 @@ interface OrderData {
   discount_amount: number;
   shipping_amount: number;
   items: Array<{
-    product_id: string;
+    product_id: string | null; // Make nullable for customized products
+    customization_id?: string | null; // Add this field
     quantity: number;
     price_at_time: number;
     selected_color?: string;
@@ -380,6 +382,11 @@ const Checkout = () => {
       
       // Check stock for all items in the cart
       for (const item of cart) {
+        // Skip stock check for customized products
+        if (item.customizationId) {
+          continue;
+        }
+        
         const stock = await checkProductStock(item.product.id);
         if (stock < item.quantity) {
           toast({
@@ -406,7 +413,8 @@ const Checkout = () => {
         `${selectedAddress.line1}, ${selectedAddress.line2 ? selectedAddress.line2 + ', ' : ''}${selectedAddress.city}, ${selectedAddress.state} ${selectedAddress.postalCode}` : '';
       
       const orderItems = cart.map(item => ({
-        product_id: item.product.id,
+        product_id: item.customizationId ? null : item.product.id, // Set to null for customized products
+        customization_id: item.customizationId || null, // Add customization_id field
         quantity: item.quantity,
         price_at_time: item.product.price,
         selected_color: item.selectedColor,
@@ -443,8 +451,35 @@ const Checkout = () => {
       const order = await createOrder(orderData);
       setCreatedOrderId(order.id);
       
+      // Handle customization image uploads for completed orders
+      const customizationService = CustomizationService.getInstance();
+      for (const item of cart) {
+        if (item.customizationId) {
+          try {
+            // Get the customization data to extract user-uploaded images
+            const customization = await customizationService.getCustomizationById(item.customizationId);
+            if (customization && customization.design.images.length > 0) {
+              // Upload user images to permanent storage
+              const userImages = customization.design.images.map(img => img.originalFile).filter(Boolean) as File[];
+              if (userImages.length > 0) {
+                await customizationService.uploadCustomizationImages(user.id, userImages);
+                console.log(`Uploaded ${userImages.length} user images for customization ${item.customizationId}`);
+              }
+            }
+          } catch (uploadError) {
+            console.error(`Failed to upload customization images for ${item.customizationId}:`, uploadError);
+            // Don't prevent order completion if image upload fails
+          }
+        }
+      }
+      
       // Update stock for all items in the cart
       for (const item of cart) {
+        // Skip stock update for customized products
+        if (item.customizationId) {
+          continue;
+        }
+        
         await updateProductStock(item.product.id, -item.quantity);
       }
       

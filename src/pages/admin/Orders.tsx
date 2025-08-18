@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { DataTable } from "@/components/admin/DataTable";
-import { ChevronRight, Download, FileText, PackageCheck, Truck, ShoppingBag, CheckCircle, AlertCircle, XCircle, Clock, BarChart, Mail, User, MapPin, CreditCard } from "lucide-react";
+import { ChevronRight, Download, FileText, PackageCheck, Truck, ShoppingBag, CheckCircle, AlertCircle, XCircle, Clock, BarChart, Mail, User, MapPin, CreditCard, Palette, Package, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
   Dialog, 
@@ -39,6 +39,7 @@ import SEOHead from "@/components/seo/SEOHead";
 import { useSEOConfig } from "@/lib/seo-config";
 import { formatPrice } from "../../lib/utils";
 import { useCurrentTenant } from "@/context/TenantContext";
+import { Link } from "react-router-dom";
 
 // Add function to calculate relative time
 const getRelativeTimeString = (date: Date): string => {
@@ -76,6 +77,11 @@ const OrdersPage = () => {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [customerDetails, setCustomerDetails] = useState<Record<string, any>>({});
+  const [imagePreviewModal, setImagePreviewModal] = useState<{ isOpen: boolean; imageUrl: string; title: string }>({
+    isOpen: false,
+    imageUrl: '',
+    title: ''
+  });
   const seoConfig = useSEOConfig('adminOrders');
   const currentTenant = useCurrentTenant();
 
@@ -141,6 +147,22 @@ const OrdersPage = () => {
   const closeDialog = () => {
     setSelectedOrder(null);
     setSelectedOrderItems([]);
+  };
+
+  const openImagePreview = (imageUrl: string, title: string) => {
+    setImagePreviewModal({
+      isOpen: true,
+      imageUrl,
+      title
+    });
+  };
+
+  const closeImagePreview = () => {
+    setImagePreviewModal({
+      isOpen: false,
+      imageUrl: '',
+      title: ''
+    });
   };
 
   const handleUpdateStatus = async (status: string) => {
@@ -487,6 +509,37 @@ const OrdersPage = () => {
                 <div className="h-1 w-full bg-gradient-to-r from-red-500 via-red-400 to-red-300"></div>
               </CardContent>
             </Card>
+            
+            {/* Customization Statistics Card */}
+            <Card className="border bg-card shadow-sm overflow-hidden">
+              <CardContent className="p-0">
+                <div className="flex flex-row items-center p-4">
+                  <div className="p-2 rounded-lg mr-3 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20">
+                    <Palette className="h-6 w-6 text-emerald-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Customized</p>
+                    <p className="text-2xl font-bold">
+                      {orders.filter(order => 
+                        order.order_items?.some((item: any) => item.customization)
+                      ).length}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {orders.reduce((total, order) => {
+                        const customizationRevenue = order.order_items?.reduce((sum: number, item: any) => {
+                          if (item.customization && item.customization.total_customization_cost > 0) {
+                            return sum + (item.customization.total_customization_cost * item.quantity);
+                          }
+                          return sum;
+                        }, 0) || 0;
+                        return total + customizationRevenue;
+                      }, 0).toFixed(2)} revenue
+                    </p>
+                  </div>
+                </div>
+                <div className="h-1 w-full bg-gradient-to-r from-emerald-500 via-emerald-400 to-emerald-300"></div>
+              </CardContent>
+            </Card>
           </div>
 
           <Card className="border shadow-sm">
@@ -613,6 +666,11 @@ const OrdersPage = () => {
                         <div className="space-y-1 bg-card/60 p-3 rounded-lg border border-border/20">
                           <p className="text-sm font-medium text-muted-foreground">Phone Number</p>
                           <p className="font-medium">{selectedOrder.phone_number || "Not provided"}</p>
+                          {selectedOrder.phone_number && 
+                          <Link to={`https://wa.me/+20${selectedOrder.phone_number}`} target="_blank" className="text-xs text-blue-600 dark:text-blue-400">
+                            WhatsApp
+                            </Link>
+                          }
                         </div>
                       </div>
                     </CardContent>
@@ -710,55 +768,214 @@ const OrdersPage = () => {
                     {selectedOrderItems.length > 0 ? (
                       <div className="space-y-3">
                         {selectedOrderItems.map((item: any) => (
-                          <div key={item.id} className="flex justify-between items-center p-3 rounded-lg bg-card/60 backdrop-blur-sm shadow-sm border border-amber-200/30 dark:border-amber-800/30 hover:shadow-md transition-shadow">
-                            <div className="flex items-center gap-3">
-                              <div className="h-14 w-14 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/20 rounded-md flex items-center justify-center overflow-hidden shadow-sm">
-                                {item.product && Array.isArray(item.product.images) && item.product.images.length > 0 ? (
+                          <div key={item.id} className="flex justify-between items-start p-3 rounded-lg bg-card/60 backdrop-blur-sm shadow-sm border border-amber-200/30 dark:border-amber-800/30 hover:shadow-md transition-shadow">
+                            <div className="flex items-start gap-3 flex-1">
+                              <div className="h-14 w-14 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/20 rounded-md flex items-center justify-center overflow-hidden shadow-sm flex-shrink-0">
+                                {item.customization ? (
+                                  // For customized products, show the design preview image
+                                  (() => {
+                                    try {
+                                      // First, check if there's a preview image from the customizations table
+                                      if (item.customization.preview_image_url) {
+                                        return (
+                                          <img 
+                                            src={item.customization.preview_image_url} 
+                                            alt={`Custom ${item.customization.base_product_type} design`}
+                                            className="object-cover w-full h-full" 
+                                          />
+                                        );
+                                      }
+                                      
+                                      // Fallback: Parse design data to extract design image URL
+                                      let designData: Record<string, unknown> = {};
+                                      if (typeof item.customization.design_data === 'string') {
+                                        designData = JSON.parse(item.customization.design_data);
+                                      } else if (typeof item.customization.design_data === 'object' && item.customization.design_data !== null) {
+                                        designData = item.customization.design_data as Record<string, unknown>;
+                                      }
+                                      
+                                      // Check if there's a design image URL in the metadata
+                                      if (designData?.designImageUrl && typeof designData.designImageUrl === 'string') {
+                                        return (
+                                          <img 
+                                            src={designData.designImageUrl} 
+                                            alt={`Custom ${item.customization.base_product_type} design`}
+                                            className="object-cover w-full h-full" 
+                                          />
+                                        );
+                                      }
+                                      
+                                      // Fallback to background image if available
+                                      if (designData?.backgroundImage && typeof designData.backgroundImage === 'string') {
+                                        return (
+                                          <img 
+                                            src={designData.backgroundImage} 
+                                            alt={`${item.customization.base_product_type} template`}
+                                            className="object-cover w-full h-full" 
+                                          />
+                                        );
+                                      }
+                                      
+                                      // Final fallback to package icon
+                                      return <ShoppingBag className="h-5 w-5 text-amber-500" />;
+                                    } catch (error) {
+                                      // Fallback to package icon if there's an error parsing design data
+                                      return <ShoppingBag className="h-5 w-5 text-amber-500" />;
+                                    }
+                                  })()
+                                ) : item.product && Array.isArray(item.product.images) && item.product.images.length > 0 ? (
                                   <img src={item.product.images[0]} alt={item.product?.name || 'Product'} className="object-cover w-full h-full" />
                                 ) : (
                                   <ShoppingBag className="h-5 w-5 text-amber-500" />
                                 )}
                               </div>
-                              <div>
-                                <p className="font-medium">{item.product?.name || 'Unknown Product'}</p>
-                                <div className="flex items-center gap-3 mt-1">
-                                  <p className="text-xs px-2 py-0.5 bg-amber-100/50 dark:bg-amber-900/30 rounded-full">Qty: {item.quantity}</p>
-                                  <p className="text-xs text-muted-foreground">{formatPrice(item.price_at_time)} each</p>
-                                </div>
-                                
-                                {/* Display selected type, color and size if available */}
-                                {(item.selected_type || item.selected_color || item.selected_size) && (
-                                  <div className="flex flex-wrap gap-2 mt-1">
-                                    {item.selected_type && (
-                                      <span className="text-xs px-1.5 py-0.5 bg-amber-100/50 dark:bg-amber-900/30 rounded-full">
-                                        {item.selected_type}
-                                      </span>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex-1">
+                                    <p className="font-medium">
+                                      {item.customization ? (
+                                        <span className="flex items-center gap-2">
+                                          Custom {item.customization.base_product_type}
+                                          <Badge variant="default" className="text-xs px-2 py-0.5 ">
+                                            Custom
+                                          </Badge>
+                                        </span>
+                                      ) : (
+                                        item.product?.name || 'Unknown Product'
+                                      )}
+                                    </p>
+                                    
+                                    {item.customization && (
+                                      <p className="text-xs text-muted-foreground mt-0.5">
+                                        Customized product with design elements
+                                      </p>
                                     )}
-                                    {item.selected_size && (
-                                      <span className="text-xs px-1.5 py-0.5 bg-amber-100/50 dark:bg-amber-900/30 rounded-full">
-                                        Size: {item.selected_size}
-                                      </span>
+                                    
+                                    <div className="flex items-center gap-3 mt-1">
+                                      <p className="text-xs px-2 py-0.5 bg-amber-100/50 dark:bg-amber-900/30 rounded-full">Qty: {item.quantity}</p>
+                                      <p className="text-xs text-muted-foreground">{formatPrice(item.price_at_time)} each</p>
+                                    </div>
+                                    
+                                    {/* Display customization details if available */}
+                                    {item.customization && (
+                                      <div className="flex flex-wrap gap-2 mt-2">
+                                        <Badge 
+                                          variant="outline" 
+                                          className="text-xs px-2 py-0.5 bg-background border-border/50">
+                                          Type: {item.customization.base_product_type}
+                                        </Badge>
+                                        <Badge 
+                                          variant="outline" 
+                                          className="text-xs px-2 py-0.5 bg-background border-border/50">
+                                          Size: {item.customization.base_product_size}
+                                        </Badge>
+                                        <Badge 
+                                          variant="outline" 
+                                          className="text-xs px-2 py-0.5 bg-background border-border/50 flex items-center">
+                                          <span 
+                                            className="w-2 h-2 rounded-full mr-1"
+                                            style={{ 
+                                              backgroundColor: item.customization.base_product_color
+                                            }}
+                                          ></span>
+                                          {item.customization.base_product_color}
+                                        </Badge>
+                                        {item.customization.total_customization_cost > 0 && (
+                                          <Badge 
+                                            variant="outline" 
+                                            className="text-xs px-2 py-0.5 bg-background border-border/50 text-green-600 dark:text-green-400">
+                                            +${item.customization.total_customization_cost.toFixed(2)} customization
+                                          </Badge>
+                                        )}
+                                        
+                                        {/* View Design Button */}
+                                        {(() => {
+                                          try {
+                                            // Try to get the preview image URL
+                                            let previewUrl = '';
+                                            if (item.customization.preview_image_url) {
+                                              previewUrl = item.customization.preview_image_url;
+                                            } else {
+                                              // Parse design data to extract design image URL
+                                              let designData: Record<string, unknown> = {};
+                                              if (typeof item.customization.design_data === 'string') {
+                                                designData = JSON.parse(item.customization.design_data);
+                                              } else if (typeof item.customization.design_data === 'object' && item.customization.design_data !== null) {
+                                                designData = item.customization.design_data as Record<string, unknown>;
+                                              }
+                                              
+                                              if (designData?.designImageUrl && typeof designData.designImageUrl === 'string') {
+                                                previewUrl = designData.designImageUrl;
+                                              } else if (designData?.backgroundImage && typeof designData.backgroundImage === 'string') {
+                                                previewUrl = designData.backgroundImage;
+                                              }
+                                            }
+                                            
+                                            if (previewUrl) {
+                                              return (
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  onClick={() => openImagePreview(
+                                                    previewUrl, 
+                                                    `Custom ${item.customization.base_product_type} Design`
+                                                  )}
+                                                  className="text-xs px-2 py-0.5 h-6 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800/30"
+                                                >
+                                                  View Design
+                                                </Button>
+                                              );
+                                            }
+                                            return null;
+                                          } catch (error) {
+                                            return null;
+                                          }
+                                        })()}
+                                      </div>
                                     )}
-                                    {item.selected_color && (
-                                      <span className="text-xs px-1.5 py-0.5 bg-amber-100/50 dark:bg-amber-900/30 rounded-full flex items-center">
-                                        <span 
-                                          className="w-2 h-2 rounded-full mr-1"
-                                          style={{ 
-                                            backgroundColor: 
-                                              ['black', 'white', 'red', 'blue', 'green', 'yellow', 'orange', 'purple', 'pink', 'brown', 'gray']
-                                                .includes(item.selected_color.toLowerCase()) 
-                                                ? item.selected_color.toLowerCase()
-                                                : '#888' 
-                                          }}
-                                        ></span>
-                                        {item.selected_color}
-                                      </span>
+                                    
+                                    {/* Display selected type, color and size if available (for non-customized products) */}
+                                    {!item.customization && (item.selected_type || item.selected_color || item.selected_size) && (
+                                      <div className="flex flex-wrap gap-2 mt-2">
+                                        {item.selected_type && (
+                                          <span className="text-xs px-1.5 py-0.5 bg-amber-100/50 dark:bg-amber-900/30 rounded-full">
+                                            {item.selected_type}
+                                          </span>
+                                        )}
+                                        {item.selected_size && (
+                                          <span className="text-xs px-1.5 py-0.5 bg-amber-100/50 dark:bg-amber-900/30 rounded-full">
+                                            Size: {item.selected_size}
+                                          </span>
+                                        )}
+                                        {item.selected_color && (
+                                          <span className="text-xs px-1.5 py-0.5 bg-amber-100/50 dark:bg-amber-900/30 rounded-full flex items-center">
+                                            <span 
+                                              className="w-2 h-2 rounded-full mr-1"
+                                              style={{ 
+                                                backgroundColor: 
+                                                  ['black', 'white', 'red', 'blue', 'green', 'yellow', 'orange', 'purple', 'pink', 'brown', 'gray']
+                                                    .includes(item.selected_color.toLowerCase()) 
+                                                    ? item.selected_color.toLowerCase()
+                                                    : '#888' 
+                                              }}
+                                            ></span>
+                                            {item.selected_color}
+                                          </span>
+                                        )}
+                                      </div>
                                     )}
                                   </div>
-                                )}
+                                </div>
                               </div>
                             </div>
-                            <p className="font-semibold text-amber-900 dark:text-amber-200">{formatPrice(parseFloat(item.price_at_time) * item.quantity)}</p>
+                            <div className="text-right flex-shrink-0">
+                              <p className="font-semibold text-amber-900 dark:text-amber-200">{formatPrice(parseFloat(item.price_at_time) * item.quantity)}</p>
+                              {item.customization && item.customization.total_customization_cost > 0 && (
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Base: {formatPrice((parseFloat(item.price_at_time) - item.customization.total_customization_cost) * item.quantity)}
+                                </p>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -790,6 +1007,35 @@ const OrdersPage = () => {
                         <span className="text-muted-foreground">Subtotal:</span>
                         <span className="font-medium">{formatPrice(selectedOrderItems.reduce((total, item) => total + (Number(item.price_at_time) * item.quantity), 0))}</span>
                       </div>
+                      
+                      {/* Show customization costs breakdown if there are customized items */}
+                      {selectedOrderItems.some((item: any) => item.customization) && (
+                        <>
+                          <div className="flex justify-between py-1">
+                            <span className="text-muted-foreground">Base Products:</span>
+                            <span className="font-medium">
+                              {formatPrice(selectedOrderItems.reduce((total, item: any) => {
+                                if (item.customization && item.customization.total_customization_cost > 0) {
+                                  return total + ((Number(item.price_at_time) - item.customization.total_customization_cost) * item.quantity);
+                                }
+                                return total + (Number(item.price_at_time) * item.quantity);
+                              }, 0))}
+                            </span>
+                          </div>
+                          <div className="flex justify-between py-1">
+                            <span className="text-muted-foreground">Customization:</span>
+                            <span className="font-medium text-green-600">
+                              +{formatPrice(selectedOrderItems.reduce((total, item: any) => {
+                                if (item.customization && item.customization.total_customization_cost > 0) {
+                                  return total + (item.customization.total_customization_cost * item.quantity);
+                                }
+                                return total;
+                              }, 0))}
+                            </span>
+                          </div>
+                        </>
+                      )}
+                      
                       <div className="flex justify-between py-1">
                         <span className="text-muted-foreground">Tax:</span>
                         <span className="font-medium">{formatPrice(Number(selectedOrder.tax || 0))}</span>
@@ -818,6 +1064,61 @@ const OrdersPage = () => {
             <DialogFooter className="border-t border-border/40 pt-4 mt-2">
               <Button className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary" onClick={closeDialog}>Close</Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        {/* Full Screen Image Preview Modal */}
+        <Dialog open={imagePreviewModal.isOpen} onOpenChange={closeImagePreview}>
+          <DialogContent className="max-w-none w-screen h-screen max-h-screen p-0 bg-black/95 backdrop-blur-sm border-0">
+            <div className="relative w-full h-full flex flex-col">
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 bg-black/50 backdrop-blur-sm border-b border-white/20">
+                <DialogTitle className="text-white text-lg font-medium">
+                  {imagePreviewModal.title}
+                </DialogTitle>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={closeImagePreview}
+                  className="text-white hover:bg-white/20 rounded-full"
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+              
+              {/* Image Container */}
+              <div className="flex-1 flex items-center justify-center p-4 overflow-hidden">
+                {imagePreviewModal.imageUrl ? (
+                  <img
+                    src={imagePreviewModal.imageUrl}
+                    alt={imagePreviewModal.title}
+                    className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                    style={{
+                      maxWidth: '90vw',
+                      maxHeight: '80vh'
+                    }}
+                  />
+                ) : (
+                  <div className="text-center text-white/70">
+                    <Package className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                    <p>No preview image available</p>
+                  </div>
+                )}
+              </div>
+              
+              {/* Footer */}
+              <div className="p-4 bg-black/50 backdrop-blur-sm border-t border-white/20">
+                <div className="flex justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={closeImagePreview}
+                    className="text-white border-white/30 hover:bg-white/20"
+                  >
+                    Close Preview
+                  </Button>
+                </div>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </AdminLayout>

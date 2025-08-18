@@ -14,7 +14,8 @@ import {
   Settings, 
   Menu, 
   X,
-  Clock
+  Clock,
+  Palette
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";

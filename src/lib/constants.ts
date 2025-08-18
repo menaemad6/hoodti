@@ -145,4 +145,52 @@ export const SIZING_OPTIONS = [
       { size: "XXL", shoulder: 44, length: 51, sleeve_length: 19.5 },
     ],
   },
-]; 
+];
+
+// Product type to blank image mapping for customization
+export const PRODUCT_BLANK_IMAGES: Record<string, string> = {
+  "Hoodie": "/assets/blank-hoodie.png",
+  "Sweatshirt": "/assets/blank-sweatshirt.png",
+  "Regular T-shirt": "/assets/blank-tshirt.png",
+  "Boxy T-shirt": "/assets/blank-tshirt.png",
+  "Oversized T-shirt": "/assets/blank-oversized-tshirt.png",
+  "Slim-Fit T-shirt": "/assets/blank-tshirt.png",
+  "Polo Shirt": "/assets/blank-polo.png",
+  "Polo Baskota": "/assets/blank-polo.png",
+};
+
+// Fallback to placeholder if blank images don't exist
+export const getProductImage = (productType: string): string => {
+  const blankImage = PRODUCT_BLANK_IMAGES[productType];
+  if (blankImage) {
+    return blankImage;
+  }
+  
+  // Fallback to a generic placeholder
+  return "/assets/blank-hoodie.png"; // Default fallback
+};
+
+// Color mapping for product customization
+// Maps hex colors to CSS filter values for better color representation
+export const PRODUCT_COLOR_FILTERS: Record<string, string> = {
+  "#000000": "brightness(0) saturate(100%)", // Black
+  "#FFFFFF": "brightness(1) saturate(0%)", // White
+  "#FF0000": "hue-rotate(0deg) saturate(100%) brightness(0.8)", // Red
+  "#00FF00": "hue-rotate(120deg) saturate(100%) brightness(0.8)", // Green
+  "#0000FF": "hue-rotate(240deg) saturate(100%) brightness(0.8)", // Blue
+  "#FFFF00": "hue-rotate(60deg) saturate(100%) brightness(0.8)", // Yellow
+  "#FF00FF": "hue-rotate(300deg) saturate(100%) brightness(0.8)", // Magenta
+  "#00FFFF": "hue-rotate(180deg) saturate(100%) brightness(0.8)", // Cyan
+  "#FFA500": "hue-rotate(30deg) saturate(100%) brightness(0.8)", // Orange
+  "#800080": "hue-rotate(270deg) saturate(80%) brightness(0.6)", // Purple
+  "#A52A2A": "hue-rotate(0deg) saturate(60%) brightness(0.4)", // Brown
+  "#808080": "brightness(0.5) saturate(0%)", // Gray
+  "#FFD700": "hue-rotate(45deg) saturate(100%) brightness(0.9)", // Gold
+  "#C0C0C0": "brightness(0.8) saturate(0%)", // Silver
+  "#FFC0CB": "hue-rotate(350deg) saturate(60%) brightness(0.9)", // Pink
+  "#32CD32": "hue-rotate(120deg) saturate(80%) brightness(0.8)", // Lime Green
+  "#FF4500": "hue-rotate(15deg) saturate(100%) brightness(0.7)", // Orange Red
+  "#4169E1": "hue-rotate(220deg) saturate(80%) brightness(0.7)", // Royal Blue
+  "#8B4513": "hue-rotate(30deg) saturate(60%) brightness(0.4)", // Saddle Brown
+  "#2E8B57": "hue-rotate(150deg) saturate(60%) brightness(0.5)", // Sea Green
+}; 

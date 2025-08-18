@@ -33,7 +33,15 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({ menuItems 
                 <item.icon size={20} />
                 <span>{item.name}</span>
                 {item.badge && (
-                  <Badge variant="destructive" className="ml-auto">
+                  <Badge 
+                    variant={typeof item.badge === 'string' && item.badge === 'New' ? 'default' : 'destructive'} 
+                    className={cn(
+                      "ml-auto",
+                      typeof item.badge === 'string' && item.badge === 'New' 
+                        ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs px-1.5 py-0.5" 
+                        : ""
+                    )}
+                  >
                     {item.badge}
                   </Badge>
                 )}

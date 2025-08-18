@@ -16,7 +16,8 @@ import {
   Heart,
   Package,
   ChevronRight,
-  LayoutDashboard
+  LayoutDashboard,
+  Palette
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/context/CartContext";
@@ -118,19 +119,27 @@ const MobileNavbar: React.FC<MobileNavbarProps> = ({ isVisible = true }) => {
   const getSidebarItems = (): SidebarNavItem[] => {
     const items: SidebarNavItem[] = [
       {
-        icon: TagIcon,
-        label: "Categories",
-        href: "/categories",
-        iconBg: "bg-orange-100 dark:bg-orange-900/20",
-        iconColor: "text-orange-600 dark:text-orange-400",
-      },
-      {
         icon: Search,
         label: "Search Products",
         href: "/shop",
         iconBg: "bg-blue-100 dark:bg-blue-900/20",
         iconColor: "text-blue-600 dark:text-blue-400",
       },
+      {
+        icon: Palette,
+        label: "Customize Product",
+        href: "/customize",
+        iconBg: "bg-red-100 dark:bg-red-900/20",
+        iconColor: "text-red-600 dark:text-red-400",
+      },
+      {
+        icon: TagIcon,
+        label: "Categories",
+        href: "/categories",
+        iconBg: "bg-orange-100 dark:bg-orange-900/20",
+        iconColor: "text-orange-600 dark:text-orange-400",
+      },
+
     ];
     
     if (isAuthenticated) {
