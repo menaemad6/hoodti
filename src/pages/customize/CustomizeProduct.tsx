@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -124,6 +124,7 @@ export default function CustomizeProduct() {
   const [newTextInput, setNewTextInput] = useState('');
   const [editingText, setEditingText] = useState<CustomizationText | null>(null);
   const [clickToAddMode, setClickToAddMode] = useState(false);
+  const [clickPosition, setClickPosition] = useState<{ x: number; y: number } | null>(null);
   const [selectedFont, setSelectedFont] = useState<string>(() => {
     const validFont = FONT_FAMILIES.find(font => font !== '---');
     return validFont || 'Arial';
@@ -132,6 +133,43 @@ export default function CustomizeProduct() {
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
+
+  // Calculate canvas scaling for responsive positioning
+  const getCanvasScaling = () => {
+    if (!canvasRef.current) return { scaleX: 1, scaleY: 1, actualWidth: 600, actualHeight: 500 };
+    
+    const rect = canvasRef.current.getBoundingClientRect();
+    const actualWidth = rect.width;
+    const actualHeight = rect.height;
+    const scaleX = actualWidth / 600; // 600 is the base canvas width
+    const scaleY = actualHeight / 500; // 500 is the base canvas height
+    
+    // Debug logging
+    console.log('Canvas scaling:', { scaleX, scaleY, actualWidth, actualHeight, baseWidth: 600, baseHeight: 500 });
+    
+    return { scaleX, scaleY, actualWidth, actualHeight };
+  };
+
+  // Get current canvas dimensions for image generation
+  const getCurrentCanvasDimensions = useCallback(() => {
+    return getCanvasScaling();
+  }, []);
+
+  // Convert base coordinates to scaled coordinates
+  const scaleCoordinates = (x: number, y: number) => {
+    const { scaleX, scaleY } = getCanvasScaling();
+    const scaled = { x: x * scaleX, y: y * scaleY };
+    console.log('Scaling coordinates:', { base: { x, y }, scaled, scaleX, scaleY });
+    return scaled;
+  };
+
+  // Convert scaled coordinates back to base coordinates
+  const unscaleCoordinates = (x: number, y: number) => {
+    const { scaleX, scaleY } = getCanvasScaling();
+    const unscaled = { x: x / scaleX, y: y / scaleY };
+    console.log('Unscaling coordinates:', { scaled: { x, y }, unscaled, scaleX, scaleY });
+    return unscaled;
+  };
 
   // Calculate progress for the step indicator
   const getStepProgress = () => {
@@ -189,6 +227,23 @@ export default function CustomizeProduct() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentStep]);
 
+  // Update canvas dimensions on mount and resize
+  useEffect(() => {
+    if (currentStep === 'customization' && canvasRef.current) {
+      const updateDimensions = () => {
+        const { actualWidth, actualHeight } = getCurrentCanvasDimensions();
+        console.log('Canvas dimensions updated on resize:', { actualWidth, actualHeight });
+      };
+
+      // Update on mount
+      updateDimensions();
+
+      // Update on window resize
+      window.addEventListener('resize', updateDimensions);
+      return () => window.removeEventListener('resize', updateDimensions);
+    }
+  }, [currentStep, getCurrentCanvasDimensions]);
+
   const handleProductSelectionComplete = () => {
     setCurrentStep('customization');
   };
@@ -216,15 +271,17 @@ export default function CustomizeProduct() {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
+    // Convert to base coordinates for consistent positioning
+    const basePosition = unscaleCoordinates(x, y);
+    
     // Only add text if clicking within the canvas bounds (600x500) with padding consideration
-    if (x >= 20 && x <= 580 && y >= 20 && y <= 480) {
+    if (basePosition.x >= 20 && basePosition.x <= 580 && basePosition.y >= 20 && basePosition.y <= 480) {
       setNewTextInput('');
       setShowTextModal(true);
       // Store the click position for when text is confirmed
       setClickToAddMode(false);
-      // We'll need to store this position temporarily
-      const tempPosition = { x, y };
-      // For now, we'll use a simple approach - you could enhance this with a more sophisticated state management
+      // Store the base position for consistent positioning
+      setClickPosition(basePosition);
     }
   };
 
@@ -303,6 +360,9 @@ export default function CustomizeProduct() {
 
   const handleAddImage = async (file: File, position: { x: number; y: number }) => {
     try {
+      console.log('handleAddImage called with position:', position);
+      // The position from ImageUploader is already in base coordinates (600x500)
+      // No need to unscale since it's already the correct base position
       await addImage(file, position);
       toast({
         title: "Image Added",
@@ -406,14 +466,41 @@ export default function CustomizeProduct() {
       // Generate design image from canvas
       let designImageUrl: string | null = null;
       if (canvasRef.current) {
+        // Get the actual canvas dimensions for proper image generation
+        const { actualWidth, actualHeight } = getCurrentCanvasDimensions();
+        
         try {
-          // Generate the design image
-          const imageDataUrl = await generateDesignImage(canvasRef.current, {
-            width: design.canvasWidth || 600,
-            height: design.canvasHeight || 500,
+          // Create a temporary container for clean image generation (without borders/padding)
+          const tempContainer = document.createElement('div');
+          tempContainer.style.position = 'absolute';
+          tempContainer.style.left = '-9999px';
+          tempContainer.style.top = '-9999px';
+          tempContainer.style.width = `${actualWidth}px`;
+          tempContainer.style.height = `${actualHeight}px`;
+          tempContainer.style.backgroundColor = '#ffffff';
+          tempContainer.style.overflow = 'hidden';
+          
+          // Clone the canvas content without borders
+          const canvasContent = canvasRef.current.cloneNode(true) as HTMLElement;
+          canvasContent.style.border = 'none';
+          canvasContent.style.borderRadius = '0';
+          canvasContent.style.boxShadow = 'none';
+          canvasContent.style.padding = '0';
+          canvasContent.style.margin = '0';
+          
+          tempContainer.appendChild(canvasContent);
+          document.body.appendChild(tempContainer);
+          
+          // Generate the design image with clean dimensions
+          const imageDataUrl = await generateDesignImage(tempContainer, {
+            width: actualWidth,
+            height: actualHeight,
             quality: 0.9,
             backgroundColor: '#ffffff'
           });
+          
+          // Clean up temporary container
+          document.body.removeChild(tempContainer);
 
           // Convert to file and upload
           const filename = generateDesignFilename(customizationSession.id);
@@ -426,12 +513,32 @@ export default function CustomizeProduct() {
           console.log('Design image generated and stored:', designImageUrl);
         } catch (imageError) {
           console.error('Error generating design image:', imageError);
-          // Continue without image - customization will still work
-          toast({
-            title: "Warning",
-            description: "Design image generation failed, but product was added to cart.",
-            variant: "destructive",
-          });
+          
+          // Try fallback method - generate image directly from canvas
+          try {
+            console.log('Trying fallback image generation...');
+            const fallbackImageDataUrl = await generateDesignImage(canvasRef.current, {
+              width: actualWidth,
+              height: actualHeight,
+              quality: 0.9,
+              backgroundColor: '#ffffff'
+            });
+            
+            const fallbackFilename = generateDesignFilename(customizationSession.id);
+            const fallbackImageFile = dataURLtoFile(fallbackImageDataUrl, fallbackFilename);
+            designImageUrl = await uploadDesignImage(fallbackImageFile, fallbackFilename);
+            
+            await customizationService.completeCustomization(customizationSession.id, designImageUrl);
+            console.log('Fallback design image generated and stored:', designImageUrl);
+          } catch (fallbackError) {
+            console.error('Fallback image generation also failed:', fallbackError);
+            // Continue without image - customization will still work
+            toast({
+              title: "Warning",
+              description: "Design image generation failed, but product was added to cart.",
+              variant: "destructive",
+            });
+          }
         }
       }
 
@@ -542,13 +649,33 @@ export default function CustomizeProduct() {
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
     
-    const elementX = 'text' in element ? element.position.x : element.position.x;
-    const elementY = 'text' in element ? element.position.y : element.position.y;
+    // Convert element position to scaled coordinates for accurate drag offset calculation
+    const scaledElementPos = scaleCoordinates(element.position.x, element.position.y);
     
     setDraggedElement(element);
     setDragOffset({
-      x: e.clientX - rect.left - elementX,
-      y: e.clientY - rect.top - elementY,
+      x: e.clientX - rect.left - scaledElementPos.x,
+      y: e.clientY - rect.top - scaledElementPos.y,
+    });
+    
+    selectElement(element);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent, element: CustomizationText | CustomizationImage) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    
+    const touch = e.touches[0];
+    // Convert element position to scaled coordinates for accurate drag offset calculation
+    const scaledElementPos = scaleCoordinates(element.position.x, element.position.y);
+    
+    setDraggedElement(element);
+    setDragOffset({
+      x: touch.clientX - rect.left - scaledElementPos.x,
+      y: touch.clientY - rect.top - scaledElementPos.y,
     });
     
     selectElement(element);
@@ -561,9 +688,12 @@ export default function CustomizeProduct() {
     const newX = e.clientX - rect.left - dragOffset.x;
     const newY = e.clientY - rect.top - dragOffset.y;
     
+    // Convert scaled coordinates back to base coordinates for storage
+    const basePosition = unscaleCoordinates(newX, newY);
+    
     // Constrain to canvas bounds (600x500) with padding consideration
-    const constrainedX = Math.max(20, Math.min(newX, 580 - 100)); // canvas width - padding - approximate element width
-    const constrainedY = Math.max(20, Math.min(newY, 480 - 50));  // canvas height - padding - approximate element height
+    const constrainedX = Math.max(20, Math.min(basePosition.x, 580 - 100)); // canvas width - padding - approximate element width
+    const constrainedY = Math.max(20, Math.min(basePosition.y, 480 - 50));  // canvas height - padding - approximate element height
     
     if ('text' in draggedElement) {
       updateText(draggedElement.id, {
@@ -599,11 +729,36 @@ export default function CustomizeProduct() {
     startResize(element, handle);
   };
 
+  const handleTouchResizeStart = (e: React.TouchEvent, element: CustomizationText | CustomizationImage, handle: 'nw' | 'ne' | 'sw' | 'se') => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setResizingElement(element);
+    if ('text' in element) {
+      // For text, use fontSize to calculate approximate size
+      const fontSize = element.fontSize;
+      const textWidth = element.text.length * (fontSize * 0.6); // Approximate text width
+      setResizeStartSize({ width: textWidth, height: fontSize * 1.2 });
+    } else {
+      setResizeStartSize(element.size);
+    }
+    
+    const touch = e.touches[0];
+    setResizeStartPos({ x: touch.clientX, y: touch.clientY });
+    
+    startResize(element, handle);
+  };
+
   const handleResizeMove = (e: React.MouseEvent) => {
     if (!resizingElement || !canvasRef.current) return;
     
     const deltaX = e.clientX - resizeStartPos.x;
     const deltaY = e.clientY - resizeStartPos.y;
+    
+    // Scale the delta based on canvas scaling for consistent resize behavior
+    const { scaleX, scaleY } = getCanvasScaling();
+    const scaledDeltaX = deltaX / scaleX;
+    const scaledDeltaY = deltaY / scaleY;
     
     let newWidth = resizeStartSize.width;
     let newHeight = resizeStartSize.height;
@@ -611,20 +766,94 @@ export default function CustomizeProduct() {
     // Calculate new size based on resize handle
     if ('text' in resizingElement) {
       // For text, adjust fontSize based on width change
-      const sizeRatio = 1 + (deltaX / resizeStartSize.width);
+      const sizeRatio = 1 + (scaledDeltaX / resizeStartSize.width);
       const newFontSize = Math.max(8, Math.min(72, Math.round(resizingElement.fontSize * sizeRatio)));
       
       updateText(resizingElement.id, { fontSize: newFontSize });
     } else {
       // For images, adjust both width and height
-      newWidth = Math.max(50, Math.min(500, resizeStartSize.width + deltaX));
-      newHeight = Math.max(50, Math.min(500, resizeStartSize.height + deltaY));
+      newWidth = Math.max(50, Math.min(500, resizeStartSize.width + scaledDeltaX));
+      newHeight = Math.max(50, Math.min(500, resizeStartSize.height + scaledDeltaY));
       
       updateImage(resizingElement.id, { size: { width: newWidth, height: newHeight } });
     }
   };
 
   const handleResizeEnd = () => {
+    setResizingElement(null);
+    setResizeStartSize({ width: 0, height: 0 });
+    setResizeStartPos({ x: 0, y: 0 });
+    stopResize();
+  };
+
+  // Touch event handlers for mobile support
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!draggedElement || !canvasRef.current) return;
+    
+    e.preventDefault(); // Prevent scrolling while dragging
+    
+    const touch = e.touches[0];
+    const rect = canvasRef.current.getBoundingClientRect();
+    const newX = touch.clientX - rect.left - dragOffset.x;
+    const newY = touch.clientY - rect.top - dragOffset.y;
+    
+    // Convert scaled coordinates back to base coordinates for storage
+    const basePosition = unscaleCoordinates(newX, newY);
+    
+    // Constrain to canvas bounds (600x500) with padding consideration
+    const constrainedX = Math.max(20, Math.min(basePosition.x, 580 - 100));
+    const constrainedY = Math.max(20, Math.min(basePosition.y, 480 - 50));
+    
+    if ('text' in draggedElement) {
+      updateText(draggedElement.id, {
+        position: { x: constrainedX, y: constrainedY }
+      });
+    } else {
+      updateImage(draggedElement.id, {
+        position: { x: constrainedX, y: constrainedY }
+      });
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setDraggedElement(null);
+    setDragOffset({ x: 0, y: 0 });
+  };
+
+  const handleTouchResizeMove = (e: React.TouchEvent) => {
+    if (!resizingElement || !canvasRef.current) return;
+    
+    e.preventDefault(); // Prevent scrolling while resizing
+    
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - resizeStartPos.x;
+    const deltaY = touch.clientY - resizeStartPos.y;
+    
+    // Scale the delta based on canvas scaling for consistent resize behavior
+    const { scaleX, scaleY } = getCanvasScaling();
+    const scaledDeltaX = deltaX / scaleX;
+    const scaledDeltaY = deltaY / scaleY;
+    
+    let newWidth = resizeStartSize.width;
+    let newHeight = resizeStartSize.height;
+    
+    // Calculate new size based on resize handle
+    if ('text' in resizingElement) {
+      // For text, adjust fontSize based on width change
+      const sizeRatio = 1 + (scaledDeltaX / resizeStartSize.width);
+      const newFontSize = Math.max(8, Math.min(72, Math.round(resizingElement.fontSize * sizeRatio)));
+      
+      updateText(resizingElement.id, { fontSize: newFontSize });
+    } else {
+      // For images, adjust both width and height
+      newWidth = Math.max(50, Math.min(500, resizeStartSize.width + scaledDeltaX));
+      newHeight = Math.max(50, Math.min(500, resizeStartSize.height + scaledDeltaY));
+      
+      updateImage(resizingElement.id, { size: { width: newWidth, height: newHeight } });
+    }
+  };
+
+  const handleTouchResizeEnd = () => {
     setResizingElement(null);
     setResizeStartSize({ width: 0, height: 0 });
     setResizeStartPos({ x: 0, y: 0 });
@@ -655,31 +884,32 @@ export default function CustomizeProduct() {
       <Layout>
         <div className="min-h-screen ">
           {/* Hero Section */}
-          <div className="relative overflow-hidden ">
-            <div className="container mx-auto px-4 py-16 text-center relative z-10">
-              <div className="flex items-center justify-center mb-4">
-                <div className="p-3 bg-primary/10 rounded-full mr-4">
-                  <Sparkles className="w-8 h-8 text-primary" />
+          <div className="relative overflow-hidden">
+            <div className="container mx-auto px-4 py-8 sm:py-12 md:py-16 text-center relative z-10">
+              <div className="flex flex-col sm:flex-row items-center justify-center mb-4 gap-3 sm:gap-4">
+                <div className="p-2 sm:p-3 bg-primary/10 rounded-full">
+                  <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
                 </div>
-                <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white leading-tight">
                   Customize Your Style
                 </h1>
               </div>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-2">
                 Create your perfect product with our easy-to-use customization tool. 
                 Choose your product, size, and color to get started.
               </p>
               
               {/* Ready Product Modal Toggle */}
-              <div className="mt-6">
+              <div className="mt-4 sm:mt-6 px-2 ">
                 <Button
                   variant="outline"
                   size="default"
                   onClick={() => setShowReadyProductModal(true)}
-                  className=" backdrop-blur-sm border-2 border-dashed border-primary/50 hover:border-primary transition-all"
+                  className="w-full sm:w-auto backdrop-blur-sm border-2 border-dashed border-primary/50 hover:border-primary transition-all text-sm sm:text-base"
                 >
-                  <MessageCircle className="w-5 h-5 mr-2 text-primary" />
-                  If you have a ready product?
+                  <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary" />
+                  <span className="hidden xs:inline">If you have a ready product?</span>
+                  <span className="xs:hidden">Ready product?</span>
                 </Button>
               </div>
             </div>
@@ -753,14 +983,14 @@ export default function CustomizeProduct() {
         </Dialog>
 
           {/* Progress Indicator */}
-          <div className="container mx-auto px-4 -mt-8 mb-12">
+          <div className="container mx-auto px-4 -mt-4 sm:-mt-8 mb-8 sm:mb-12">
             <div className="max-w-4xl mx-auto">
-              <div className=" rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+              <div className="rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
+                  <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white text-center sm:text-left">
                     Step {getCurrentSelectionStep()} of 3
                   </h2>
-                  <Badge variant="secondary" className="text-sm">
+                  <Badge variant="secondary" className="text-sm self-center sm:self-auto">
                     {Math.round(getStepProgress())}% Complete
                   </Badge>
                 </div>
@@ -1068,7 +1298,11 @@ export default function CustomizeProduct() {
                       height: 'min(500px, 70vh)',
                       maxWidth: '600px',
                       margin: '0 auto',
-                      aspectRatio: '1.2/1'
+                      aspectRatio: '1.2/1',
+                      touchAction: 'none', // Prevent default touch behaviors like scrolling
+                      userSelect: 'none', // Prevent text selection
+                      WebkitUserSelect: 'none', // Safari support
+                      MozUserSelect: 'none' // Firefox support
                     }}
                     onMouseMove={(e) => {
                       if (draggedElement) {
@@ -1092,6 +1326,21 @@ export default function CustomizeProduct() {
                       }
                     }}
                     onClick={handleCanvasClick}
+                    // Touch events for mobile support
+                    onTouchMove={(e) => {
+                      if (draggedElement) {
+                        handleTouchMove(e);
+                      } else if (resizingElement) {
+                        handleTouchResizeMove(e);
+                      }
+                    }}
+                    onTouchEnd={() => {
+                      if (draggedElement) {
+                        handleTouchEnd();
+                      } else if (resizingElement) {
+                        handleTouchResizeEnd();
+                      }
+                    }}
                   >
                     {/* Product Preview with Blank Image */}
                     <div className="w-full h-full flex items-center justify-center relative overflow-hidden p-4">
@@ -1113,15 +1362,18 @@ export default function CustomizeProduct() {
                           />
                           
                           {/* Text elements overlay */}
-                          {design.texts.map((text) => (
+                          {design.texts.map((text) => {
+                            // Scale the position for responsive display
+                            const scaledPosition = scaleCoordinates(text.position.x, text.position.y);
+                            return (
                             <div
                               key={text.id}
                               className={`absolute z-20 cursor-move select-none canvas-text-element ${
                                 draggedElement?.id === text.id ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
                               } ${resizingElement?.id === text.id ? 'ring-2 ring-green-500 ring-opacity-75' : ''}`}
                               style={{
-                                left: `${text.position.x}px`,
-                                top: `${text.position.y}px`,
+                                left: `${scaledPosition.x}px`,
+                                top: `${scaledPosition.y}px`,
                                 transform: `rotate(${text.rotation}deg)`,
                                 fontFamily: text.fontFamily,
                                 fontSize: `${text.fontSize}px`,
@@ -1130,12 +1382,16 @@ export default function CustomizeProduct() {
                                 fontStyle: text.fontStyle,
                                 textDecoration: text.textDecoration,
                                 userSelect: 'none',
+                                WebkitUserSelect: 'none',
+                                MozUserSelect: 'none',
+                                touchAction: 'none',
                                 cursor: draggedElement?.id === text.id ? 'grabbing' : 
                                        resizingElement?.id === text.id ? 'move' : 'grab',
                                 maxWidth: '400px', // Prevent text from going off canvas
                                 wordWrap: 'break-word'
                               }}
                               onMouseDown={(e) => handleMouseDown(e, text)}
+                              onTouchStart={(e) => handleTouchStart(e, text)}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 selectElement(text);
@@ -1146,44 +1402,74 @@ export default function CustomizeProduct() {
                               </span>
                               
                               {/* Resize Handles */}
-                              <div className={`absolute -top-2 -left-2 w-4 h-4 bg-blue-500 rounded-full cursor-nw-resize transition-all ${
+                              <div className={`absolute -top-2 -left-2 w-6 h-6 sm:w-4 sm:h-4 bg-blue-500 rounded-full cursor-nw-resize transition-all touch-manipulation ${
                                 resizingElement?.id === text.id ? 'opacity-100 scale-125' : 'opacity-0 hover:opacity-100'
                               }`}
-                                   onMouseDown={(e) => handleResizeStart(e, text, 'nw')} />
-                              <div className={`absolute -top-2 -right-2 w-4 h-4 bg-blue-500 rounded-full cursor-ne-resize transition-all ${
+                                   onMouseDown={(e) => handleResizeStart(e, text, 'nw')}
+                                   onTouchStart={(e) => handleTouchResizeStart(e, text, 'nw')} />
+                              <div className={`absolute -top-2 -right-2 w-6 h-6 sm:w-4 sm:h-4 bg-blue-500 rounded-full cursor-ne-resize transition-all touch-manipulation ${
                                 resizingElement?.id === text.id ? 'opacity-100 scale-125' : 'opacity-0 hover:opacity-100'
                               }`}
-                                   onMouseDown={(e) => handleResizeStart(e, text, 'ne')} />
-                              <div className={`absolute -bottom-2 -left-2 w-4 h-4 bg-blue-500 rounded-full cursor-sw-resize transition-all ${
+                                   onMouseDown={(e) => handleResizeStart(e, text, 'ne')}
+                                   onTouchStart={(e) => handleTouchResizeStart(e, text, 'ne')} />
+                              <div className={`absolute -bottom-2 -left-2 w-6 h-6 sm:w-4 sm:h-4 bg-blue-500 rounded-full cursor-sw-resize transition-all touch-manipulation ${
                                 resizingElement?.id === text.id ? 'opacity-100 scale-125' : 'opacity-0 hover:opacity-100'
                               }`}
-                                   onMouseDown={(e) => handleResizeStart(e, text, 'sw')} />
-                              <div className={`absolute -bottom-2 -right-2 w-4 h-4 bg-blue-500 rounded-full cursor-se-resize transition-all ${
+                                   onMouseDown={(e) => handleResizeStart(e, text, 'sw')}
+                                   onTouchStart={(e) => handleTouchResizeStart(e, text, 'sw')} />
+                              <div className={`absolute -bottom-2 -right-2 w-6 h-6 sm:w-4 sm:h-4 bg-blue-500 rounded-full cursor-se-resize transition-all touch-manipulation ${
                                 resizingElement?.id === text.id ? 'opacity-100 scale-125' : 'opacity-0 hover:opacity-100'
                               }`}
-                                   onMouseDown={(e) => handleResizeStart(e, text, 'se')} />
+                                   onMouseDown={(e) => handleResizeStart(e, text, 'se')}
+                                   onTouchStart={(e) => handleTouchResizeStart(e, text, 'se')} />
                             </div>
-                          ))}
+                            );
+                          })}
                           
                           {/* Image elements overlay */}
-                          {design.images.map((image) => (
+                          {design.images.map((image) => {
+                            // Scale the position for responsive display
+                            const scaledPosition = scaleCoordinates(image.position.x, image.position.y);
+                            // Also scale the size for responsive display
+                            const { scaleX, scaleY } = getCanvasScaling();
+                            const scaledSize = {
+                              width: image.size.width * scaleX,
+                              height: image.size.height * scaleY
+                            };
+                            
+                            // Debug logging for image positioning
+                            console.log('Image positioning:', {
+                              id: image.id,
+                              basePosition: image.position,
+                              scaledPosition,
+                              baseSize: image.size,
+                              scaledSize,
+                              scaleX,
+                              scaleY
+                            });
+                            
+                            return (
                             <div
                               key={image.id}
                               className={`absolute z-20 cursor-move select-none ${
                                 draggedElement?.id === image.id ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
                               } ${resizingElement?.id === image.id ? 'ring-2 ring-green-500 ring-opacity-75' : ''}`}
                               style={{
-                                left: `${image.position.x}px`,
-                                top: `${image.position.y}px`,
+                                left: `${scaledPosition.x}px`,
+                                top: `${scaledPosition.y}px`,
                                 transform: `rotate(${image.rotation}deg)`,
                                 opacity: image.opacity,
                                 userSelect: 'none',
+                                WebkitUserSelect: 'none',
+                                MozUserSelect: 'none',
+                                touchAction: 'none',
                                 cursor: draggedElement?.id === image.id ? 'grabbing' : 
                                        resizingElement?.id === image.id ? 'move' : 'grab',
                                 maxWidth: '400px', // Prevent images from going off canvas
                                 maxHeight: '400px'
                               }}
                               onMouseDown={(e) => handleMouseDown(e, image)}
+                              onTouchStart={(e) => handleTouchStart(e, image)}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 selectElement(image);
@@ -1193,8 +1479,8 @@ export default function CustomizeProduct() {
                                 src={image.url}
                                 alt="Customization"
                                 style={{
-                                  width: `${image.size.width}px`,
-                                  height: `${image.size.height}px`,
+                                  width: `${scaledSize.width}px`,
+                                  height: `${scaledSize.height}px`,
                                   maxWidth: '100%',
                                   maxHeight: '100%',
                                   objectFit: 'contain'
@@ -1203,24 +1489,29 @@ export default function CustomizeProduct() {
                               />
                               
                               {/* Resize Handles */}
-                              <div className={`absolute -top-2 -left-2 w-4 h-4 bg-blue-500 rounded-full cursor-nw-resize transition-all ${
+                              <div className={`absolute -top-2 -left-2 w-6 h-6 sm:w-4 sm:h-4 bg-blue-500 rounded-full cursor-nw-resize transition-all touch-manipulation ${
                                 resizingElement?.id === image.id ? 'opacity-100 scale-125' : 'opacity-0 hover:opacity-100'
                               }`}
-                                   onMouseDown={(e) => handleResizeStart(e, image, 'nw')} />
-                              <div className={`absolute -top-2 -right-2 w-4 h-4 bg-blue-500 rounded-full cursor-ne-resize transition-all ${
+                                   onMouseDown={(e) => handleResizeStart(e, image, 'nw')}
+                                   onTouchStart={(e) => handleTouchResizeStart(e, image, 'nw')} />
+                              <div className={`absolute -top-2 -right-2 w-6 h-6 sm:w-4 sm:h-4 bg-blue-500 rounded-full cursor-ne-resize transition-all touch-manipulation ${
                                 resizingElement?.id === image.id ? 'opacity-100 scale-125' : 'opacity-0 hover:opacity-100'
                               }`}
-                                   onMouseDown={(e) => handleResizeStart(e, image, 'ne')} />
-                              <div className={`absolute -bottom-2 -left-2 w-4 h-4 bg-blue-500 rounded-full cursor-sw-resize transition-all ${
+                                   onMouseDown={(e) => handleResizeStart(e, image, 'ne')}
+                                   onTouchStart={(e) => handleTouchResizeStart(e, image, 'ne')} />
+                              <div className={`absolute -bottom-2 -left-2 w-6 h-6 sm:w-4 sm:h-4 bg-blue-500 rounded-full cursor-sw-resize transition-all touch-manipulation ${
                                 resizingElement?.id === image.id ? 'opacity-100 scale-125' : 'opacity-0 hover:opacity-100'
                               }`}
-                                   onMouseDown={(e) => handleResizeStart(e, image, 'sw')} />
-                              <div className={`absolute -bottom-2 -right-2 w-4 h-4 bg-blue-500 rounded-full cursor-se-resize transition-all ${
+                                   onMouseDown={(e) => handleResizeStart(e, image, 'sw')}
+                                   onTouchStart={(e) => handleTouchResizeStart(e, image, 'sw')} />
+                              <div className={`absolute -bottom-2 -right-2 w-6 h-6 sm:w-4 sm:h-4 bg-blue-500 rounded-full cursor-se-resize transition-all touch-manipulation ${
                                 resizingElement?.id === image.id ? 'opacity-100 scale-125' : 'opacity-0 hover:opacity-100'
                               }`}
-                                   onMouseDown={(e) => handleResizeStart(e, image, 'se')} />
+                                   onMouseDown={(e) => handleResizeStart(e, image, 'se')}
+                                   onTouchStart={(e) => handleTouchResizeStart(e, image, 'se')} />
                             </div>
-                          ))}
+                            );
+                          })}
                           
                           {/* Selection indicator */}
                           {/* TODO: Implement canvasState and selection indicator */}

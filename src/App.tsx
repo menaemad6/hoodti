@@ -53,7 +53,7 @@ const LoadingFallback = () => (
 );
 
 function App() {
-  console.log = () => {};
+  // console.log = () => {};
   return (
     <HelmetProvider>
         <Router>

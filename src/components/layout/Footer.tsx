@@ -23,9 +23,9 @@ const Footer = () => {
     <footer className="pt-16 pb-24 md:pb-8 bg-background">
       {/* Main Footer Content */}
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12 mb-12">
           {/* Brand Column */}
-          <div className="md:col-span-5">
+          <div className="sm:col-span-2 lg:col-span-5">
             <Link to="/" className="inline-block mb-6">
               <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70">
                 {BRAND_NAME}
@@ -71,7 +71,7 @@ const Footer = () => {
           </div>
           
           {/* Quick Links */}
-          <div className="md:col-span-3 md:ml-auto">
+          <div className="sm:col-span-1 lg:col-span-3 lg:ml-auto">
             <h3 className="text-base font-semibold tracking-wide mb-4 uppercase text-foreground/90">Shop</h3>
             <ul className="space-y-3">
               <li>
@@ -102,7 +102,7 @@ const Footer = () => {
           </div>
 
           {/* Customer Service Column */}
-          <div className="md:col-span-2">
+          <div className="sm:col-span-1 lg:col-span-2">
             <h3 className="text-base font-semibold tracking-wide mb-4 uppercase text-foreground/90">Help</h3>
             <ul className="space-y-3">
               <li>
@@ -141,27 +141,29 @@ const Footer = () => {
           </div>
 
           {/* Contact Column */}
-          <div className="md:col-span-2">
+          <div className="sm:col-span-1 lg:col-span-2">
             <h3 className="text-base font-semibold tracking-wide mb-4 uppercase text-foreground/90">Contact</h3>
             <ul className="space-y-4">
               <li>
                 <div className="flex items-start">
-                  <MapPin className="h-5 w-5 mr-3 text-primary/70 mt-0.5" />
-                  <span className="text-muted-foreground">
+                  <MapPin className="h-5 w-5 mr-3 text-primary/70 mt-0.5 flex-shrink-0" />
+                  <span className="text-muted-foreground break-words">
                     {tenant.address}
                   </span>
                 </div>
               </li>
               <li>
                 <div className="flex items-center">
-                  <Phone className="h-5 w-5 mr-3 text-primary/70" />
-                  <span className="text-muted-foreground">{tenant.contactPhone}</span>
+                  <Phone className="h-5 w-5 mr-3 text-primary/70 flex-shrink-0" />
+                  <span className="text-muted-foreground break-all">{tenant.contactPhone}</span>
                 </div>
               </li>
               <li>
-                <div className="flex items-center">
-                  <Mail className="h-5 w-5 mr-3 text-primary/70" />
-                  <span className="text-muted-foreground">{tenant.contactEmail}</span>
+                <div className="flex items-start">
+                  <Mail className="h-5 w-5 mr-3 text-primary/70 mt-0.5 flex-shrink-0" />
+                  <span className="text-muted-foreground break-all leading-relaxed">
+                    {tenant.contactEmail}
+                  </span>
                 </div>
               </li>
             </ul>

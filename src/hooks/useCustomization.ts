@@ -169,7 +169,7 @@ export function useCustomization() {
         id: crypto.randomUUID(),
         url: localUrl,
         position,
-        size: { width: 100, height: 100 },
+        size: { width: 80, height: 80 }, // Smaller default size for better small screen compatibility
         rotation: 0,
         opacity: IMAGE_CUSTOMIZATION_OPTIONS.defaultOpacity,
         originalFile: file,

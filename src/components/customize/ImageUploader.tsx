@@ -44,7 +44,7 @@ export function ImageUploader({ onImageUpload }: ImageUploaderProps) {
       return;
     }
 
-    // Default position (center of canvas)
+    // Default position (center of canvas) - this will be scaled by the parent component
     const position = { x: 300, y: 250 };
     
     try {
