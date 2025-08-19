@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTheme } from "@/context/ThemeContext";
 import { useAuth } from "@/context/AuthContext";
+import { stripTenantFromEmail } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
@@ -230,7 +231,7 @@ const MobileNavbar: React.FC<MobileNavbarProps> = ({ isVisible = true }) => {
                   {isAuthenticated && user?.email ? (
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium truncate">{user.user_metadata?.name || "User"}</p>
-                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                      <p className="text-xs text-muted-foreground truncate">{stripTenantFromEmail(user.email)}</p>
                     </div>
                   ) : (
                     "Account"
@@ -452,7 +453,7 @@ const MobileNavbar: React.FC<MobileNavbarProps> = ({ isVisible = true }) => {
                               </Avatar>
                               <div className="flex-1 min-w-0">
                                 <p className="font-medium truncate">{user?.name || "User"}</p>
-                                <p className="text-xs text-muted-foreground truncate">{user?.email || "user@example.com"}</p>
+                                <p className="text-xs text-muted-foreground truncate">{stripTenantFromEmail(user?.email) || "user@example.com"}</p>
                                 <p className="text-xs text-primary mt-0.5">View Profile</p>
                               </div>
                               <ChevronRight className="h-4 w-4 text-muted-foreground" />

@@ -5,12 +5,26 @@ export interface GovernmentShippingFee {
   shipping_fee: number;
 }
 
+export interface CustomizationProduct {
+  enabled: boolean;
+  base_price: number;
+}
+
+export interface CustomizationSettings {
+  text_fee: number;
+  image_fee: number;
+  products: {
+    [key: string]: CustomizationProduct;
+  };
+}
+
 export interface SiteSettings {
   id: string;
   shipping_fee: number;
   tax_rate: number;
   government_shipping_fees?: GovernmentShippingFee[];
   delivery_delay?: number;
+  customizations?: CustomizationSettings;
   created_at?: string;
   updated_at?: string;
 }
@@ -421,5 +435,87 @@ export async function getDeliveryDelay(tenantId?: string): Promise<number> {
   } catch (error) {
     console.error("Error in getDeliveryDelay:", error);
     return 0; // Default if anything goes wrong
+  }
+}
+
+/**
+ * Gets customization settings
+ */
+export async function getCustomizationSettings(tenantId?: string): Promise<CustomizationSettings | null> {
+  try {
+    const settings = await getSettings(tenantId);
+    
+    if (settings && settings.customizations) {
+      return settings.customizations;
+    }
+    
+    // If no settings exist, fetch directly from the table
+    let query = supabase
+      .from('settings')
+      .select('customizations')
+      .limit(1);
+      
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+    
+    const { data, error } = await query.single();
+    
+    if (error) {
+      console.error("Error fetching customization settings directly:", error);
+      return null;
+    }
+    
+    if (data && data.customizations) {
+      return data.customizations;
+    }
+    
+    // Default fallback
+    return null;
+  } catch (error) {
+    console.error("Error in getCustomizationSettings:", error);
+    return null;
+  }
+}
+
+/**
+ * Updates customization settings
+ */
+export async function updateCustomizationSettings(customizations: CustomizationSettings, tenantId?: string): Promise<boolean> {
+  try {
+    // Get current settings
+    const settings = await getSettings(tenantId);
+    
+    if (settings) {
+      // Update existing settings
+      const { error } = await supabase
+        .from('settings')
+        .update({
+          customizations: customizations,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', settings.id);
+      
+      if (error) throw error;
+    } else {
+      // Create new settings if none exist
+      const { error } = await supabase
+        .from('settings')
+        .insert({
+          shipping_fee: 5.99, // Default shipping fee
+          tax_rate: 0.08, // Default tax rate
+          customizations: customizations,
+          tenant_id: tenantId || 'hoodti',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+      
+      if (error) throw error;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error updating customization settings:", error);
+    return false;
   }
 }

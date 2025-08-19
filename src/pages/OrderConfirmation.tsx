@@ -18,6 +18,7 @@ import { OrderItem as SupabaseOrderItem } from "@/integrations/supabase/types.se
 import { formatPrice } from "../lib/utils";
 import SEOHead from "@/components/seo/SEOHead";
 import { useSEOConfig } from "@/lib/seo-config";
+import { stripTenantFromEmail } from "@/lib/utils";
 
 interface LocalOrderItem {
   id: string;
@@ -322,7 +323,7 @@ const OrderConfirmation = () => {
                       {order.email && (
                         <div>
                           <span className="font-medium block">Email</span>
-                          <span className="break-words">{order.email}</span>
+                          <span className="break-words">{stripTenantFromEmail(order.email)}</span>
                         </div>
                       )}
                       {order.phone_number && (

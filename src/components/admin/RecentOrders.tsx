@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getOrdersWithItems } from "@/integrations/supabase/orders.service";
 import { useCurrentTenant } from "@/context/TenantContext";
+import { stripTenantFromEmail } from "@/lib/utils";
 
 interface Order {
   id: string;
@@ -67,7 +68,7 @@ const RecentOrders = () => {
               total: order.total,
               customer_id: order.user_id,
               customer_name: profile?.name,
-              customer_email: profile?.email,
+              customer_email: stripTenantFromEmail(profile?.email),
               customer_avatar: profile?.avatar,
               items_count: itemsCount
             };

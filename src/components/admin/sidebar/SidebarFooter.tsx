@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Sun, MoonStar, LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { stripTenantFromEmail } from "@/lib/utils";
 import { ProfileData } from "@/components/admin/types";
 
 interface SidebarFooterProps {
@@ -36,7 +37,7 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
         </Avatar>
         <div className="flex-1 min-w-0">
           <p className="font-medium truncate">
-            {profile?.name || user?.email || 'Admin User'}
+                            {profile?.name || stripTenantFromEmail(user?.email) || 'Admin User'}
           </p>
           <p className="text-xs text-muted-foreground truncate">
             {profile?.role === 'super_admin' ? 'Super Admin' : 'Admin'}

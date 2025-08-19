@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 import { BRAND_NAME } from "@/lib/constants";
 import SEOHead from "@/components/seo/SEOHead";
 import { useSEOConfig } from "@/lib/seo-config";
+import { stripTenantFromEmail } from "@/lib/utils";
 import PolicyModal from "@/components/policies/PolicyModal";
 import { CustomizationService } from "@/integrations/supabase/customization.service";
 
@@ -158,7 +159,7 @@ const Checkout = () => {
             firstName,
             lastName,
             phone: data.phone_number || "",
-            email: data.email || user.email || "",
+            email: stripTenantFromEmail(data.email) || stripTenantFromEmail(user.email) || "",
           }));
         }
       } catch (error) {

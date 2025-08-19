@@ -30,7 +30,8 @@ import {
   MapPin,
   Plus,
   Trash2,
-  Edit
+  Edit,
+  Palette
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -50,6 +51,7 @@ import {
 } from "@/integrations/supabase/settings.service";
 import Spinner from "@/components/ui/spinner";
 import DiscountsTab from "@/components/admin/DiscountsTab";
+import CustomizationsTab from "@/components/admin/CustomizationsTab";
 import SEOHead from "@/components/seo/SEOHead";
 import { useSEOConfig } from "@/lib/seo-config";
 import { Badge } from "@/components/ui/badge";
@@ -72,8 +74,8 @@ const SettingsPage = () => {
   
   // Validate active tab is available
   useEffect(() => {
-    // Only discounts and shipping tabs are available
-    const availableTabs = ["discounts", "shipping"];
+    // Only discounts, shipping, and customizations tabs are available
+    const availableTabs = ["discounts", "shipping", "customizations"];
     if (!availableTabs.includes(activeTab)) {
       setActiveTab("discounts");
     }
@@ -453,6 +455,17 @@ const SettingsPage = () => {
                   Shipping
                 </button>
                 <button
+                  onClick={() => setActiveTab("customizations")}
+                  className={`flex items-center justify-start w-full px-3 py-1.5 text-sm font-medium rounded-sm ${
+                    activeTab === "customizations"
+                      ? "bg-muted text-foreground shadow-sm"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  <Palette className="h-4 w-4 mr-2" />
+                  Customizations
+                </button>
+                <button
                   disabled
                   className="flex items-center justify-start w-full px-3 py-1.5 text-sm font-medium rounded-sm text-muted-foreground opacity-60 cursor-not-allowed"
                 >
@@ -781,6 +794,10 @@ const SettingsPage = () => {
                     </CardContent>
                   </GlassCard>
                 </div>
+              )}
+              
+              {activeTab === "customizations" && (
+                <CustomizationsTab />
               )}
             </div>
           </div>

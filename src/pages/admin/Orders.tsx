@@ -37,6 +37,7 @@ import { useRoleAccess } from "@/hooks/use-role-access";
 import { sendOrderStatusEmail } from "@/integrations/email.service";
 import SEOHead from "@/components/seo/SEOHead";
 import { useSEOConfig } from "@/lib/seo-config";
+import { stripTenantFromEmail } from "@/lib/utils";
 import { formatPrice } from "../../lib/utils";
 import { useCurrentTenant } from "@/context/TenantContext";
 import { Link } from "react-router-dom";
@@ -248,7 +249,7 @@ const OrdersPage = () => {
           console.log("Sending email with tax value:", orderTax);
           
           await sendOrderStatusEmail({
-            userEmail: customerProfile.email,
+            userEmail: stripTenantFromEmail(customerProfile.email),
             userName: customerProfile.name || 'Valued Customer',
             orderId: selectedOrder.id,
             orderStatus: status,
@@ -270,7 +271,7 @@ const OrdersPage = () => {
           
           toast({
             title: "Email Sent",
-            description: `Notification email sent to ${customerProfile.email}`,
+            description: `Notification email sent to ${stripTenantFromEmail(customerProfile.email)}`,
           });
         } catch (emailError) {
           console.error("Error sending email notification:", emailError);
@@ -343,7 +344,7 @@ const OrdersPage = () => {
         return (
           <div>
             <p className="font-medium">{getCustomerName(row.original.user_id)}</p>
-            <p className="text-xs text-muted-foreground">{profile?.email || "Customer"}</p>
+                            <p className="text-xs text-muted-foreground">{stripTenantFromEmail(profile?.email) || "Customer"}</p>
           </div>
         );
       }
@@ -661,7 +662,7 @@ const OrdersPage = () => {
                         </div>
                         <div className="space-y-1 bg-card/60 p-3 rounded-lg border border-border/20">
                           <p className="text-sm font-medium text-muted-foreground">Email</p>
-                          <p className="font-medium">{selectedOrder.email || customerDetails[selectedOrder.user_id]?.email || "Not provided"}</p>
+                          <p className="font-medium">{stripTenantFromEmail(selectedOrder.email) || stripTenantFromEmail(customerDetails[selectedOrder.user_id]?.email) || "Not provided"}</p>
                         </div>
                         <div className="space-y-1 bg-card/60 p-3 rounded-lg border border-border/20">
                           <p className="text-sm font-medium text-muted-foreground">Phone Number</p>
@@ -693,9 +694,9 @@ const OrdersPage = () => {
                           </div>
                           <div className="flex flex-col">
                             <span className="text-sm text-muted-foreground">Email:</span> 
-                            <span className="font-medium truncate" title={customerDetails[selectedOrder.user_id]?.email || "Not provided"}>
-                              {customerDetails[selectedOrder.user_id]?.email || "Not provided"}
-                            </span>
+                                            <span className="font-medium truncate" title={stripTenantFromEmail(customerDetails[selectedOrder.user_id]?.email) || "Not provided"}>
+                  {stripTenantFromEmail(customerDetails[selectedOrder.user_id]?.email) || "Not provided"}
+                </span>
                           </div>
                           <div className="flex flex-col">
                             <span className="text-sm text-muted-foreground">Phone:</span> 

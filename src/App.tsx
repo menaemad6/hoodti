@@ -53,9 +53,9 @@ const LoadingFallback = () => (
 );
 
 function App() {
+  console.log = () => {};
   return (
     <HelmetProvider>
-      <ThemeProvider>
         <Router>
           <ScrollToTop />
           <TenantProvider>
@@ -124,7 +124,7 @@ function App() {
           </AuthProvider>
           </TenantProvider>
         </Router>
-      </ThemeProvider>
+
     </HelmetProvider>
   );
 }

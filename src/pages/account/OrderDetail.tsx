@@ -17,6 +17,7 @@ import { Order, OrderItem as SupabaseOrderItem } from "@/integrations/supabase/t
 import { formatPrice } from "../../lib/utils";
 import SEOHead from "@/components/seo/SEOHead";
 import { useSEOConfig } from "@/lib/seo-config";
+import { stripTenantFromEmail } from "@/lib/utils";
 
 interface OrderItem extends SupabaseOrderItem {
   customization?: {
@@ -322,7 +323,7 @@ const OrderDetail = () => {
                           {order.email && (
                             <div className="flex items-center gap-2">
                               <Mail className="h-3.5 w-3.5 text-muted-foreground/70" />
-                              <p className="text-xs sm:text-sm break-all">{order.email}</p>
+                              <p className="text-xs sm:text-sm break-all">{stripTenantFromEmail(order.email)}</p>
                             </div>
                           )}
                           {order.phone_number && (

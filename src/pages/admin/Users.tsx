@@ -40,6 +40,7 @@ import { Badge } from "@/components/ui/badge";
 import { Search, Users as UsersIcon, ShieldCheck, Shield } from "lucide-react";
 import SEOHead from "@/components/seo/SEOHead";
 import { useSEOConfig } from "@/lib/seo-config";
+import { stripTenantFromEmail } from "@/lib/utils";
 
 interface UserWithRole {
   id: string;
@@ -116,7 +117,7 @@ const UserManagement = () => {
   useEffect(() => {
     const filtered = users.filter(user => 
       user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      stripTenantFromEmail(user.email).toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.role.toLowerCase().includes(searchQuery.toLowerCase())
     );
     setFilteredUsers(filtered);
@@ -293,7 +294,7 @@ const UserManagement = () => {
                               </Avatar>
                               <div>
                                 <p className="font-medium">{rowUser.name || "Unnamed User"}</p>
-                                <p className="text-sm text-muted-foreground">{rowUser.email}</p>
+                                <p className="text-sm text-muted-foreground">{stripTenantFromEmail(rowUser.email)}</p>
                               </div>
                             </div>
                           </TableCell>

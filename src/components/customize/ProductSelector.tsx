@@ -3,21 +3,60 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { SIZING_OPTIONS } from '@/lib/constants';
-import { PRODUCT_COLORS } from '@/types/customization.types';
+import { SIZING_OPTIONS, getAvailableColorsForProduct, getProductColorImage } from '@/lib/constants';
 import { CustomizationDesign } from '@/types/customization.types';
 import { CheckCircle, ArrowRight, ArrowLeft, Package, Ruler, Palette } from 'lucide-react';
+
+// Helper function to convert color names to hex values for fallback
+function getColorHex(colorName: string): string {
+  const colorMap: Record<string, string> = {
+    'black': '#000000',
+    'white': '#FFFFFF',
+    'red': '#FF0000',
+    'blue': '#0000FF',
+    'green': '#00FF00',
+    'yellow': '#FFFF00',
+    'orange': '#FFA500',
+    'purple': '#800080',
+    'pink': '#FFC0CB',
+    'brown': '#A52A2A',
+    'gray': '#808080',
+    'navy': '#000080',
+    'navy-blue': '#000080',
+    'baby-blue': '#87CEEB',
+    'light-blue': '#ADD8E6',
+    'rose': '#FF007F',
+    'beige': '#F5F5DC',
+    'lime': '#32CD32',
+    'dark-green': '#006400',
+    'offwhite': '#F5F5F5',
+    'bubblegum': '#FFB6C1'
+  };
+  
+  return colorMap[colorName.toLowerCase()] || '#808080'; // Default to gray if color not found
+}
 
 interface ProductSelectorProps {
   onComplete: () => void;
   design: CustomizationDesign;
   updateBaseProduct: (type: string, size: string, color: string) => void;
   availableProductTypes: string[];
+  availableProductTypesWithInfo?: Array<{
+    key: string;
+    displayName: string;
+    sizes: Array<{ size: string; [key: string]: string | number }>;
+    basePrice: number;
+    enabled: boolean;
+  }>;
 }
 
-export function ProductSelector({ onComplete, design, updateBaseProduct, availableProductTypes }: ProductSelectorProps) {
+export function ProductSelector({ onComplete, design, updateBaseProduct, availableProductTypes, availableProductTypesWithInfo }: ProductSelectorProps) {
   const [currentStep, setCurrentStep] = useState(1);
-  const selectedProductType = SIZING_OPTIONS.find(
+  
+  // Use the new product info if available, otherwise fallback to constants
+  const selectedProductType = availableProductTypesWithInfo?.find(
+    product => product.key === design.baseProductType
+  ) || SIZING_OPTIONS.find(
     option => option.type === design.baseProductType
   );
 
@@ -43,13 +82,23 @@ export function ProductSelector({ onComplete, design, updateBaseProduct, availab
 
   const nextStep = () => {
     if (currentStep < 3) {
-      setCurrentStep(currentStep + 1);
+      // Scroll to top before changing step
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Small delay to allow scroll animation to complete
+      setTimeout(() => {
+        setCurrentStep(currentStep + 1);
+      }, 300);
     }
   };
 
   const prevStep = () => {
     if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
+      // Scroll to top before changing step
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Small delay to allow scroll animation to complete
+      setTimeout(() => {
+        setCurrentStep(currentStep - 1);
+      }, 300);
     }
   };
 
@@ -83,22 +132,27 @@ export function ProductSelector({ onComplete, design, updateBaseProduct, availab
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {availableProductTypes.map((type) => (
+                {(availableProductTypesWithInfo || availableProductTypes.map(type => ({ key: type, displayName: type, sizes: [], basePrice: 0, enabled: true }))).map((product) => (
                   <Button
-                    key={type}
-                    variant={design.baseProductType === type ? "default" : "outline"}
+                    key={product.key}
+                    variant={design.baseProductType === product.key ? "default" : "outline"}
                     className={`h-auto p-6 flex-col items-center gap-3 transition-all ${
-                      design.baseProductType === type 
+                      design.baseProductType === product.key 
                         ? 'bg-gradient-to-r from-primary to-primary/80 shadow-lg scale-105' 
                         : 'hover:scale-105 hover:border-primary/30 hover:bg-primary/5'
                     }`}
-                    onClick={() => handleProductTypeChange(type)}
+                    onClick={() => handleProductTypeChange(product.key)}
                   >
-                    <div className="text-lg font-semibold">{type}</div>
+                    <div className="text-lg font-semibold">{product.displayName}</div>
                     <div className="text-sm text-muted-foreground">
-                      {SIZING_OPTIONS.find(opt => opt.type === type)?.sizes.length || 0} sizes available
+                      {product.sizes.length || 0} sizes available
                     </div>
-                    {design.baseProductType === type && (
+                    {product.basePrice > 0 && (
+                      <div className="text-sm font-medium text-foreground">
+                        ${product.basePrice.toFixed(2)}
+                      </div>
+                    )}
+                    {design.baseProductType === product.key && (
                       <CheckCircle className="w-5 h-5 text-white" />
                     )}
                   </Button>
@@ -196,7 +250,7 @@ export function ProductSelector({ onComplete, design, updateBaseProduct, availab
                   <Palette className="w-5 h-5 text-primary" />
                 </div>
                 <span>3. Choose Color</span>
-                {design.baseProductColor && (
+                {design.baseProductType && (
                   <Badge variant="secondary" className="ml-auto bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
                     <CheckCircle className="w-3 h-3 mr-1" />
                     Selected
@@ -206,37 +260,55 @@ export function ProductSelector({ onComplete, design, updateBaseProduct, availab
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="grid grid-cols-5 gap-4 sm:grid-cols-8 lg:grid-cols-10">
-                  {PRODUCT_COLORS.map((color) => (
-                    <Button
-                      key={color}
-                      variant={design.baseProductColor === color ? "default" : "outline"}
-                      className={`h-16 w-16 p-0 rounded-full border-2 hover:scale-110 transition-all ${
-                        design.baseProductColor === color 
-                          ? 'ring-2 ring-primary ring-offset-2 scale-110 shadow-lg' 
-                          : 'hover:border-primary/30'
-                      }`}
-                      style={{ backgroundColor: color }}
-                      onClick={() => handleColorChange(color)}
-                      aria-label={`Select color ${color}`}
-                    >
-                      {design.baseProductColor === color && (
-                        <CheckCircle className="w-5 h-5 text-white drop-shadow-sm" />
+                {design.baseProductType ? (
+                  <>
+                    <div className="grid grid-cols-5 gap-4 sm:grid-cols-8 lg:grid-cols-10">
+                      {getAvailableColorsForProduct(design.baseProductType).map((color) => (
+                        <Button
+                          key={color}
+                          variant={design.baseProductColor === color ? "default" : "outline"}
+                          className={`h-16 w-16 p-0 rounded-full border-2 hover:scale-110 transition-all ${
+                            design.baseProductColor === color 
+                              ? 'ring-2 ring-primary ring-offset-2 scale-110 shadow-lg' 
+                              : 'hover:border-primary/30'
+                          }`}
+                          style={{ 
+                            backgroundColor: getColorHex(color),
+                            backgroundImage: `url(${getProductColorImage(design.baseProductType, color)})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center'
+                          }}
+                          onClick={() => handleColorChange(color)}
+                          aria-label={`Select color ${color}`}
+                        >
+                          {design.baseProductColor === color && (
+                            <CheckCircle className="w-5 h-5 text-white drop-shadow-sm" />
+                          )}
+                        </Button>
+                      ))}
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                        Selected: <span className="font-semibold capitalize">{design.baseProductColor || 'None'}</span>
+                      </div>
+                      {design.baseProductColor && (
+                        <div className="w-8 h-8 rounded-full mx-auto border-2 border-gray-300 dark:border-gray-600 overflow-hidden">
+                          <img 
+                            src={getProductColorImage(design.baseProductType, design.baseProductColor)}
+                            alt={design.baseProductColor}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
                       )}
-                    </Button>
-                  ))}
-                </div>
-                <div className="text-center">
-                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                    Selected: <span className="font-semibold">{design.baseProductColor || 'None'}</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center text-gray-500 py-12">
+                    <Palette className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p className="text-lg">Please select a product type first</p>
+                    <p className="text-sm">Choose from the options above to see available colors</p>
                   </div>
-                  {design.baseProductColor && (
-                    <div 
-                      className="w-8 h-8 rounded-full mx-auto border-2 border-gray-300 dark:border-gray-600"
-                      style={{ backgroundColor: design.baseProductColor }}
-                    />
-                  )}
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -277,24 +349,26 @@ export function ProductSelector({ onComplete, design, updateBaseProduct, availab
       {renderStep()}
 
       {/* Navigation Buttons */}
-      <div className="flex justify-between items-center pt-4">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4">
         <Button
           variant="outline"
           onClick={prevStep}
           disabled={currentStep === 1}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 w-full sm:w-auto order-2 sm:order-1"
         >
           <ArrowLeft className="w-4 h-4" />
-          Previous
+          <span className="hidden sm:inline">Previous</span>
+          <span className="sm:hidden">Back</span>
         </Button>
 
         {currentStep < 3 ? (
           <Button
             onClick={nextStep}
             disabled={!canProceedToNext()}
-            className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+            className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 w-full sm:w-auto order-1 sm:order-2"
           >
-            Next
+            <span className="hidden sm:inline">Next</span>
+            <span className="sm:hidden">Next</span>
             <ArrowRight className="w-4 h-4" />
           </Button>
         ) : (
@@ -302,10 +376,11 @@ export function ProductSelector({ onComplete, design, updateBaseProduct, availab
             size="lg"
             onClick={onComplete}
             disabled={!isValid}
-            className="px-12 py-4 text-lg font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:scale-105"
+            className="px-6 sm:px-8 lg:px-12 py-3 sm:py-4 text-base sm:text-lg font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:scale-105 transition-all w-full sm:w-auto order-1 sm:order-2"
           >
-            Continue to Customization
-            <ArrowRight className="w-5 h-5 ml-2" />
+            <span className="hidden sm:inline">Continue to Customization</span>
+            <span className="sm:hidden">Continue</span>
+            <ArrowRight className="w-4 h-5 ml-2" />
           </Button>
         )}
       </div>

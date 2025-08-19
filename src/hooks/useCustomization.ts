@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useCurrentTenant } from '@/context/TenantContext';
 import {
@@ -10,21 +10,27 @@ import {
   CanvasState,
   FONT_FAMILIES,
   PRODUCT_COLORS,
+  TEXT_COLORS,
   TEXT_CUSTOMIZATION_OPTIONS,
   IMAGE_CUSTOMIZATION_OPTIONS,
 } from '@/types/customization.types';
-import { getProductImage } from '@/lib/constants';
+import { getProductImage, SIZING_OPTIONS } from '@/lib/constants';
+import { getCustomizationSettings, CustomizationSettings } from '@/integrations/supabase/settings.service';
 
 export function useCustomization() {
   const { user } = useAuth();
   const currentTenant = useCurrentTenant();
+  
+  // Customization settings from database
+  const [customizationSettings, setCustomizationSettings] = useState<CustomizationSettings | null>(null);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   
   // Main customization state
   const [design, setDesign] = useState<CustomizationDesign>({
     id: crypto.randomUUID(),
     baseProductType: '',
     baseProductSize: '',
-    baseProductColor: '#000000',
+    baseProductColor: '',
     texts: [],
     images: [],
     canvasWidth: 600,
@@ -43,9 +49,28 @@ export function useCustomization() {
     resizeDirection: null,
   });
 
-  // Pricing calculation using local tenant data
+  // Fetch customization settings from database
+  useEffect(() => {
+    const fetchCustomizationSettings = async () => {
+      if (!currentTenant?.id) return;
+      
+      try {
+        setIsLoadingSettings(true);
+        const settings = await getCustomizationSettings(currentTenant.id);
+        setCustomizationSettings(settings);
+      } catch (error) {
+        console.error('Error fetching customization settings:', error);
+      } finally {
+        setIsLoadingSettings(false);
+      }
+    };
+
+    fetchCustomizationSettings();
+  }, [currentTenant?.id]);
+
+  // Pricing calculation using database settings
   const pricing = useMemo((): CustomizationPricing => {
-    if (!currentTenant?.customization?.enabled) {
+    if (!customizationSettings) {
       return {
         baseProductPrice: 0,
         textElements: 0,
@@ -57,9 +82,9 @@ export function useCustomization() {
       };
     }
 
-    const baseProductPrice = currentTenant.customization.baseProductPrices[design.baseProductType] || 0;
-    const textCost = design.texts.length * currentTenant.customization.textPrice;
-    const imageCost = design.images.length * currentTenant.customization.imagePrice;
+    const baseProductPrice = customizationSettings.products[design.baseProductType]?.base_price || 0;
+    const textCost = design.texts.length * customizationSettings.text_fee;
+    const imageCost = design.images.length * customizationSettings.image_fee;
     const totalCustomizationCost = textCost + imageCost;
     const totalPrice = baseProductPrice + totalCustomizationCost;
 
@@ -67,12 +92,12 @@ export function useCustomization() {
       baseProductPrice,
       textElements: design.texts.length,
       imageElements: design.images.length,
-      textPrice: currentTenant.customization.textPrice,
-      imagePrice: currentTenant.customization.imagePrice,
+      textPrice: customizationSettings.text_fee,
+      imagePrice: customizationSettings.image_fee,
       totalCustomizationCost,
       totalPrice,
     };
-  }, [design, currentTenant]);
+  }, [design, customizationSettings]);
 
   // Update base product selection
   const updateBaseProduct = useCallback((type: string, size: string, color: string) => {
@@ -88,10 +113,16 @@ export function useCustomization() {
 
   // Add text element
   const addText = useCallback((text: string, position: { x: number; y: number }, fontFamily?: string, color?: string) => {
+    // Get the first valid font (skip separator)
+    const getValidFont = (font?: string) => {
+      if (font && font !== '---') return font;
+      return FONT_FAMILIES.find(f => f !== '---') || 'Arial';
+    };
+
     const newText: CustomizationText = {
       id: crypto.randomUUID(),
       text,
-      fontFamily: fontFamily || FONT_FAMILIES[0],
+      fontFamily: getValidFont(fontFamily),
       fontSize: TEXT_CUSTOMIZATION_OPTIONS.defaultFontSize,
       color: color || '#000000',
       position,
@@ -264,7 +295,7 @@ export function useCustomization() {
       id: crypto.randomUUID(),
       baseProductType: '',
       baseProductSize: '',
-      baseProductColor: '#000000',
+      baseProductColor: '',
       texts: [],
       images: [],
       canvasWidth: 600,
@@ -293,20 +324,64 @@ export function useCustomization() {
     );
   }, [design]);
 
-  // Get available product types from local tenant data
+  // Utility function to transform database key to display name
+  const transformProductKeyToDisplayName = useCallback((key: string): string => {
+    return key
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }, []);
+
+  // Utility function to get product info from constants
+  const getProductInfoFromConstants = useCallback((productKey: string) => {
+    const displayName = transformProductKeyToDisplayName(productKey);
+    return SIZING_OPTIONS.find(option => 
+      option.type.toLowerCase().replace(/\s+/g, '_') === productKey ||
+      option.type === displayName
+    );
+  }, [transformProductKeyToDisplayName]);
+
+  // Get available product types from database settings with display names
   const availableProductTypes = useMemo(() => {
-    if (!currentTenant?.customization?.enabled) return [];
-    return Object.keys(currentTenant.customization.baseProductPrices);
-  }, [currentTenant]);
+    if (!customizationSettings) return [];
+    return Object.keys(customizationSettings.products).filter(
+      productKey => customizationSettings.products[productKey].enabled
+    );
+  }, [customizationSettings]);
+
+  // Get available product types with full information (key, display name, sizes, base price)
+  const availableProductTypesWithInfo = useMemo(() => {
+    if (!customizationSettings) return [];
+    
+    return Object.keys(customizationSettings.products)
+      .filter(productKey => customizationSettings.products[productKey].enabled)
+      .map(productKey => {
+        const productInfo = getProductInfoFromConstants(productKey);
+        const displayName = transformProductKeyToDisplayName(productKey);
+        
+        return {
+          key: productKey,
+          displayName: displayName,
+          sizes: productInfo?.sizes || [],
+          basePrice: customizationSettings.products[productKey].base_price,
+          enabled: customizationSettings.products[productKey].enabled
+        };
+      });
+  }, [customizationSettings, getProductInfoFromConstants, transformProductKeyToDisplayName]);
 
   // Get available colors for selected product
   const availableColors = useMemo(() => {
     return PRODUCT_COLORS;
   }, []);
 
+  // Get available text colors
+  const availableTextColors = useMemo(() => {
+    return TEXT_COLORS;
+  }, []);
+
   // Get available fonts
   const availableFonts = useMemo(() => {
-    return FONT_FAMILIES;
+    return FONT_FAMILIES.filter(font => font !== '---');
   }, []);
 
   return {
@@ -314,11 +389,15 @@ export function useCustomization() {
     design,
     canvasState,
     pricing,
+    customizationSettings,
+    isLoadingSettings,
     
     // Computed values
     isValid,
     availableProductTypes,
+    availableProductTypesWithInfo,
     availableColors,
+    availableTextColors,
     availableFonts,
     
     // Actions
@@ -336,7 +415,12 @@ export function useCustomization() {
     stopResize,
     resetDesign,
     
+    // Utility functions
+    transformProductKeyToDisplayName,
+    getProductInfoFromConstants,
+    
     // Utility
-    hasCustomization: currentTenant?.customization?.enabled || false,
+    hasCustomization: customizationSettings !== null && 
+      Object.keys(customizationSettings?.products || {}).length > 0,
   };
 }

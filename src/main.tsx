@@ -10,7 +10,7 @@ import { debugEmailConfig } from './integrations/email.debug'
 
 // Initialize EmailJS for sending emails
 const emailInitialized = initializeEmailService();
-console.log('EmailJS initialization result:', emailInitialized);
+// console.log('EmailJS initialization result:', emailInitialized);
 
 // Make email debugging utilities available in window for troubleshooting
 if (typeof window !== 'undefined') {

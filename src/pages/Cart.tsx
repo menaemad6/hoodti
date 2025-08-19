@@ -397,7 +397,7 @@ const Cart = () => {
                               {/* Display selected color, size, and type if available */}
                               {(item.selected_type  || item.selectedSize || item.selectedColor) && (
                                 <div className="mt-1 flex flex-wrap gap-2">
-                                  {(item.selected_type ) && (
+                                  {(item.selected_type ) && (!item.customizationId) && (
                                     <span className="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium bg-background/70 border border-primary/10 backdrop-blur-sm shadow-sm">
                                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="mr-1 text-primary/70">
                                         <rect x="3" y="3" width="18" height="18" rx="2" />

@@ -25,6 +25,7 @@ interface ImageUploaderProps {
 export function ImageUploader({ onImageUpload }: ImageUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
+  const { pricing } = useCustomization();
 
   const handleFileSelect = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -92,7 +93,14 @@ export function ImageUploader({ onImageUpload }: ImageUploaderProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-sm">
           <ImageIcon className="w-4 h-4" />
-          Add Images
+          <div>
+            <div>Add Images</div>
+            {pricing.imagePrice > 0 && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Image customization fee: ${pricing.imagePrice.toFixed(2)}
+              </p>
+            )}
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

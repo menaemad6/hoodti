@@ -24,12 +24,11 @@ import { useCustomization } from '@/hooks/useCustomization';
 import { useCurrentTenant } from '@/context/TenantContext';
 import { useCart } from '@/context/CartContext';
 import { ProductSelector } from '@/components/customize/ProductSelector';
-import { PricingCalculator } from '@/components/customize/PricingCalculator';
 import { TextEditor } from '@/components/customize/TextEditor';
 import { ImageUploader, ImageEditor } from '@/components/customize/ImageUploader';
 import { useToast } from '@/hooks/use-toast';
-import { PRODUCT_COLOR_FILTERS } from '@/lib/constants';
-import { CustomizationText, CustomizationImage, FONT_FAMILIES, PRODUCT_COLORS } from '@/types/customization.types';
+import { getProductColorImage } from '@/lib/constants';
+import { CustomizationText, CustomizationImage, FONT_FAMILIES, PRODUCT_COLORS, TEXT_COLORS } from '@/types/customization.types';
 import Layout from '@/components/layout/Layout';
 import { Product } from '@/types';
 import { useAuth } from '@/context/AuthContext';
@@ -38,38 +37,49 @@ import { generateDesignImage, dataURLtoFile, generateDesignFilename } from '@/li
 import { uploadDesignImage } from '@/integrations/supabase/storage.service';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
-// Utility function to get the appropriate CSS filter for a color
-function getColorFilter(hexColor: string): string {
-  return PRODUCT_COLOR_FILTERS[hexColor] || `hue-rotate(${getHueRotation(hexColor)}deg) saturate(1.2) brightness(0.9)`;
-}
-
-// Utility function to convert hex color to hue rotation for CSS filters (fallback)
-function getHueRotation(hexColor: string): number {
-  // Convert hex to RGB
-  const hex = hexColor.replace('#', '');
-  const r = parseInt(hex.substr(0, 2), 16);
-  const g = parseInt(hex.substr(2, 2), 16);
-  const b = parseInt(hex.substr(4, 2), 16);
+// Helper function to convert color names to hex values
+function getColorHex(colorName: string): string {
+  const colorMap: Record<string, string> = {
+    // Product colors
+    'black': '#000000',
+    'white': '#FFFFFF',
+    'red': '#FF0000',
+    'blue': '#0000FF',
+    'green': '#00FF00',
+    'yellow': '#FFFF00',
+    'orange': '#FFA500',
+    'purple': '#800080',
+    'pink': '#FFC0CB',
+    'brown': '#A52A2A',
+    'gray': '#808080',
+    'navy': '#000080',
+    'lightblue': '#87CEEB',
+    'rose': '#FF007F',
+    'beige': '#F5F5DC',
+    'lime': '#32CD32',
+    'darkgreen': '#006400',
+    'offwhite': '#F5F5F5',
+    // Text colors (additional)
+    'cyan': '#00FFFF',
+    'magenta': '#FF00FF',
+    'gold': '#FFD700',
+    'silver': '#C0C0C0',
+    'maroon': '#800000',
+    'olive': '#808000',
+    'teal': '#008080',
+    'indigo': '#4B0082',
+    'violet': '#EE82EE',
+    'coral': '#FF7F50',
+    'salmon': '#FA8072',
+    'turquoise': '#40E0D0',
+    'lavender': '#E6E6FA',
+    'plum': '#DDA0DD',
+    'tan': '#D2B48C',
+    'khaki': '#F0E68C',
+    'crimson': '#DC143C'
+  };
   
-  // Convert RGB to HSL
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  let h = 0;
-  
-  if (max === min) {
-    h = 0; // achromatic
-  } else {
-    const d = max - min;
-    switch (max) {
-      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-      case g: h = (b - r) / d + 2; break;
-      case b: h = (r - g) / d + 4; break;
-    }
-    h /= 6;
-  }
-  
-  // Convert to degrees
-  return h * 360;
+  return colorMap[colorName.toLowerCase()] || '#808080'; // Default to gray if color not found
 }
 
 export default function CustomizeProduct() {
@@ -96,6 +106,8 @@ export default function CustomizeProduct() {
     hasCustomization,
     updateBaseProduct,
     availableProductTypes,
+    availableProductTypesWithInfo,
+    isLoadingSettings,
   } = useCustomization();
 
   const [currentStep, setCurrentStep] = useState<'selection' | 'customization'>('selection');
@@ -110,7 +122,10 @@ export default function CustomizeProduct() {
   const [newTextInput, setNewTextInput] = useState('');
   const [editingText, setEditingText] = useState<CustomizationText | null>(null);
   const [clickToAddMode, setClickToAddMode] = useState(false);
-  const [selectedFont, setSelectedFont] = useState<string>(FONT_FAMILIES[0]);
+  const [selectedFont, setSelectedFont] = useState<string>(() => {
+    const validFont = FONT_FAMILIES.find(font => font !== '---');
+    return validFont || 'Arial';
+  });
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -138,7 +153,8 @@ export default function CustomizeProduct() {
 
   // Check if customization is enabled for this tenant
   useEffect(() => {
-    if (!hasCustomization) {
+    // Only show error if we've finished loading and there are no settings
+    if (!isLoadingSettings && !hasCustomization) {
       toast({
         title: "Customization Not Available",
         description: "This brand doesn't support product customization.",
@@ -146,7 +162,12 @@ export default function CustomizeProduct() {
       });
       navigate('/shop');
     }
-  }, [hasCustomization, navigate, toast]);
+  }, [isLoadingSettings, hasCustomization, navigate, toast]);
+
+  // Scroll to top when navigating between steps
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentStep]);
 
   // Add keyboard shortcuts
   useEffect(() => {
@@ -214,7 +235,8 @@ export default function CustomizeProduct() {
       
       // Reset modal state
       setNewTextInput('');
-      setSelectedFont(FONT_FAMILIES[0]);
+      const validFont = FONT_FAMILIES.find(font => font !== '---') || 'Arial';
+      setSelectedFont(validFont);
       setSelectedColor('');
       setShowTextModal(false);
       
@@ -233,7 +255,8 @@ export default function CustomizeProduct() {
 
   const handleCancelAddText = () => {
     setNewTextInput('');
-    setSelectedFont(FONT_FAMILIES[0]);
+    const validFont = FONT_FAMILIES.find(font => font !== '---') || 'Arial';
+    setSelectedFont(validFont);
     setSelectedColor('');
     setShowTextModal(false);
   };
@@ -248,7 +271,8 @@ export default function CustomizeProduct() {
       
       // Reset modal state
       setNewTextInput('');
-      setSelectedFont(FONT_FAMILIES[0]);
+      const validFont = FONT_FAMILIES.find(font => font !== '---') || 'Arial';
+      setSelectedFont(validFont);
       setSelectedColor('');
       setShowEditTextModal(false);
       setEditingText(null);
@@ -268,7 +292,8 @@ export default function CustomizeProduct() {
 
   const handleCancelEditText = () => {
     setNewTextInput('');
-    setSelectedFont(FONT_FAMILIES[0]);
+    const validFont = FONT_FAMILIES.find(font => font !== '---') || 'Arial';
+    setSelectedFont(validFont);
     setSelectedColor('');
     setShowEditTextModal(false);
     setEditingText(null);
@@ -604,6 +629,21 @@ export default function CustomizeProduct() {
     stopResize();
   };
 
+  // Show loading state while fetching customization settings
+  if (isLoadingSettings) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-lg text-muted-foreground">Loading customization settings...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Show error if customization is not available
   if (!hasCustomization) {
     return null;
   }
@@ -718,6 +758,7 @@ export default function CustomizeProduct() {
                 design={design}
                 updateBaseProduct={updateBaseProduct}
                 availableProductTypes={availableProductTypes}
+                availableProductTypesWithInfo={availableProductTypesWithInfo}
               />
             </div>
           </div>
@@ -814,7 +855,7 @@ export default function CustomizeProduct() {
                       <span className="hidden sm:inline">Add to Cart</span>
                       {pricing.totalPrice > 0 && (
                         <span className="text-xs opacity-90">
-                          ${pricing.totalPrice.toFixed(2)}
+                          {pricing.totalPrice.toFixed(2)} EGP
                         </span>
                       )}
                     </>
@@ -838,7 +879,7 @@ export default function CustomizeProduct() {
                     <>
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                       <span className="text-sm text-green-700 dark:text-green-300 font-medium">
-                        ✅ Ready to add to cart! Total: ${pricing.totalPrice.toFixed(2)}
+                        ✅ Ready to add to cart! Total: {pricing.totalPrice.toFixed(2)} EGP
                       </span>
                     </>
                   )}
@@ -939,7 +980,7 @@ export default function CustomizeProduct() {
                 <CardContent className="p-4">
                   <div 
                     ref={canvasRef}
-                    className="relative rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 overflow-hidden shadow-inner"
+                    className="relative rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 overflow-hidden shadow-inner customization-canvas"
                     style={{
                       width: '100%',
                       height: 'min(500px, 70vh)',
@@ -977,21 +1018,15 @@ export default function CustomizeProduct() {
                       
                       {design.backgroundImage ? (
                         <div className="relative w-full h-full flex items-center justify-center">
-                          {/* Background color overlay */}
-                          <div 
-                            className="absolute inset-0 opacity-20"
-                            style={{ backgroundColor: design.baseProductColor }}
-                          />
-                          
-                          {/* Blank product image with color filter */}
+                          {/* Product image based on type and color */}
                           <img
-                            src={design.backgroundImage}
-                            alt={`Blank ${design.baseProductType}`}
-                            className="max-w-full max-h-full object-contain relative z-10"
+                            src={getProductColorImage(design.baseProductType, design.baseProductColor)}
+                            alt={`${design.baseProductColor} ${design.baseProductType}`}
+                            className="w-full h-full object-contain relative z-10"
                             style={{
-                              filter: getColorFilter(design.baseProductColor),
-                              maxWidth: '80%',
-                              maxHeight: '80%'
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'contain'
                             }}
                           />
                           
@@ -999,7 +1034,7 @@ export default function CustomizeProduct() {
                           {design.texts.map((text) => (
                             <div
                               key={text.id}
-                              className={`absolute z-20 cursor-move select-none ${
+                              className={`absolute z-20 cursor-move select-none canvas-text-element ${
                                 draggedElement?.id === text.id ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
                               } ${resizingElement?.id === text.id ? 'ring-2 ring-green-500 ring-opacity-75' : ''}`}
                               style={{
@@ -1024,7 +1059,9 @@ export default function CustomizeProduct() {
                                 selectElement(text);
                               }}
                             >
-                              {text.text}
+                              <span className={text.fontFamily.toLowerCase().includes('arabic') ? 'arabic-text' : ''}>
+                                {text.text}
+                              </span>
                               
                               {/* Resize Handles */}
                               <div className={`absolute -top-2 -left-2 w-4 h-4 bg-blue-500 rounded-full cursor-nw-resize transition-all ${
@@ -1224,10 +1261,85 @@ export default function CustomizeProduct() {
                   </CardContent>
                 </Card>
 
-                {/* Pricing Calculator */}
-                <div className="sticky top-24">
-                  <PricingCalculator />
-                </div>
+                {/* Pricing Breakdown */}
+                <Card className="border-0 shadow-lg ">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                      </svg>
+                      Pricing Breakdown
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {/* Base Product Price */}
+                      <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          Base {design.baseProductType || 'Product'}
+                        </span>
+                        <span className="text-sm font-medium">
+                          {pricing.baseProductPrice.toFixed(2)} EGP
+                        </span>
+                      </div>
+
+                      {/* Text Customization Cost */}
+                      {design.texts.length > 0 && (
+                        <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            Text Elements ({design.texts.length} × {pricing.textPrice.toFixed(2)}) EGP
+                          </span>
+                          <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                            +{(design.texts.length * pricing.textPrice).toFixed(2)} EGP
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Image Customization Cost */}
+                      {design.images.length > 0 && (
+                        <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            Image Elements ({design.images.length} × {pricing.imagePrice.toFixed(2)}) EGP
+                          </span>
+                          <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                            +{(design.images.length * pricing.imagePrice).toFixed(2)} EGP
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Total Customization Cost */}
+                      {pricing.totalCustomizationCost > 0 && (
+                        <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            Customization Total
+                          </span>
+                          <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                            +{pricing.totalCustomizationCost.toFixed(2)} EGP
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Final Total */}
+                      <div className="flex justify-between items-center py-3 border-t-2 border-gray-200 dark:border-gray-600">
+                        <span className="text-base font-semibold text-gray-900 dark:text-white">
+                          Total Price
+                        </span>
+                        <span className="text-lg font-bold text-primary">
+                          {pricing.totalPrice.toFixed(2)} EGP
+                        </span>
+                      </div>
+
+                      {/* Savings Info */}
+                      {pricing.totalCustomizationCost > 0 && (
+                        <div className="text-xs text-center text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
+                          💡 Customization adds value to your product
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+
               </div>
             </div>
           </div>
@@ -1266,7 +1378,14 @@ export default function CustomizeProduct() {
                 <div className="p-2 bg-primary/10 rounded-lg">
                   <Type className="w-5 h-5 text-primary" />
                 </div>
-                <DialogTitle>Add New Text</DialogTitle>
+                <div>
+                  <DialogTitle>Add New Text</DialogTitle>
+                  {pricing.textPrice > 0 && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Text customization fee: {pricing.textPrice.toFixed(2)} EGP
+                    </p>
+                  )}
+                </div>
               </div>
             </DialogHeader>
             
@@ -1305,11 +1424,27 @@ export default function CustomizeProduct() {
                   onChange={(e) => setSelectedFont(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white transition-all"
                 >
-                  {FONT_FAMILIES.map((font) => (
-                    <option key={font} value={font} style={{ fontFamily: font }}>
-                      {font}
-                    </option>
-                  ))}
+                  {FONT_FAMILIES.map((font) => {
+                    if (font === '---') {
+                      return (
+                        <option key="separator" value="" disabled>
+                          ─────────────────────────
+                        </option>
+                      );
+                    }
+                    
+                    const isArabic = font.toLowerCase().includes('arabic') || 
+                                   ['Amiri', 'Scheherazade New', 'Lateef', 'Reem Kufi', 'Cairo', 
+                                    'Tajawal', 'Almarai', 'IBM Plex Sans Arabic', 'Alkalami', 
+                                    'Noto Kufi Arabic', 'Noto Naskh Arabic', 'Noto Nastaliq Urdu', 
+                                    'Harmattan', 'Markazi Text', 'Rubik'].includes(font);
+                    
+                    return (
+                      <option key={font} value={font} style={{ fontFamily: font }}>
+                        {isArabic ? `🌍 ${font} (Ar)` : `🔤 ${font} (En)`}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
 
@@ -1324,7 +1459,8 @@ export default function CustomizeProduct() {
                     variant="ghost"
                     size="sm"
                     onClick={() => {
-                      setSelectedFont(FONT_FAMILIES[0]);
+                      const validFont = FONT_FAMILIES.find(font => font !== '---') || 'Arial';
+                      setSelectedFont(validFont);
                       setSelectedColor('');
                     }}
                     className="text-xs h-7 px-3 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -1333,7 +1469,7 @@ export default function CustomizeProduct() {
                   </Button>
                 </div>
                 <div className="grid grid-cols-8 gap-3">
-                  {PRODUCT_COLORS.map((color) => (
+                  {TEXT_COLORS.map((color) => (
                     <button
                       key={color}
                       type="button"
@@ -1343,7 +1479,7 @@ export default function CustomizeProduct() {
                           ? 'border-gray-800 dark:border-white scale-110 ring-2 ring-primary ring-offset-2' 
                           : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
                       }`}
-                      style={{ backgroundColor: color }}
+                      style={{ backgroundColor: getColorHex(color) }}
                       title={color}
                     >
                       {selectedColor === color && (
@@ -1369,7 +1505,7 @@ export default function CustomizeProduct() {
                     className="text-center p-4 rounded-lg bg-white dark:bg-gray-600 shadow-sm"
                     style={{
                       fontFamily: selectedFont,
-                      color: selectedColor,
+                      color: getColorHex(selectedColor),
                       fontSize: '18px',
                       fontWeight: '500',
                     }}
@@ -1410,7 +1546,14 @@ export default function CustomizeProduct() {
                   <div className="p-2 bg-primary/10 rounded-lg">
                     <Type className="w-5 h-5 text-primary" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Edit Text</h3>
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Edit Text</h3>
+                    {pricing.textPrice > 0 && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Text customization fee: {pricing.textPrice.toFixed(2)} EGP
+                      </p>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="space-y-6">
@@ -1448,11 +1591,27 @@ export default function CustomizeProduct() {
                       onChange={(e) => setSelectedFont(e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white transition-all"
                     >
-                      {FONT_FAMILIES.map((font) => (
-                        <option key={font} value={font} style={{ fontFamily: font }}>
-                          {font}
-                        </option>
-                      ))}
+                      {FONT_FAMILIES.map((font) => {
+                        if (font === '---') {
+                          return (
+                            <option key="separator" value="" disabled>
+                              ─────────────────────────
+                            </option>
+                          );
+                        }
+                        
+                        const isArabic = font.toLowerCase().includes('arabic') || 
+                                       ['Amiri', 'Scheherazade New', 'Lateef', 'Reem Kufi', 'Cairo', 
+                                        'Tajawal', 'Almarai', 'IBM Plex Sans Arabic', 'Alkalami', 
+                                        'Noto Kufi Arabic', 'Noto Naskh Arabic', 'Noto Nastaliq Urdu', 
+                                        'Harmattan', 'Markazi Text', 'Rubik'].includes(font);
+                        
+                        return (
+                          <option key={font} value={font} style={{ fontFamily: font }}>
+                            {isArabic ? `🌍 ${font} (Ar)` : `🔤 ${font} (En)`}
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
 
@@ -1476,7 +1635,7 @@ export default function CustomizeProduct() {
                       </Button>
                     </div>
                     <div className="grid grid-cols-8 gap-3">
-                      {PRODUCT_COLORS.map((color) => (
+                      {TEXT_COLORS.map((color) => (
                         <button
                           key={color}
                           type="button"
@@ -1486,7 +1645,7 @@ export default function CustomizeProduct() {
                               ? 'border-gray-800 dark:border-white scale-110 ring-2 ring-primary ring-offset-2' 
                               : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
                           }`}
-                          style={{ backgroundColor: color }}
+                          style={{ backgroundColor: getColorHex(color) }}
                           title={color}
                         >
                           {selectedColor === color && (
@@ -1508,7 +1667,7 @@ export default function CustomizeProduct() {
                         className="text-center p-4 rounded-lg bg-white dark:bg-gray-600 shadow-sm"
                         style={{
                           fontFamily: selectedFont,
-                          color: selectedColor,
+                          color: getColorHex(selectedColor),
                           fontSize: '18px',
                           fontWeight: '500',
                         }}

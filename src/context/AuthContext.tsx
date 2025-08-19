@@ -306,7 +306,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       switch (role) {
         case "super_admin":
-          navigate("/admin/users");
+          navigate("/admin/dashboard");
           break;
         case "admin":
           navigate("/admin");

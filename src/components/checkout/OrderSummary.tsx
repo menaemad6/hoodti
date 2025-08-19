@@ -158,7 +158,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                 {/* Display selected type, size, and color if available */}
                 {(item.selected_type || item.selectedSize || item.selectedColor) && (
                   <div className="flex flex-wrap gap-1 mt-1">
-                    {item.selected_type && (
+                    {item.selected_type && !item.customizationId && (
                       <span className="text-xs px-1.5 py-0.5 bg-muted/50 rounded-sm">
                         {item.selected_type}
                       </span>

@@ -38,6 +38,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { formatPrice } from "../../lib/utils";
 import SEOHead from "@/components/seo/SEOHead";
 import { useSEOConfig } from "@/lib/seo-config";
+import { stripTenantFromEmail } from "@/lib/utils";
 
 interface Customer {
   id: string;
@@ -503,7 +504,7 @@ const CustomersPage = () => {
             </Avatar>
             <div>
               <p className="font-medium">{customer.name || 'Unnamed User'}</p>
-              <p className="text-xs text-muted-foreground">{customer.email}</p>
+                              <p className="text-xs text-muted-foreground">{stripTenantFromEmail(customer.email)}</p>
             </div>
           </div>
         );
@@ -619,7 +620,7 @@ const CustomersPage = () => {
                       </div>
                       
                       <h3 className="text-2xl font-bold text-center mb-1">{selectedCustomer.name || 'Unnamed User'}</h3>
-                      <p className="text-muted-foreground text-sm mb-6">{selectedCustomer.email}</p>
+                      <p className="text-muted-foreground text-sm mb-6">{stripTenantFromEmail(selectedCustomer.email)}</p>
                       
                       <div className="w-full space-y-4 bg-muted/30 p-4 rounded-lg">
                         <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wider">Contact Information</h4>
@@ -630,7 +631,7 @@ const CustomersPage = () => {
                             </div>
                             <div>
                               <p className="text-xs text-muted-foreground">Email</p>
-                              <p className="text-sm font-medium">{selectedCustomer.email}</p>
+                              <p className="text-sm font-medium">{stripTenantFromEmail(selectedCustomer.email)}</p>
                             </div>
                           </div>
                           
@@ -813,7 +814,7 @@ const CustomersPage = () => {
                         </div>
                         <div>
                           <p className="text-sm text-muted-foreground">Email</p>
-                          <p className="font-medium">{selectedOrder.email || "Not provided"}</p>
+                          <p className="font-medium">{stripTenantFromEmail(selectedOrder.email) || "Not provided"}</p>
                         </div>
                         <div>
                           <p className="text-sm text-muted-foreground">Phone Number</p>

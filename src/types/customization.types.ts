@@ -101,6 +101,27 @@ export interface CanvasState {
 
 // Font options for text customization
 export const FONT_FAMILIES = [
+  // Arabic Fonts
+  'Noto Sans Arabic',
+  'Noto Serif Arabic',
+  'Amiri',
+  'Scheherazade New',
+  'Lateef',
+  'Reem Kufi',
+  'Cairo',
+  'Tajawal',
+  'Almarai',
+  'IBM Plex Sans Arabic',
+  'Alkalami',
+  'Noto Kufi Arabic',
+  'Noto Naskh Arabic',
+  'Noto Nastaliq Urdu',
+  'Harmattan',
+  'Markazi Text',
+  'Rubik',
+  // Separator
+  '---',
+  // English Fonts
   'Arial',
   'Helvetica',
   'Times New Roman',
@@ -120,47 +141,27 @@ export const FONT_FAMILIES = [
   'Century Gothic',
   'Baskerville',
   'Didot',
-  'Bodoni',
-  // Arabic fonts
-  'Noto Sans Arabic',
-  'Noto Serif Arabic',
-  'Amiri',
-  'Scheherazade',
-  'Lateef',
-  'Reem Kufi',
-  'Cairo',
-  'Tajawal',
-  'Almarai',
-  'IBM Plex Sans Arabic'
+  'Bodoni'
 ] as const;
 
 export type FontFamily = typeof FONT_FAMILIES[number];
 
 // Color palette for text and product customization
 export const PRODUCT_COLORS = [
-  '#000000', // Black
-  '#FFFFFF', // White
-  '#FF0000', // Red
-  '#00FF00', // Green
-  '#0000FF', // Blue
-  '#FFFF00', // Yellow
-  '#FF00FF', // Magenta
-  '#00FFFF', // Cyan
-  '#FFA500', // Orange
-  '#800080', // Purple
-  '#A52A2A', // Brown
-  '#808080', // Gray
-  '#FFD700', // Gold
-  '#C0C0C0', // Silver
-  '#FFC0CB', // Pink
-  '#32CD32', // Lime Green
-  '#FF4500', // Orange Red
-  '#4169E1', // Royal Blue
-  '#8B4513', // Saddle Brown
-  '#2E8B57'  // Sea Green
+  'black', 'white', 'red', 'blue', 'green', 'yellow', 'orange', 'purple', 'pink', 
+  'brown', 'gray', 'navy', 'lightblue', 'rose', 'beige', 'lime', 'darkgreen', 'offwhite'
+] as const;
+
+// Separate color palette specifically for text customization
+export const TEXT_COLORS = [
+  'black', 'white', 'red', 'blue', 'green', 'yellow', 'orange', 'purple', 'pink',
+  'brown', 'gray', 'navy', 'lightblue', 'rose', 'beige', 'lime', 'darkgreen',
+  'cyan', 'magenta', 'gold', 'silver', 'maroon', 'olive', 'teal', 'indigo', 'violet',
+  'coral', 'salmon', 'turquoise', 'lavender', 'plum', 'tan', 'khaki', 'crimson'
 ] as const;
 
 export type ProductColor = typeof PRODUCT_COLORS[number];
+export type TextColor = typeof TEXT_COLORS[number];
 
 // Text customization options
 export const TEXT_CUSTOMIZATION_OPTIONS = {

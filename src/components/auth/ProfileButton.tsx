@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
+import { stripTenantFromEmail } from "@/lib/utils";
 import { useRoleAccess } from "@/hooks/use-role-access";
 
 const ProfileButton = () => {
@@ -39,7 +40,7 @@ const ProfileButton = () => {
           {user?.email ? (
             <div className="flex flex-col space-y-1">
               <p className="text-sm font-medium truncate">{user.user_metadata?.name || "User"}</p>
-              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                              <p className="text-xs text-muted-foreground truncate">{stripTenantFromEmail(user.email)}</p>
             </div>
           ) : (
             "My Account"

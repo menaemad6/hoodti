@@ -18,7 +18,7 @@ import {
   Move,
   RotateCw
 } from 'lucide-react';
-import { CustomizationText, FONT_FAMILIES, PRODUCT_COLORS } from '@/types/customization.types';
+import { CustomizationText, FONT_FAMILIES, TEXT_COLORS } from '@/types/customization.types';
 import { useCustomization } from '@/hooks/useCustomization';
 
 interface TextEditorProps {
@@ -144,11 +144,29 @@ export function TextEditor({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {FONT_FAMILIES.map((font) => (
-                    <SelectItem key={font} value={font}>
-                      {font}
-                    </SelectItem>
-                  ))}
+                  {FONT_FAMILIES.map((font) => {
+                    if (font === '---') {
+                      return (
+                        <SelectItem key="separator" value="---" disabled>
+                          ─────────────────────────
+                        </SelectItem>
+                      );
+                    }
+                    
+                    const isArabic = font.toLowerCase().includes('arabic') || 
+                                   ['Amiri', 'Scheherazade New', 'Lateef', 'Reem Kufi', 'Cairo', 
+                                    'Tajawal', 'Almarai', 'IBM Plex Sans Arabic', 'Alkalami', 
+                                    'Noto Kufi Arabic', 'Noto Naskh Arabic', 'Noto Nastaliq Urdu', 
+                                    'Harmattan', 'Markazi Text', 'Rubik'].includes(font);
+                    
+                    return (
+                      <SelectItem key={font} value={font}>
+                        <span className={isArabic ? 'font-arabic' : 'font-english'}>
+                          {font} {isArabic ? '(Ar)' : '(En)'}
+                        </span>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
@@ -201,21 +219,39 @@ export function TextEditor({
           {/* Color Selection */}
           <div className="space-y-2">
             <Label>Text Color</Label>
-            <div className="grid grid-cols-5 gap-2">
-              {PRODUCT_COLORS.slice(0, 15).map((color) => (
-                <Button
-                  key={color}
-                  variant={text.color === color ? 'default' : 'outline'}
-                  className="h-8 w-8 p-0 rounded-full border-2"
-                  style={{ backgroundColor: color }}
-                  onClick={() => handleColorChange(color)}
-                  aria-label={`Select color ${color}`}
-                >
-                  {text.color === color && (
-                    <div className="w-2 h-2 bg-white rounded-full" />
-                  )}
-                </Button>
-              ))}
+            <div className="grid grid-cols-6 gap-2">
+              {TEXT_COLORS.map((color) => {
+                // Helper function to get hex color (same as in CustomizeProduct)
+                const getColorHex = (colorName: string): string => {
+                  const colorMap: Record<string, string> = {
+                    'black': '#000000', 'white': '#FFFFFF', 'red': '#FF0000', 'blue': '#0000FF',
+                    'green': '#00FF00', 'yellow': '#FFFF00', 'orange': '#FFA500', 'purple': '#800080',
+                    'pink': '#FFC0CB', 'brown': '#A52A2A', 'gray': '#808080', 'navy': '#000080',
+                    'lightblue': '#87CEEB', 'rose': '#FF007F', 'beige': '#F5F5DC', 'lime': '#32CD32',
+                    'darkgreen': '#006400', 'offwhite': '#F5F5F5', 'cyan': '#00FFFF', 'magenta': '#FF00FF',
+                    'gold': '#FFD700', 'silver': '#C0C0C0', 'maroon': '#800000', 'olive': '#808000',
+                    'teal': '#008080', 'indigo': '#4B0082', 'violet': '#EE82EE', 'coral': '#FF7F50',
+                    'salmon': '#FA8072', 'turquoise': '#40E0D0', 'lavender': '#E6E6FA', 'plum': '#DDA0DD',
+                    'tan': '#D2B48C', 'khaki': '#F0E68C', 'crimson': '#DC143C'
+                  };
+                  return colorMap[colorName.toLowerCase()] || '#808080';
+                };
+
+                return (
+                  <Button
+                    key={color}
+                    variant={text.color === color ? 'default' : 'outline'}
+                    className="h-8 w-8 p-0 rounded-full border-2"
+                    style={{ backgroundColor: getColorHex(color) }}
+                    onClick={() => handleColorChange(color)}
+                    aria-label={`Select color ${color}`}
+                  >
+                    {text.color === color && (
+                      <div className="w-2 h-2 bg-white rounded-full" />
+                    )}
+                  </Button>
+                );
+              })}
             </div>
           </div>
 

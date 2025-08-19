@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
+import { stripTenantFromEmail } from "@/lib/utils";
 import ProfileButton from "@/components/auth/ProfileButton";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import { cn } from "@/lib/utils";
@@ -66,7 +67,7 @@ const Navbar = () => {
                           </Avatar>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium truncate">{user.name}</p>
-                            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                            <p className="text-xs text-muted-foreground truncate">{stripTenantFromEmail(user.email)}</p>
                           </div>
                         </div>
                         <div className="mt-3 grid grid-cols-2 gap-2">

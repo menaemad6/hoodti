@@ -17,6 +17,7 @@ import { repairUserAccount } from "@/integrations/supabase/repair.service";
 import { useToast } from "@/hooks/use-toast";
 import SEOHead from "@/components/seo/SEOHead";
 import { useSEOConfig } from "@/lib/seo-config";
+import { stripTenantFromEmail } from "@/lib/utils";
 
 const Account = () => {
   const { user, signOut } = useAuth();
@@ -171,7 +172,7 @@ const Account = () => {
                   </Badge>
                 )}
               </div>
-              <p className="text-muted-foreground mt-1">{user.email}</p>
+                                      <p className="text-muted-foreground mt-1">{stripTenantFromEmail(user.email)}</p>
               
               {showProfileAlert && (
                 <div className="mt-4">
@@ -344,7 +345,7 @@ const Account = () => {
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-sm font-medium text-muted-foreground">Email Address</h3>
                   </div>
-                  <p className="font-medium truncate">{user.email}</p>
+                                          <p className="font-medium truncate">{stripTenantFromEmail(user.email)}</p>
                 </div>
                 
                 <div className="bg-gradient-to-r from-primary/5 to-transparent p-4 rounded-lg">
@@ -428,7 +429,7 @@ const Account = () => {
                         </div>
                         <div>
                           <p className="text-sm font-medium">Email verified</p>
-                          <p className="text-xs text-muted-foreground">{user.email}</p>
+                          <p className="text-xs text-muted-foreground">{stripTenantFromEmail(user.email)}</p>
                         </div>
                       </div>
                     </div>

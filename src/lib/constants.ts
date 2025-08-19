@@ -126,6 +126,15 @@ export const SIZING_OPTIONS = [
     ],
   },
   {
+    type: "Hoodie",
+    sizes: [
+      { size: "M", sleve: 44, length: 77, width: 62},
+      { size: "L", sleve: 44, length: 79, width: 64},
+      { size: "XL", sleve: 44, length: 81, width: 66},
+      { size: "XXL", sleve: 44, length: 83, width: 68},
+    ],
+  },
+  {
     type: "Sweatshirt",
     sizes: [
       { size: "M", sleve: 44, length: 77, width: 62},
@@ -159,6 +168,216 @@ export const PRODUCT_BLANK_IMAGES: Record<string, string> = {
   "Polo Baskota": "/assets/blank-polo.png",
 };
 
+// Product colors based on actual images in assets folders
+export const PRODUCT_COLORS_BY_TYPE: Record<string, string[]> = {
+  "Hoodie": [
+    "black", "white", "red", "blue", "green", "yellow", "orange", "purple", "pink", 
+    "brown", "gray", "navy-blue", "light-blue", "dark-green", "beige"
+  ],
+  "Sweatshirt": [
+    "black", "white", "red", "blue", "green", "pink", "beige", "offwhite", "baby-blue", "bubblegum"
+  ],
+  "Regular T-shirt": [
+    "black", "white", "red", "blue", "green", "yellow", "orange", "purple", "pink", 
+    "brown", "gray", "navy", "baby-blue", "light-blue", "rose", "beige", "lime"
+  ],
+  "Boxy T-shirt": [
+    "black", "white", "red", "blue", "green", "yellow", "orange", "purple", "pink", 
+    "brown", "gray", "navy", "baby-blue", "light-blue", "rose", "beige", "lime"
+  ],
+  "Oversized T-shirt": [
+    "black", "white", "red", "blue", "green", "yellow", "orange", "purple", "pink", 
+    "brown", "gray", "navy", "baby-blue", "light-blue", "rose", "beige", "lime"
+  ],
+  "Slim-Fit T-shirt": [
+    "black", "white", "red", "blue", "green", "yellow", "orange", "purple", "pink", 
+    "brown", "gray", "navy", "baby-blue", "light-blue", "rose", "beige", "lime"
+  ],
+  "Polo Shirt": [
+    "black", "white", "red", "blue", "green", "yellow", "orange", "purple", "pink", 
+    "brown", "gray", "navy", "baby-blue", "light-blue", "rose", "beige", "lime"
+  ],
+  "Polo Baskota": [
+    "black", "white", "red", "blue", "green", "yellow", "orange", "purple", "pink", 
+    "brown", "gray", "navy", "baby-blue", "light-blue", "rose", "beige", "lime"
+  ],
+  "Jeans": [
+    "black", "white", "blue", "gray", "navy", "brown"
+  ],
+  "Sweet Pants": [
+    "black", "white", "blue", "gray", "navy", "brown", "beige"
+  ],
+  "Shorts": [
+    "black", "white", "blue", "gray", "navy", "brown", "beige"
+  ],
+  "Jacket": [
+    "black", "white", "blue", "gray", "navy", "brown", "beige"
+  ],
+  "Cargo Pants": [
+    "black", "white", "blue", "gray", "navy", "brown", "beige", "green"
+  ],
+  "Denim Jacket": [
+    "black", "white", "blue", "gray", "navy", "brown"
+  ],
+  "Track Pants": [
+    "black", "white", "blue", "gray", "navy", "brown", "beige"
+  ],
+  "Chinos": [
+    "black", "white", "blue", "gray", "navy", "brown", "beige", "green"
+  ],
+  "Other": [
+    "black", "white", "red", "blue", "green", "yellow", "orange", "purple", "pink", 
+    "brown", "gray", "navy", "baby-blue", "light-blue", "rose", "beige", "lime"
+  ]
+};
+
+// Color to image mapping for each product type
+export const PRODUCT_COLOR_IMAGES: Record<string, Record<string, string>> = {
+  "Hoodie": {
+    "black": "/assets/hoodies/black-hoodie.jpg",
+    "white": "/assets/hoodies/white-hoodie.jpg",
+    "red": "/assets/hoodies/red-hoodie.jpg",
+    "blue": "/assets/hoodies/blue-hoodie.jpg",
+    "green": "/assets/hoodies/green-hoodie.jpg",
+    "yellow": "/assets/hoodies/yellow-hoodie.jpg",
+    "orange": "/assets/hoodies/orange-hoodie.jpg",
+    "purple": "/assets/hoodies/purple-hoodie.jpg",
+    "pink": "/assets/hoodies/pink-hoodie.jpg",
+    "brown": "/assets/hoodies/brown-hoodie.jpg",
+    "gray": "/assets/hoodies/gray-hoodie.jpg",
+    "navy-blue": "/assets/hoodies/navy-blue-hoodie.jpg",
+    "light-blue": "/assets/hoodies/light-blue-hoodie.jpg",
+    "dark-green": "/assets/hoodies/dark-green-hoodie.jpg",
+    "beige": "/assets/hoodies/beige-hoodie.jpg"
+  },
+  "Sweatshirt": {
+    "black": "/assets/sweatshirts/black-sweatshirt.jpg",
+    "white": "/assets/sweatshirts/white-sweatshirt.jpg",
+    "red": "/assets/sweatshirts/red-sweatshirt.jpg",
+    "blue": "/assets/sweatshirts/blue-sweatshirt.jpg",
+    "green": "/assets/sweatshirts/green-sweatshirt.jpg",
+    "pink": "/assets/sweatshirts/pink-sweatshirt.jpg",
+    "beige": "/assets/sweatshirts/beige-sweatshirt.jpg",
+    "offwhite": "/assets/sweatshirts/offwhite--sweatshirt.jpg",
+    "baby-blue": "/assets/sweatshirts/baby-blue-sweatshirt.jpg",
+    "bubblegum": "/assets/sweatshirts/bubblegum-sweatshirt.jpg"
+  },
+  "Regular T-shirt": {
+    "black": "/assets/shirts/black-shirt.jpg",
+    "white": "/assets/shirts/white-shirt.jpg",
+    "red": "/assets/shirts/red-shirt.jpg",
+    "blue": "/assets/shirts/blue-shirt.jpg",
+    "green": "/assets/shirts/green-shirt.jpg",
+    "yellow": "/assets/shirts/yellow-shirt.jpg",
+    "orange": "/assets/shirts/orange-shirt.jpg",
+    "purple": "/assets/shirts/purple-shirt.jpg",
+    "pink": "/assets/shirts/pink-shirt.jpg",
+    "brown": "/assets/shirts/brown-shirt.jpg",
+    "gray": "/assets/shirts/grey-shirt.jpg",
+    "navy": "/assets/shirts/navy-shirt.jpg",
+    "baby-blue": "/assets/shirts/baby-blue-shirt.jpg",
+    "light-blue": "/assets/shirts/light-blue-shirt.jpg",
+    "rose": "/assets/shirts/rose-shirt.jpg",
+    "beige": "/assets/shirts/beige-shirt.jpg",
+    "lime": "/assets/shirts/lime-shirt.jpg"
+  },
+  "Boxy T-shirt": {
+    "black": "/assets/shirts/black-shirt.jpg",
+    "white": "/assets/shirts/white-shirt.jpg",
+    "red": "/assets/shirts/red-shirt.jpg",
+    "blue": "/assets/shirts/blue-shirt.jpg",
+    "green": "/assets/shirts/green-shirt.jpg",
+    "yellow": "/assets/shirts/yellow-shirt.jpg",
+    "orange": "/assets/shirts/orange-shirt.jpg",
+    "purple": "/assets/shirts/purple-shirt.jpg",
+    "pink": "/assets/shirts/pink-shirt.jpg",
+    "brown": "/assets/shirts/brown-shirt.jpg",
+    "gray": "/assets/shirts/grey-shirt.jpg",
+    "navy": "/assets/shirts/navy-shirt.jpg",
+    "baby-blue": "/assets/shirts/baby-blue-shirt.jpg",
+    "light-blue": "/assets/shirts/light-blue-shirt.jpg",
+    "rose": "/assets/shirts/rose-shirt.jpg",
+    "beige": "/assets/shirts/beige-shirt.jpg",
+    "lime": "/assets/shirts/lime-shirt.jpg"
+  },
+  "Oversized T-shirt": {
+    "black": "/assets/shirts/black-shirt.jpg",
+    "white": "/assets/shirts/white-shirt.jpg",
+    "red": "/assets/shirts/red-shirt.jpg",
+    "blue": "/assets/shirts/blue-shirt.jpg",
+    "green": "/assets/shirts/green-shirt.jpg",
+    "yellow": "/assets/shirts/yellow-shirt.jpg",
+    "orange": "/assets/shirts/orange-shirt.jpg",
+    "purple": "/assets/shirts/purple-shirt.jpg",
+    "pink": "/assets/shirts/pink-shirt.jpg",
+    "brown": "/assets/shirts/brown-shirt.jpg",
+    "gray": "/assets/shirts/grey-shirt.jpg",
+    "navy": "/assets/shirts/navy-shirt.jpg",
+    "baby-blue": "/assets/shirts/baby-blue-shirt.jpg",
+    "light-blue": "/assets/shirts/light-blue-shirt.jpg",
+    "rose": "/assets/shirts/rose-shirt.jpg",
+    "beige": "/assets/shirts/beige-shirt.jpg",
+    "lime": "/assets/shirts/lime-shirt.jpg"
+  },
+  "Slim-Fit T-shirt": {
+    "black": "/assets/shirts/black-shirt.jpg",
+    "white": "/assets/shirts/white-shirt.jpg",
+    "red": "/assets/shirts/red-shirt.jpg",
+    "blue": "/assets/shirts/blue-shirt.jpg",
+    "green": "/assets/shirts/green-shirt.jpg",
+    "yellow": "/assets/shirts/yellow-shirt.jpg",
+    "orange": "/assets/shirts/orange-shirt.jpg",
+    "purple": "/assets/shirts/purple-shirt.jpg",
+    "pink": "/assets/shirts/pink-shirt.jpg",
+    "brown": "/assets/shirts/brown-shirt.jpg",
+    "gray": "/assets/shirts/grey-shirt.jpg",
+    "navy": "/assets/shirts/navy-shirt.jpg",
+    "baby-blue": "/assets/shirts/baby-blue-shirt.jpg",
+    "light-blue": "/assets/shirts/light-blue-shirt.jpg",
+    "rose": "/assets/shirts/rose-shirt.jpg",
+    "beige": "/assets/shirts/beige-shirt.jpg",
+    "lime": "/assets/shirts/lime-shirt.jpg"
+  },
+  "Polo Shirt": {
+    "black": "/assets/shirts/black-shirt.jpg",
+    "white": "/assets/shirts/white-shirt.jpg",
+    "red": "/assets/shirts/red-shirt.jpg",
+    "blue": "/assets/shirts/blue-shirt.jpg",
+    "green": "/assets/shirts/green-shirt.jpg",
+    "yellow": "/assets/shirts/yellow-shirt.jpg",
+    "orange": "/assets/shirts/orange-shirt.jpg",
+    "purple": "/assets/shirts/purple-shirt.jpg",
+    "pink": "/assets/shirts/pink-shirt.jpg",
+    "brown": "/assets/shirts/brown-shirt.jpg",
+    "gray": "/assets/shirts/grey-shirt.jpg",
+    "navy": "/assets/shirts/navy-shirt.jpg",
+    "baby-blue": "/assets/shirts/baby-blue-shirt.jpg",
+    "light-blue": "/assets/shirts/light-blue-shirt.jpg",
+    "rose": "/assets/shirts/rose-shirt.jpg",
+    "beige": "/assets/shirts/beige-shirt.jpg",
+    "lime": "/assets/shirts/lime-shirt.jpg"
+  },
+  "Polo Baskota": {
+    "black": "/assets/shirts/black-shirt.jpg",
+    "white": "/assets/shirts/white-shirt.jpg",
+    "red": "/assets/shirts/red-shirt.jpg",
+    "blue": "/assets/shirts/blue-shirt.jpg",
+    "green": "/assets/shirts/green-shirt.jpg",
+    "yellow": "/assets/shirts/yellow-shirt.jpg",
+    "orange": "/assets/shirts/orange-shirt.jpg",
+    "purple": "/assets/shirts/purple-shirt.jpg",
+    "pink": "/assets/shirts/pink-shirt.jpg",
+    "brown": "/assets/shirts/brown-shirt.jpg",
+    "gray": "/assets/shirts/grey-shirt.jpg",
+    "navy": "/assets/shirts/navy-shirt.jpg",
+    "baby-blue": "/assets/shirts/baby-blue-shirt.jpg",
+    "light-blue": "/assets/shirts/light-blue-shirt.jpg",
+    "rose": "/assets/shirts/rose-shirt.jpg",
+    "beige": "/assets/shirts/beige-shirt.jpg",
+    "lime": "/assets/shirts/lime-shirt.jpg"
+  }
+};
+
 // Fallback to placeholder if blank images don't exist
 export const getProductImage = (productType: string): string => {
   const blankImage = PRODUCT_BLANK_IMAGES[productType];
@@ -170,27 +389,58 @@ export const getProductImage = (productType: string): string => {
   return "/assets/blank-hoodie.png"; // Default fallback
 };
 
-// Color mapping for product customization
-// Maps hex colors to CSS filter values for better color representation
-export const PRODUCT_COLOR_FILTERS: Record<string, string> = {
-  "#000000": "brightness(0) saturate(100%)", // Black
-  "#FFFFFF": "brightness(1) saturate(0%)", // White
-  "#FF0000": "hue-rotate(0deg) saturate(100%) brightness(0.8)", // Red
-  "#00FF00": "hue-rotate(120deg) saturate(100%) brightness(0.8)", // Green
-  "#0000FF": "hue-rotate(240deg) saturate(100%) brightness(0.8)", // Blue
-  "#FFFF00": "hue-rotate(60deg) saturate(100%) brightness(0.8)", // Yellow
-  "#FF00FF": "hue-rotate(300deg) saturate(100%) brightness(0.8)", // Magenta
-  "#00FFFF": "hue-rotate(180deg) saturate(100%) brightness(0.8)", // Cyan
-  "#FFA500": "hue-rotate(30deg) saturate(100%) brightness(0.8)", // Orange
-  "#800080": "hue-rotate(270deg) saturate(80%) brightness(0.6)", // Purple
-  "#A52A2A": "hue-rotate(0deg) saturate(60%) brightness(0.4)", // Brown
-  "#808080": "brightness(0.5) saturate(0%)", // Gray
-  "#FFD700": "hue-rotate(45deg) saturate(100%) brightness(0.9)", // Gold
-  "#C0C0C0": "brightness(0.8) saturate(0%)", // Silver
-  "#FFC0CB": "hue-rotate(350deg) saturate(60%) brightness(0.9)", // Pink
-  "#32CD32": "hue-rotate(120deg) saturate(80%) brightness(0.8)", // Lime Green
-  "#FF4500": "hue-rotate(15deg) saturate(100%) brightness(0.7)", // Orange Red
-  "#4169E1": "hue-rotate(220deg) saturate(80%) brightness(0.7)", // Royal Blue
-  "#8B4513": "hue-rotate(30deg) saturate(60%) brightness(0.4)", // Saddle Brown
-  "#2E8B57": "hue-rotate(150deg) saturate(60%) brightness(0.5)", // Sea Green
-}; 
+// Get the actual product image based on type and color
+export const getProductColorImage = (productType: string, color: string): string => {
+  // Transform database product type to match our constants format
+  const transformedType = transformProductType(productType);
+  const colorImages = PRODUCT_COLOR_IMAGES[transformedType];
+  if (colorImages && colorImages[color]) {
+    return colorImages[color];
+  }
+  
+  // Fallback to blank image if color not found
+  return getProductImage(transformedType);
+};
+
+// Get available colors for a specific product type
+export const getAvailableColorsForProduct = (productType: string): string[] => {
+  // Transform database product type to match our constants format
+  const transformedType = transformProductType(productType);
+  return PRODUCT_COLORS_BY_TYPE[transformedType] || [];
+};
+
+// Transform database product type to match constants format
+function transformProductType(dbType: string): string {
+  // Handle common transformations from database format to constants format
+  const transformations: Record<string, string> = {
+    'regular_t-shirt': 'Regular T-shirt',
+    'boxy_t-shirt': 'Boxy T-shirt',
+    'oversized_t-shirt': 'Oversized T-shirt',
+    'slim-fit_t-shirt': 'Slim-Fit T-shirt',
+    'polo_shirt': 'Polo Shirt',
+    'polo_baskota': 'Polo Baskota',
+    'sweet_pants': 'Sweet Pants',
+    'cargo_pants': 'Cargo Pants',
+    'track_pants': 'Track Pants',
+    'denim_jacket': 'Denim Jacket'
+  };
+  
+  // Check if we have a direct transformation
+  if (transformations[dbType.toLowerCase()]) {
+    return transformations[dbType.toLowerCase()];
+  }
+  
+  // Fallback: try to match by converting underscores to spaces and capitalizing
+  const fallbackType = dbType
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+  
+  // Check if the fallback type exists in our constants
+  if (PRODUCT_COLORS_BY_TYPE[fallbackType]) {
+    return fallbackType;
+  }
+  
+  // If still no match, return the original type (might work for simple cases)
+  return dbType;
+} 

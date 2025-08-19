@@ -112,3 +112,27 @@ export function ensureProductTypeCompatibility(product: Product | SupabaseProduc
   // Convert from Supabase product to App product format
   return mapSupabaseProductToAppProduct(product);
 }
+
+/**
+ * Strips tenant ID from email addresses that contain +tenant_id format
+ * Example: "user+hoodti@gmail.com" becomes "user@gmail.com"
+ * @param email - The email address that may contain tenant ID
+ * @returns The email address without tenant ID
+ */
+export function stripTenantFromEmail(email: string | null | undefined): string {
+  if (!email) return '';
+  
+  // Check if email contains + symbol (tenant ID format)
+  const plusIndex = email.indexOf('+');
+  if (plusIndex === -1) return email;
+  
+  // Find the @ symbol after the +
+  const atIndex = email.indexOf('@', plusIndex);
+  if (atIndex === -1) return email;
+  
+  // Extract the part before + and after @
+  const beforePlus = email.substring(0, plusIndex);
+  const afterAt = email.substring(atIndex);
+  
+  return beforePlus + afterAt;
+}
