@@ -11,6 +11,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Spinner from "@/components/ui/spinner";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import MusicPlayer from "@/components/ui/music-player";
+import LandingPage from "./pages/LandingPage";
 
 // Lazy-loaded components
 const Index = lazy(() => import("@/pages/Index"));
@@ -64,7 +65,7 @@ function App() {
                 <Suspense fallback={<LoadingFallback />}>
                   <Routes>
                   {/* Public routes */}
-                  <Route path="/" element={<Index />} />
+                  <Route path="/" element={<LandingPage />} />
                   <Route path="/shop" element={<Shop />} />
                   <Route path="/product/:id" element={<ProductDetail />} />
                   <Route path="/category/:id" element={<CategoryDetail />} />
