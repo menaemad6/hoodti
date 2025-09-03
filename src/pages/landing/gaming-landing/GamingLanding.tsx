@@ -17,6 +17,7 @@ import { Button as UIButton } from '@/components/ui/button';
 import Footer from '@/components/layout/Footer';
 import './GamingLanding.css';
 import { useCurrentTenant } from '@/context/TenantContext';
+import BannersModal from '@/components/ui/BannersModal';
 // Register GSAP plugins
 gsap.registerPlugin(ScrollTrigger);
 
@@ -942,6 +943,18 @@ const CTA = () => {
 
 // Main GamingLanding Component
 const GamingLanding = () => {
+  const [showBannersModal, setShowBannersModal] = useState(false);
+
+  const showDelay = 5000;
+  useEffect(() => {
+    // Show banners modal after 5 seconds
+    const timer = setTimeout(() => {
+      setShowBannersModal(true);
+    }, showDelay);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <main className="relative min-h-screen w-screen overflow-x-hidden bg-creamy_gaming-100">
       <Navbar />
@@ -951,6 +964,13 @@ const GamingLanding = () => {
       <Story />
       <CTA />
       <Footer bgColor="black" />
+      
+      {/* Banners Modal */}
+      <BannersModal 
+        isOpen={showBannersModal}
+        onClose={() => setShowBannersModal(false)}
+        autoCloseDelay={10} // Auto-close after 10 seconds
+      />
     </main>
   );
 };

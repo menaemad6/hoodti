@@ -104,7 +104,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     { name: "Customers", icon: Users, path: "/admin/customers" },
     { name: "Delivery Slots", icon: Clock, path: "/admin/delivery-slots" },
     { name: "Reports", icon: BarChart, path: "/admin/reports" },
-    { name: "Categories", icon: Ungroup, path: "/admin/content" },
+    { name: "Content", icon: Ungroup, path: "/admin/content" },
     { name: "Settings", icon: Settings, path: "/admin/settings" },
   ];
 

@@ -174,6 +174,64 @@ export const getDesignDownloadUrl = async (filePath: string, expiresIn: number =
   }
 };
 
+// Upload a banner image
+export const uploadBannerImage = async (file: File, fileName?: string) => {
+  try {
+    const fileExt = file.name.split('.').pop();
+    const uniqueFileName = fileName || `banner_${Date.now()}.${fileExt}`;
+    const filePath = `banner-images/${uniqueFileName}`;
+    
+    const { data, error } = await supabase.storage
+      .from('banners')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
+    
+    if (error) {
+      console.error('Banner upload error details:', error);
+      throw error;
+    }
+    
+    if (!data || !data.path) {
+      throw new Error('Upload succeeded but no file path was returned');
+    }
+    
+    // Get the public URL
+    const { data: publicUrlData } = supabase.storage
+      .from('banners')
+      .getPublicUrl(data.path);
+      
+    if (!publicUrlData || !publicUrlData.publicUrl) {
+      throw new Error('File uploaded but could not generate public URL');
+    }
+    
+    return publicUrlData.publicUrl;
+  } catch (error) {
+    console.error('Error uploading banner image:', error);
+    throw error;
+  }
+};
+
+// Delete a banner image
+export const deleteBannerImage = async (path: string) => {
+  try {
+    const { error } = await supabase.storage
+      .from('banners')
+      .remove([path]);
+    
+    if (error) {
+      console.error('Error deleting banner image:', error);
+      throw error;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error deleting banner image:', error);
+    throw error;
+  }
+};
+
 
 
 // List all customization uploads for a user (for merchant access)

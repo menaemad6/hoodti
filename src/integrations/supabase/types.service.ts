@@ -2,6 +2,7 @@ import { Database } from "./types";
 
 export type ProductRow = Database['public']['Tables']['products']['Row'];
 export type CategoryRow = Database['public']['Tables']['categories']['Row'];
+export type BannerRow = Database['public']['Tables']['banners']['Row'];
 export type DeliverySlotRow = Database['public']['Tables']['delivery_slots']['Row'];
 export type OrderRow = Database['public']['Tables']['orders']['Row'];
 export type OrderItemRow = Database['public']['Tables']['order_items']['Row'];

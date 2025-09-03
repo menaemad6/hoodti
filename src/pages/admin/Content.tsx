@@ -40,6 +40,7 @@ import {
   CategoryInput
 } from "@/integrations/supabase/categories.service";
 import { CategoryRow } from "@/integrations/supabase/types.service";
+import BannersTab from "@/components/admin/BannersTab";
 import { useCurrentTenant } from "@/context/TenantContext";
 import SEOHead from "@/components/seo/SEOHead";
 import { useSEOConfig } from "@/lib/seo-config";
@@ -383,12 +384,6 @@ const ContentPage = () => {
                   Add Category
                 </Button>
               )}
-              {activeTab === "banners" && (
-                <Button className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Add Banner
-                </Button>
-              )}
             </div>
           </div>
 
@@ -423,21 +418,7 @@ const ContentPage = () => {
             </TabsContent>
 
             <TabsContent value="banners">
-              <GlassCard>
-                <CardHeader>
-                  <CardTitle>Banners</CardTitle>
-                  <CardDescription>Manage promotional banners for your store.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-12">
-                    <Image className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">Banners Coming Soon</h3>
-                    <p className="text-muted-foreground mb-4 max-w-md mx-auto">
-                      Banner management will be available in a future update. Check back soon for this feature.
-                    </p>
-                  </div>
-                </CardContent>
-              </GlassCard>
+              <BannersTab />
             </TabsContent>
           </Tabs>
         </div>
