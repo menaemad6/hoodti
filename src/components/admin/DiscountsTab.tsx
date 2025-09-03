@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { 
   Card, 
   CardContent, 
@@ -45,20 +45,25 @@ import { Discount, getAllDiscounts, createDiscount, updateDiscount, deleteDiscou
 import { PlusCircle, Pencil, Trash2, BadgePercent, Clock, PercentIcon, Tag, Check } from "lucide-react";
 import Spinner from "@/components/ui/spinner";
 import { format } from "date-fns";
+import { useCurrentTenant } from "@/context/TenantContext";
 
 interface DiscountFormData {
   code: string;
   description: string;
-  discount_percent: number;
-  max_uses: number;
-  min_order_amount: number;
-  active: boolean;
-  start_date: string;
-  end_date: string;
+  discount_type: 'percentage' | 'fixed';
+  discount_value: number;
+  usage_limit: number;
+  minimum_order_amount: number;
+  maximum_discount: number | null;
+  is_active: boolean;
+  valid_from: string;
+  valid_until: string;
+  tenant_id: string;
 }
 
 const DiscountsTab: React.FC = () => {
   const { toast } = useToast();
+  const currentTenant = useCurrentTenant();
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -67,20 +72,19 @@ const DiscountsTab: React.FC = () => {
   const [formData, setFormData] = useState<DiscountFormData>({
     code: '',
     description: '',
-    discount_percent: 10,
-    max_uses: 100,
-    min_order_amount: 0,
-    active: true,
-    start_date: '',
-    end_date: '',
+    discount_type: 'percentage',
+    discount_value: 10,
+    usage_limit: 100,
+    minimum_order_amount: 0,
+    maximum_discount: null,
+    is_active: true,
+    valid_from: '',
+    valid_until: '',
+    tenant_id: currentTenant.id,
   });
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof DiscountFormData, string>>>({});
 
-  useEffect(() => {
-    loadDiscounts();
-  }, []);
-
-  const loadDiscounts = async () => {
+  const loadDiscounts = useCallback(async () => {
     setIsLoading(true);
     try {
       const data = await getAllDiscounts();
@@ -95,7 +99,11 @@ const DiscountsTab: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    loadDiscounts();
+  }, [loadDiscounts]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -107,8 +115,18 @@ const DiscountsTab: React.FC = () => {
     }
   };
 
+  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Clear the error when the user changes selection
+    if (formErrors[name as keyof DiscountFormData]) {
+      setFormErrors(prev => ({ ...prev, [name]: undefined }));
+    }
+  };
+
   const handleSwitchChange = (checked: boolean) => {
-    setFormData(prev => ({ ...prev, active: checked }));
+    setFormData(prev => ({ ...prev, is_active: checked }));
   };
 
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -133,28 +151,30 @@ const DiscountsTab: React.FC = () => {
       errors.code = "Code must contain only uppercase letters and numbers";
     }
     
-    if (formData.discount_percent === '' || isNaN(Number(formData.discount_percent))) {
-      errors.discount_percent = "Discount percent is required";
-    } else if (Number(formData.discount_percent) <= 0 || Number(formData.discount_percent) > 100) {
-      errors.discount_percent = "Discount percent must be between 1 and 100";
+    if (formData.discount_value === 0 || isNaN(Number(formData.discount_value))) {
+      errors.discount_value = "Discount value is required";
+    } else if (Number(formData.discount_value) <= 0) {
+      errors.discount_value = "Discount value must be greater than 0";
+    } else if (formData.discount_type === 'percentage' && Number(formData.discount_value) > 100) {
+      errors.discount_value = "Percentage discount must be between 1 and 100";
     }
     
-    if (formData.max_uses === '' || isNaN(Number(formData.max_uses))) {
-      errors.max_uses = "Maximum uses is required";
-    } else if (Number(formData.max_uses) <= 0) {
-      errors.max_uses = "Maximum uses must be greater than 0";
+    if (formData.usage_limit === 0 || isNaN(Number(formData.usage_limit))) {
+      errors.usage_limit = "Usage limit is required";
+    } else if (Number(formData.usage_limit) <= 0) {
+      errors.usage_limit = "Usage limit must be greater than 0";
     }
     
-    if (formData.min_order_amount === '' || isNaN(Number(formData.min_order_amount))) {
-      errors.min_order_amount = "Minimum order amount is required";
-    } else if (Number(formData.min_order_amount) < 0) {
-      errors.min_order_amount = "Minimum order amount cannot be negative";
+    if (formData.minimum_order_amount === 0 || isNaN(Number(formData.minimum_order_amount))) {
+      errors.minimum_order_amount = "Minimum order amount is required";
+    } else if (Number(formData.minimum_order_amount) < 0) {
+      errors.minimum_order_amount = "Minimum order amount cannot be negative";
     }
     
     // Validate dates if provided
-    if (formData.start_date && formData.end_date) {
-      if (new Date(formData.start_date) > new Date(formData.end_date)) {
-        errors.end_date = "End date must be after start date";
+    if (formData.valid_from && formData.valid_until) {
+      if (new Date(formData.valid_from) > new Date(formData.valid_until)) {
+        errors.valid_until = "End date must be after start date";
       }
     }
     
@@ -172,8 +192,8 @@ const DiscountsTab: React.FC = () => {
       const discountData = {
         ...formData,
         code: formData.code.trim().toUpperCase(),
-        start_date: formData.start_date || null,
-        end_date: formData.end_date || null,
+        valid_from: formData.valid_from || null,
+        valid_until: formData.valid_until || null,
       };
       
       let result;
@@ -219,12 +239,15 @@ const DiscountsTab: React.FC = () => {
     setFormData({
       code: '',
       description: '',
-      discount_percent: 10,
-      max_uses: 100,
-      min_order_amount: 0,
-      active: true,
-      start_date: '',
-      end_date: '',
+      discount_type: 'percentage',
+      discount_value: 10,
+      usage_limit: 100,
+      minimum_order_amount: 0,
+      maximum_discount: null,
+      is_active: true,
+      valid_from: '',
+      valid_until: '',
+      tenant_id: currentTenant.id,
     });
     setFormErrors({});
     setIsDialogOpen(true);
@@ -235,12 +258,15 @@ const DiscountsTab: React.FC = () => {
     setFormData({
       code: discount.code,
       description: discount.description || '',
-      discount_percent: discount.discount_percent,
-      max_uses: discount.max_uses,
-      min_order_amount: discount.min_order_amount,
-      active: discount.active,
-      start_date: discount.start_date || '',
-      end_date: discount.end_date || '',
+      discount_type: discount.discount_type,
+      discount_value: discount.discount_value,
+      usage_limit: discount.usage_limit || 0,
+      minimum_order_amount: discount.minimum_order_amount,
+      maximum_discount: discount.maximum_discount,
+      is_active: discount.is_active,
+      valid_from: discount.valid_from || '',
+      valid_until: discount.valid_until || '',
+      tenant_id: discount.tenant_id,
     });
     setFormErrors({});
     setIsDialogOpen(true);
@@ -335,10 +361,10 @@ const DiscountsTab: React.FC = () => {
                   <TableCell>
                     <div className="flex items-center">
                       <PercentIcon className="h-4 w-4 mr-1 text-muted-foreground" />
-                      {discount.discount_percent}%
-                      {discount.min_order_amount > 0 && (
+                      {discount.discount_type === 'percentage' ? `${discount.discount_value}%` : `${discount.discount_value} EGP`}
+                      {discount.minimum_order_amount > 0 && (
                         <span className="text-xs text-muted-foreground ml-2">
-                          (min: ${discount.min_order_amount.toFixed(2)})
+                          (min: {discount.minimum_order_amount.toFixed(2)} EGP)
                         </span>
                       )}
                     </div>
@@ -349,30 +375,32 @@ const DiscountsTab: React.FC = () => {
                     )}
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center">
-                      <span className={discount.current_uses >= discount.max_uses ? "text-destructive" : ""}>
-                        {discount.current_uses} / {discount.max_uses}
+                                        <div className="flex items-center">
+                      <span className={discount.usage_limit && discount.used_count >= discount.usage_limit ? "text-destructive" : ""}>
+                        {discount.used_count} / {discount.usage_limit || '∞'}
                       </span>
                     </div>
-                    <div className="w-full h-1.5 bg-muted rounded-full mt-1 overflow-hidden">
-                      <div 
-                        className={`h-full rounded-full ${
-                          discount.current_uses >= discount.max_uses 
-                            ? "bg-destructive" 
-                            : discount.current_uses > discount.max_uses * 0.7
-                              ? "bg-amber-500"
-                              : "bg-primary"
-                        }`}
-                        style={{ width: `${Math.min(discount.current_uses / discount.max_uses * 100, 100)}%` }}
-                      />
-                    </div>
+                    {discount.usage_limit && (
+                      <div className="w-full h-1.5 bg-muted rounded-full mt-1 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${
+                            discount.used_count >= discount.usage_limit 
+                              ? "bg-destructive" 
+                              : discount.used_count > discount.usage_limit * 0.7
+                                ? "bg-amber-500"
+                                : "bg-primary"
+                          }`}
+                          style={{ width: `${Math.min(discount.used_count / discount.usage_limit * 100, 100)}%` }}
+                        />
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Badge 
-                      variant={discount.active ? "default" : "outline"}
-                      className={`${discount.active ? "bg-green-500/20 text-green-700 hover:bg-green-500/30" : ""}`}
+                      variant={discount.is_active ? "default" : "outline"}
+                      className={`${discount.is_active ? "bg-green-500/20 text-green-700 hover:bg-green-500/30" : ""}`}
                     >
-                      {discount.active ? (
+                      {discount.is_active ? (
                         <>
                           <Check className="h-3 w-3 mr-1" />
                           Active
@@ -381,15 +409,15 @@ const DiscountsTab: React.FC = () => {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {discount.start_date || discount.end_date ? (
+                    {discount.valid_from || discount.valid_until ? (
                       <div className="text-sm">
                         <div className="flex items-center text-muted-foreground">
                           <Clock className="h-3 w-3 mr-1" />
-                          {discount.start_date ? formatDate(discount.start_date) : 'Anytime'} 
-                          {discount.end_date && (
+                          {discount.valid_from ? formatDate(discount.valid_from) : 'Anytime'} 
+                          {discount.valid_until && (
                             <>
                               <span className="mx-1">-</span>
-                              {formatDate(discount.end_date)}
+                              {formatDate(discount.valid_until)}
                             </>
                           )}
                         </div>
@@ -427,8 +455,8 @@ const DiscountsTab: React.FC = () => {
 
       {/* Create/Edit Discount Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>
               {selectedDiscount ? "Edit Discount" : "Create Discount"}
             </DialogTitle>
@@ -440,7 +468,7 @@ const DiscountsTab: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
           
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-4 py-4 overflow-y-auto flex-1 min-h-0">
             <div className="grid gap-2">
               <Label htmlFor="code">
                 Discount Code <span className="text-destructive">*</span>
@@ -478,75 +506,89 @@ const DiscountsTab: React.FC = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="discount_percent">
-                  Discount Percent <span className="text-destructive">*</span>
+                <Label htmlFor="discount_type">Discount Type</Label>
+                <select
+                  id="discount_type"
+                  name="discount_type"
+                  value={formData.discount_type}
+                  onChange={handleSelectChange}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="percentage">Percentage</option>
+                  <option value="fixed">Fixed Amount</option>
+                </select>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="discount_value">
+                  Discount Value <span className="text-destructive">*</span>
                 </Label>
                 <div className="relative">
                   <Input
-                    id="discount_percent"
-                    name="discount_percent"
+                    id="discount_value"
+                    name="discount_value"
                     type="number"
                     min="1"
-                    max="100"
-                    value={formData.discount_percent}
+                    max={formData.discount_type === 'percentage' ? "100" : undefined}
+                    value={formData.discount_value}
                     onChange={handleNumberChange}
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <PercentIcon className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">{formData.discount_type === 'percentage' ? '%' : 'EGP'}</span>
                   </div>
                 </div>
-                {formErrors.discount_percent && (
-                  <p className="text-sm text-destructive">{formErrors.discount_percent}</p>
+                {formErrors.discount_value && (
+                  <p className="text-sm text-destructive">{formErrors.discount_value}</p>
                 )}
               </div>
               
               <div className="grid gap-2">
-                <Label htmlFor="min_order_amount">Minimum Order Amount</Label>
+                <Label htmlFor="minimum_order_amount">Minimum Order Amount</Label>
                 <div className="relative">
                   <Input
-                    id="min_order_amount"
-                    name="min_order_amount"
+                    id="minimum_order_amount"
+                    name="minimum_order_amount"
                     type="number"
                     min="0"
                     step="0.01"
-                    value={formData.min_order_amount}
+                    value={formData.minimum_order_amount}
                     onChange={handleNumberChange}
                   />
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <span className="text-muted-foreground">$</span>
+                    <span className="text-muted-foreground">EGP</span>
                   </div>
                 </div>
-                {formErrors.min_order_amount && (
-                  <p className="text-sm text-destructive">{formErrors.min_order_amount}</p>
+                {formErrors.minimum_order_amount && (
+                  <p className="text-sm text-destructive">{formErrors.minimum_order_amount}</p>
                 )}
               </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="max_uses">
-                  Maximum Uses <span className="text-destructive">*</span>
+                <Label htmlFor="usage_limit">
+                  Usage Limit <span className="text-destructive">*</span>
                 </Label>
                 <Input
-                  id="max_uses"
-                  name="max_uses"
+                  id="usage_limit"
+                  name="usage_limit"
                   type="number"
                   min="1"
-                  value={formData.max_uses}
+                  value={formData.usage_limit}
                   onChange={handleNumberChange}
                 />
-                {formErrors.max_uses && (
-                  <p className="text-sm text-destructive">{formErrors.max_uses}</p>
+                {formErrors.usage_limit && (
+                  <p className="text-sm text-destructive">{formErrors.usage_limit}</p>
                 )}
               </div>
               
               <div className="flex items-center space-x-2 pt-8">
                 <Switch
-                  id="active"
-                  checked={formData.active}
+                  id="is_active"
+                  checked={formData.is_active}
                   onCheckedChange={handleSwitchChange}
                 />
-                <Label htmlFor="active">Active</Label>
+                <Label htmlFor="is_active">Active</Label>
               </div>
             </div>
             
@@ -556,33 +598,33 @@ const DiscountsTab: React.FC = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="start_date">Start Date</Label>
+                <Label htmlFor="valid_from">Start Date</Label>
                 <Input
-                  id="start_date"
-                  name="start_date"
+                  id="valid_from"
+                  name="valid_from"
                   type="date"
-                  value={formData.start_date}
+                  value={formData.valid_from}
                   onChange={handleInputChange}
                 />
               </div>
               
               <div className="grid gap-2">
-                <Label htmlFor="end_date">End Date</Label>
+                <Label htmlFor="valid_until">End Date</Label>
                 <Input
-                  id="end_date"
-                  name="end_date"
+                  id="valid_until"
+                  name="valid_until"
                   type="date"
-                  value={formData.end_date}
+                  value={formData.valid_until}
                   onChange={handleInputChange}
                 />
-                {formErrors.end_date && (
-                  <p className="text-sm text-destructive">{formErrors.end_date}</p>
+                {formErrors.valid_until && (
+                  <p className="text-sm text-destructive">{formErrors.valid_until}</p>
                 )}
               </div>
             </div>
           </div>
           
-          <DialogFooter>
+          <DialogFooter className="flex-shrink-0">
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               Cancel
             </Button>

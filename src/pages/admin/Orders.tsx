@@ -253,7 +253,7 @@ const OrdersPage = () => {
             userName: customerProfile.name || 'Valued Customer',
             orderId: selectedOrder.id,
             orderStatus: status,
-            orderTotal: `$${parseFloat(selectedOrder.total).toFixed(2)}`,
+            orderTotal: `${parseFloat(selectedOrder.total).toFixed(2)} EGP`,
             orderDate: new Date(selectedOrder.created_at).toLocaleDateString(),
             orderItems: selectedOrderItems,
             // Include shipping and payment information
@@ -261,10 +261,10 @@ const OrdersPage = () => {
             paymentMethod,
             deliverySlot,
             // Include financial details 
-            subtotal: `$${orderSubtotal.toFixed(2)}`,
-            shippingCost: `$${orderShipping.toFixed(2)}`,
-            taxAmount: `$${orderTax.toFixed(2)}`,
-            discountAmount: orderDiscount > 0 ? `-$${orderDiscount.toFixed(2)}` : '$0.00',
+            subtotal: `${orderSubtotal.toFixed(2)} EGP`,
+            shippingCost: `${orderShipping.toFixed(2)} EGP`,
+            taxAmount: `${orderTax.toFixed(2)} EGP`,
+            discountAmount: orderDiscount > 0 ? `-${orderDiscount.toFixed(2)} EGP` : '0.00 EGP',
             customerPhone: selectedOrder.phone_number || customerProfile.phone || 'Not provided',
             domain: currentTenant.domain,
           });
@@ -365,7 +365,7 @@ const OrdersPage = () => {
       id: "total",
       header: "Total",
       accessorKey: "total",
-      cell: ({ row }) => `$${parseFloat(row.original.total).toFixed(2)}`
+      cell: ({ row }) => `${parseFloat(row.original.total).toFixed(2)} EGP`
     },
     {
       id: "actions",
@@ -748,7 +748,7 @@ const OrdersPage = () => {
                         </div>
                         <div className="flex justify-between mt-1">
                           <span className="text-sm text-muted-foreground">Total:</span>
-                          <span className="font-semibold">${parseFloat(selectedOrder.total).toFixed(2)}</span>
+                          <span className="font-semibold">{parseFloat(selectedOrder.total).toFixed(2)} EGP</span>
                         </div>
                       </div>
                     </CardContent>
@@ -885,7 +885,7 @@ const OrdersPage = () => {
                                           <Badge 
                                             variant="outline" 
                                             className="text-xs px-2 py-0.5 bg-background border-border/50 text-green-600 dark:text-green-400">
-                                            +${item.customization.total_customization_cost.toFixed(2)} customization
+                                            +{item.customization.total_customization_cost.toFixed(2)} EGP customization
                                           </Badge>
                                         )}
                                         

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,21 +43,13 @@ const AddressModal: React.FC<AddressModalProps> = ({
       line1: '',
       line2: '',
       city: '',
-      state: '',
-      postalCode: '',
       isDefault: false
     }
   });
   
   const selectedCity = watch('city');
   
-  useEffect(() => {
-    if (open) {
-      loadGovernmentFees();
-    }
-  }, [open]);
-  
-  const loadGovernmentFees = async () => {
+  const loadGovernmentFees = useCallback(async () => {
     try {
       const fees = await getGovernmentShippingFees();
       setGovernmentFees(fees);
@@ -71,7 +63,13 @@ const AddressModal: React.FC<AddressModalProps> = ({
     } finally {
       setIsLoadingGovernments(false);
     }
-  };
+  }, [toast]);
+  
+  useEffect(() => {
+    if (open) {
+      loadGovernmentFees();
+    }
+  }, [open, loadGovernmentFees]);
   
   const onSubmit = async (data: Omit<Address, 'id'>, e?: React.BaseSyntheticEvent) => {
     // Prevent form submission from propagating to parent form
@@ -184,10 +182,22 @@ const AddressModal: React.FC<AddressModalProps> = ({
                     <SelectTrigger className={errors.city ? "border-destructive" : ""}>
                       <SelectValue placeholder="Select a city/government" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-[300px] overflow-y-auto">
                       {governmentFees.map((government) => (
-                        <SelectItem key={government.name} value={government.name}>
-                          {government.name} {government.shipping_fee === 0 && '(Free Shipping)'}
+                        <SelectItem key={government.name} value={government.name} className="py-3">
+                          <div className="flex items-center justify-between w-full">
+                            <span className="font-medium">{government.name}</span>
+                            <span className={`text-sm ml-2 ${
+                              government.shipping_fee === 0 
+                                ? 'text-green-600 font-semibold' 
+                                : 'text-muted-foreground'
+                            }`}>
+                              {government.shipping_fee === 0 
+                                ? 'Free Shipping' 
+                                : `${government.shipping_fee.toFixed(2)} EGP`
+                              }
+                            </span>
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -198,34 +208,11 @@ const AddressModal: React.FC<AddressModalProps> = ({
                 )}
                 {selectedCity && !errors.city && (
                   <p className="text-sm text-muted-foreground">
-                    Shipping fee: ${governmentFees.find(g => g.name === selectedCity)?.shipping_fee.toFixed(2) || '0.00'}
+                    Shipping fee: {governmentFees.find(g => g.name === selectedCity)?.shipping_fee === 0 
+                      ? 'Free' 
+                      : `${governmentFees.find(g => g.name === selectedCity)?.shipping_fee.toFixed(2) || '0.00'} EGP`
+                    }
                   </p>
-                )}
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="state">State *</Label>
-                <Input
-                  id="state"
-                  placeholder="State"
-                  {...register('state', { required: "State is required" })}
-                  className={errors.state ? "border-destructive" : ""}
-                />
-                {errors.state && (
-                  <p className="text-sm text-destructive">{errors.state.message}</p>
-                )}
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="postalCode">Postal Code *</Label>
-                <Input
-                  id="postalCode"
-                  placeholder="Postal code"
-                  {...register('postalCode', { required: "Postal code is required" })}
-                  className={errors.postalCode ? "border-destructive" : ""}
-                />
-                {errors.postalCode && (
-                  <p className="text-sm text-destructive">{errors.postalCode.message}</p>
                 )}
               </div>
             </div>

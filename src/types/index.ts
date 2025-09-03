@@ -60,8 +60,8 @@ export interface Address {
   line1: string;
   line2?: string;
   city: string;
-  state: string;
-  postalCode: string;
+  state?: string;
+  postalCode?: string;
   isDefault: boolean;
 }
 
@@ -81,4 +81,10 @@ export interface DeliverySlot {
   time_slot: string;
   available: boolean;
   tenant_id: string;
+}
+
+export interface UserMetadata {
+  points?: number;
+  redeemedPoints?: number;
+  [key: string]: any; // Allow for future metadata fields
 }

@@ -88,7 +88,7 @@ export const TopSellingProducts: React.FC<TopSellingProductsProps> = ({ products
                   <span className="text-xs text-muted-foreground">units</span>
                 </div>
                 {product.price && (
-                  <span className="text-xs font-medium">${product.price.toFixed(2)}</span>
+                  <span className="text-xs font-medium">{product.price.toFixed(2)} EGP</span>
                 )}
               </div>
             </div>

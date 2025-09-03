@@ -40,7 +40,7 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({ data }) => {
                 Revenue
               </span>
               <span className="font-bold">
-                ${payload[0].value.toLocaleString()}
+                {payload[0].value.toLocaleString()} EGP
               </span>
             </div>
           </div>
@@ -79,7 +79,7 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({ data }) => {
                 tickLine={false}
                 axisLine={false}
                 domain={[0, 'dataMax + 1000']}
-                tickFormatter={(value) => `$${value}`}
+                tickFormatter={(value) => `${value} EGP`}
               />
               <Line
                 type="monotone"

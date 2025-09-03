@@ -4,14 +4,18 @@ export interface Discount {
   id: string;
   code: string;
   description: string | null;
-  discount_percent: number;
-  max_uses: number;
-  current_uses: number;
-  active: boolean;
-  start_date: string | null;
-  end_date: string | null;
+  discount_type: 'percentage' | 'fixed';
+  discount_value: number;
+  minimum_order_amount: number;
+  maximum_discount: number | null;
+  usage_limit: number | null;
+  used_count: number;
+  valid_from: string | null;
+  valid_until: string | null;
+  is_active: boolean;
+  tenant_id: string;
   created_at: string;
-  min_order_amount: number;
+  updated_at: string;
 }
 
 /**
@@ -45,9 +49,9 @@ export async function getActiveDiscounts(): Promise<Discount[]> {
     const { data, error } = await supabase
       .from('discounts')
       .select('*')
-      .eq('active', true)
-      .or(`start_date.is.null,start_date.lte.${now}`)
-      .or(`end_date.is.null,end_date.gte.${now}`)
+      .eq('is_active', true)
+      .or(`valid_from.is.null,valid_from.lte.${now}`)
+      .or(`valid_until.is.null,valid_until.gte.${now}`)
       .order('created_at', { ascending: false });
     
     if (error) {
@@ -64,13 +68,13 @@ export async function getActiveDiscounts(): Promise<Discount[]> {
 /**
  * Create a new discount code
  */
-export async function createDiscount(discount: Omit<Discount, 'id' | 'created_at' | 'current_uses'>): Promise<Discount | null> {
+export async function createDiscount(discount: Omit<Discount, 'id' | 'created_at' | 'updated_at' | 'used_count'>): Promise<Discount | null> {
   try {
     const { data, error } = await supabase
       .from('discounts')
       .insert({
         ...discount,
-        current_uses: 0,
+        used_count: 0,
       })
       .select()
       .single();
@@ -155,14 +159,14 @@ export async function validateDiscount(code: string, orderAmount: number = 0): P
     console.log('Found discount:', discount);
 
     // Check if the discount is active
-    if (!discount.active) {
+    if (!discount.is_active) {
       console.log('Discount code is inactive:', code);
       return null;
     }
     
     // Check date constraints - use proper date formatting
-    if (discount.start_date) {
-      const startDate = new Date(discount.start_date);
+    if (discount.valid_from) {
+      const startDate = new Date(discount.valid_from);
       const currentDate = new Date();
       
       // Set start date to beginning of day to avoid time comparison issues
@@ -174,8 +178,8 @@ export async function validateDiscount(code: string, orderAmount: number = 0): P
       }
     }
     
-    if (discount.end_date) {
-      const endDate = new Date(discount.end_date);
+    if (discount.valid_until) {
+      const endDate = new Date(discount.valid_until);
       const currentDate = new Date();
       
       // Set end date to end of day to ensure the entire end date is included
@@ -188,14 +192,14 @@ export async function validateDiscount(code: string, orderAmount: number = 0): P
     }
     
     // Check if discount has reached max uses
-    if (discount.max_uses > 0 && discount.current_uses >= discount.max_uses) {
+    if (discount.usage_limit && discount.usage_limit > 0 && discount.used_count >= discount.usage_limit) {
       console.log('Discount code has reached maximum uses:', code);
       return null;
     }
     
     // Check minimum order amount
-    if (discount.min_order_amount > 0 && discount.min_order_amount > orderAmount) {
-      console.log(`Order amount ${orderAmount} is less than minimum required ${discount.min_order_amount}`);
+    if (discount.minimum_order_amount > 0 && discount.minimum_order_amount > orderAmount) {
+      console.log(`Order amount ${orderAmount} is less than minimum required ${discount.minimum_order_amount}`);
       return null;
     }
     
@@ -215,7 +219,7 @@ export async function incrementDiscountUsage(id: string): Promise<boolean> {
     // First get the current discount to check if it can still be used
     const { data, error } = await supabase
       .from('discounts')
-      .select('current_uses, max_uses')
+      .select('used_count, usage_limit')
       .eq('id', id);
     
     if (error || !data || data.length === 0) {
@@ -226,7 +230,7 @@ export async function incrementDiscountUsage(id: string): Promise<boolean> {
     const discount = data[0];
     
     // Check if discount has reached max uses
-    if (discount.current_uses >= discount.max_uses) {
+    if (discount.usage_limit && discount.used_count >= discount.usage_limit) {
       console.error('Discount has already reached maximum uses');
       return false;
     }
@@ -234,7 +238,7 @@ export async function incrementDiscountUsage(id: string): Promise<boolean> {
     // Increment the usage counter
     const { error: updateError } = await supabase
       .from('discounts')
-      .update({ current_uses: discount.current_uses + 1 })
+      .update({ used_count: discount.used_count + 1 })
       .eq('id', id);
     
     if (updateError) {

@@ -311,7 +311,7 @@ export async function createOrder(orderData: {
     selected_size?: string;
     selected_type?: string;
   }[];
-}) {
+}, pointsRedeemed: boolean = false) {
   try {
     // Extract date and time slot from the composite slot ID (format: "YYYY-MM-DD_TimeSlot")
     let deliverySlot = null;
@@ -370,6 +370,37 @@ export async function createOrder(orderData: {
       .insert(orderItems);
     
     if (itemsError) throw itemsError;
+    
+    // Add points to user if points system is enabled for this tenant and points weren't already redeemed
+    if (!pointsRedeemed) {
+      try {
+        const { addUserPoints } = await import('./profiles.service');
+        const { getProductPoints } = await import('./settings.service');
+        const { getTenantById } = await import('@/lib/tenants');
+        
+        // Get tenant configuration
+        const tenant = getTenantById(tenant_id);
+        
+        if (tenant?.pointsSystem) {
+          // Get points per product from settings
+          const pointsPerProduct = await getProductPoints(tenant_id);
+          
+          // Calculate total points to award (points per product * number of products)
+          const totalProducts = orderData.items.reduce((sum, item) => sum + item.quantity, 0);
+          const pointsToAward = pointsPerProduct * totalProducts;
+          
+          // Add points to user
+          await addUserPoints(orderData.user_id, tenant_id, pointsToAward);
+          
+          console.log(`Awarded ${pointsToAward} points to user ${orderData.user_id} for order ${order.id}`);
+        }
+      } catch (pointsError) {
+        // Don't fail the order creation if points awarding fails
+        console.error('Error awarding points for order:', pointsError);
+      }
+    } else {
+      console.log('Skipping points awarding because points were already redeemed for this order');
+    }
     
     return order;
   } catch (error) {

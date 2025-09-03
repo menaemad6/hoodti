@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import { ChevronDown, ChevronUp, ShoppingBag, Tag, DollarSign, Truck, Calculator, BadgePercent, Loader2, AlertTriangle } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { ChevronDown, ChevronUp, ShoppingBag, Tag, DollarSign, Truck, Calculator, BadgePercent, Loader2, AlertTriangle, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CartItem } from "@/context/CartContext";
@@ -8,6 +9,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "../../lib/utils";
+import { useCurrentTenant } from "@/context/TenantContext";
+import { useAuth } from "@/context/AuthContext";
+import PointsDiscountModal from "./PointsDiscountModal";
+import { getUserPoints } from "@/integrations/supabase/profiles.service";
+import { getProductPoints } from "@/integrations/supabase/settings.service";
 
 interface OrderSummaryProps {
   items: CartItem[];
@@ -17,7 +23,8 @@ interface OrderSummaryProps {
   tax: number;
   discount?: number;
   total: number;
-  onApplyPromo?: (code: string, discountPercent: number, discountId: string) => void;
+  onApplyPromo?: (code: string, discountValue: number, discountType: 'percentage' | 'fixed', discountId: string) => void;
+  onApplyPointsDiscount?: (discountAmount: number, pointsUsed: number) => void;
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({
@@ -29,13 +36,31 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   discount = 0,
   total,
   onApplyPromo,
+  onApplyPointsDiscount,
 }) => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const currentTenant = useCurrentTenant();
   const [promoCode, setPromoCode] = useState("");
   const [isExpanded, setIsExpanded] = useState(true);
   const [isPromoApplied, setIsPromoApplied] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [isPointsModalOpen, setIsPointsModalOpen] = useState(false);
+  const [pointsDiscount, setPointsDiscount] = useState({ amount: 0, pointsUsed: 0 });
+
+  // Load points discount from session storage on component mount
+  useEffect(() => {
+    const savedPointsDiscount = sessionStorage.getItem('pointsDiscountInfo');
+    if (savedPointsDiscount) {
+      try {
+        const parsed = JSON.parse(savedPointsDiscount);
+        setPointsDiscount(parsed);
+      } catch (error) {
+        console.error('Error parsing saved points discount:', error);
+      }
+    }
+  }, []);
 
   const handleApplyPromo = async () => {
     if (!promoCode.trim() || isPromoApplied || !onApplyPromo) return;
@@ -46,7 +71,8 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
     try {
       // Try to get the discount data first to check if it exists
       const { data, error } = await supabase
-        .from('discounts')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .from('discounts' as any)
         .select('*')
         .eq('code', promoCode.trim().toUpperCase());
       
@@ -62,12 +88,13 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       
       if (!discount) {
         // The discount exists but couldn't be applied - provide more specific error
-        const foundDiscount = data[0];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const foundDiscount = data[0] as any;
         
-        if (!foundDiscount.active) {
+        if (!foundDiscount.is_active) {
           setValidationError("This discount code is inactive.");
-        } else if (foundDiscount.start_date) {
-          const startDate = new Date(foundDiscount.start_date);
+        } else if (foundDiscount.valid_from) {
+          const startDate = new Date(foundDiscount.valid_from);
           const currentDate = new Date();
           startDate.setHours(0, 0, 0, 0);
           
@@ -75,8 +102,8 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
             setValidationError(`This discount code is not active yet. It starts on ${startDate.toLocaleDateString()}.`);
             return;
           }
-        } else if (foundDiscount.end_date) {
-          const endDate = new Date(foundDiscount.end_date);
+        } else if (foundDiscount.valid_until) {
+          const endDate = new Date(foundDiscount.valid_until);
           const currentDate = new Date();
           endDate.setHours(23, 59, 59, 999);
           
@@ -84,10 +111,10 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
             setValidationError(`This discount code expired on ${endDate.toLocaleDateString()}.`);
             return;
           }
-        } else if (foundDiscount.max_uses > 0 && foundDiscount.current_uses >= foundDiscount.max_uses) {
+        } else if (foundDiscount.usage_limit && foundDiscount.usage_limit > 0 && foundDiscount.used_count >= foundDiscount.usage_limit) {
           setValidationError("This discount code has reached its maximum usage limit.");
-        } else if (foundDiscount.min_order_amount > 0 && subtotal < foundDiscount.min_order_amount) {
-          setValidationError(`This discount requires a minimum order of $${foundDiscount.min_order_amount.toFixed(2)}.`);
+        } else if (foundDiscount.minimum_order_amount > 0 && subtotal < foundDiscount.minimum_order_amount) {
+          setValidationError(`This discount requires a minimum order of $${foundDiscount.minimum_order_amount.toFixed(2)}.`);
         } else {
           setValidationError("This discount code cannot be applied to your order.");
         }
@@ -97,14 +124,15 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       // Call the parent component's handler with discount info
       onApplyPromo(
         discount.code, 
-        discount.discount_percent, 
+        discount.discount_value, 
+        discount.discount_type,
         discount.id
       );
       
       setIsPromoApplied(true);
       toast({
         title: "Discount applied!",
-        description: `${discount.discount_percent}% discount has been applied to your order.`,
+        description: `${discount.discount_type === 'percentage' ? discount.discount_value + '%' : '$' + discount.discount_value} discount has been applied to your order.`,
       });
     } catch (error) {
       console.error("Error validating discount:", error);
@@ -114,8 +142,33 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
     }
   };
 
+  const handleApplyPointsDiscount = (discountAmount: number, pointsUsed: number) => {
+    setPointsDiscount({ amount: discountAmount, pointsUsed });
+    
+    // Store the points discount in session storage
+    const pointsDiscountInfo = {
+      amount: discountAmount,
+      pointsUsed: pointsUsed
+    };
+    sessionStorage.setItem('pointsDiscountInfo', JSON.stringify(pointsDiscountInfo));
+    console.log('Saved points discount to session storage:', pointsDiscountInfo);
+    
+    // Call external handler if provided (for checkout page)
+    if (onApplyPointsDiscount) {
+      onApplyPointsDiscount(discountAmount, pointsUsed);
+    }
+  };
+
+  // Function to clear points discount (can be called externally)
+  const clearPointsDiscount = () => {
+    setPointsDiscount({ amount: 0, pointsUsed: 0 });
+    sessionStorage.removeItem('pointsDiscountInfo');
+    console.log('Cleared points discount from OrderSummary');
+  };
+
   return (
-    <div className="animate-fade-in p-3 sm:p-4">
+    <>
+      <div className="animate-fade-in p-3 sm:p-4">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-base sm:text-lg font-semibold flex items-center">
           <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
@@ -236,6 +289,28 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           </div>
         )}
         
+                 {/* Points Discount Section - Only show if points system is enabled */}
+         {currentTenant?.pointsSystem && (
+           <div className="space-y-2 mb-3 sm:mb-4">
+             <div className="flex space-x-1 sm:space-x-2">
+               <Button 
+                 variant="outline" 
+                 onClick={() => setIsPointsModalOpen(true)}
+                 className="rounded-full whitespace-nowrap text-xs sm:text-sm h-8 sm:h-10 px-2 sm:px-3 flex-1"
+               >
+                 <Star className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                 Use Points
+               </Button>
+             </div>
+             
+             {pointsDiscount.amount > 0 && (
+               <p className="text-xs sm:text-sm text-green-600 animate-fade-in">
+                 Points discount applied! You saved {formatPrice(pointsDiscount.amount)} using {pointsDiscount.pointsUsed} points.
+               </p>
+             )}
+           </div>
+         )}
+        
         <div className="space-y-2 sm:space-y-3 text-sm sm:text-base">
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground flex items-center">
@@ -269,19 +344,41 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
             <div className="flex justify-between items-center text-green-600">
               <span className="flex items-center">
                 <BadgePercent className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                Discount
+                Promo Discount
               </span>
               <span>-{formatPrice(discount)}</span>
             </div>
           )}
           
+          {pointsDiscount.amount > 0 && (
+            <div className="flex justify-between items-center text-yellow-600">
+              <span className="flex items-center">
+                <Star className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                Points Discount
+              </span>
+              <span>-{formatPrice(pointsDiscount.amount)}</span>
+            </div>
+          )}
+          
           <div className="border-t border-border pt-2 sm:pt-3 flex justify-between font-semibold">
             <span>Total</span>
-            <span>{formatPrice(subtotal + (shipping_fee || shipping) + tax - discount)}</span>
+            <span>{formatPrice(subtotal + (shipping_fee || shipping) + tax - discount - pointsDiscount.amount)}</span>
           </div>
         </div>
       </div>
-    </div>
+      </div>
+      
+      {/* Points Discount Modal - Rendered as Portal */}
+      {typeof document !== 'undefined' && createPortal(
+        <PointsDiscountModal
+          isOpen={isPointsModalOpen}
+          onClose={() => setIsPointsModalOpen(false)}
+          onApplyDiscount={handleApplyPointsDiscount}
+          subtotal={subtotal}
+        />,
+        document.body
+      )}
+    </>
   );
 };
 

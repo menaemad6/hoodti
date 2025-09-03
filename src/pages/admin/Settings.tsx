@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import AdminLayout from "@/components/admin/Layout";
 import { Button } from "@/components/ui/button";
 import GlassCard from "@/components/ui/glass-card";
@@ -31,7 +31,8 @@ import {
   Plus,
   Trash2,
   Edit,
-  Palette
+  Palette,
+  Star
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,6 +48,8 @@ import {
   updateGovernmentShippingFees,
   getDeliveryDelay,
   updateDeliveryDelay,
+  getProductPoints,
+  updateProductPoints,
   GovernmentShippingFee 
 } from "@/integrations/supabase/settings.service";
 import Spinner from "@/components/ui/spinner";
@@ -71,6 +74,8 @@ const SettingsPage = () => {
   const [editingGovernment, setEditingGovernment] = useState<string | null>(null);
   const [newGovernmentName, setNewGovernmentName] = useState<string>('');
   const [newGovernmentFee, setNewGovernmentFee] = useState<string>('');
+  const [productPoints, setProductPoints] = useState<string>('');
+  const [isSavingProductPoints, setIsSavingProductPoints] = useState(false);
   
   // Validate active tab is available
   useEffect(() => {
@@ -82,20 +87,17 @@ const SettingsPage = () => {
       availableTabs.push("customizations");
     }
     
+    // Add loyalty points tab only if enabled in tenant settings
+    if (currentTenant.pointsSystem) {
+      availableTabs.push("loyalty");
+    }
+    
     if (!availableTabs.includes(activeTab)) {
       setActiveTab("discounts");
     }
-  }, [activeTab, currentTenant.customization?.enabled]);
+  }, [activeTab, currentTenant.customization?.enabled, currentTenant.pointsSystem]);
   
-  useEffect(() => {
-    // Load settings when component mounts or shipping tab is activated
-    if (activeTab === "shipping") {
-      loadSettings();
-      loadGovernmentFees();
-    }
-  }, [activeTab]);
-  
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     setIsLoading(true);
     try {
       const settings = await getSettings(currentTenant.id);
@@ -141,9 +143,9 @@ const SettingsPage = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentTenant.id, toast]);
 
-  const loadGovernmentFees = async () => {
+  const loadGovernmentFees = useCallback(async () => {
     try {
       const fees = await getGovernmentShippingFees(currentTenant.id);
       setGovernmentFees(fees || []);
@@ -155,7 +157,33 @@ const SettingsPage = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [currentTenant.id, toast]);
+
+  const loadProductPoints = useCallback(async () => {
+    try {
+      const points = await getProductPoints(currentTenant.id);
+      setProductPoints(points.toString());
+    } catch (error) {
+      console.error('Error loading product points:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load product points",
+        variant: "destructive",
+      });
+    }
+  }, [currentTenant.id, toast]);
+
+  useEffect(() => {
+    // Load settings when component mounts or shipping tab is activated
+    if (activeTab === "shipping") {
+      loadSettings();
+      loadGovernmentFees();
+    }
+    // Load product points when loyalty tab is activated
+    if (activeTab === "loyalty") {
+      loadProductPoints();
+    }
+  }, [activeTab, loadSettings, loadGovernmentFees, loadProductPoints]);
   
   const handleSave = () => {
     toast({
@@ -220,7 +248,7 @@ const SettingsPage = () => {
   const handleSaveGovernmentFees = async () => {
     setIsSavingGovernmentFees(true);
     try {
-      const success = await updateGovernmentShippingFees(currentTenant.id, governmentFees);
+      const success = await updateGovernmentShippingFees(governmentFees, currentTenant.id);
       if (success) {
         toast({
           title: "Government fees updated",
@@ -393,7 +421,7 @@ const SettingsPage = () => {
         throw new Error("Invalid number format or negative value");
       }
       
-      const success = await updateDeliveryDelay(currentTenant.id, delayNumber);
+      const success = await updateDeliveryDelay(delayNumber, currentTenant.id);
       if (success) {
         toast({
           title: "Delivery delay updated",
@@ -423,6 +451,46 @@ const SettingsPage = () => {
       setDeliveryDelay(value);
     }
   };
+
+  const handleSaveProductPoints = async () => {
+    setIsSavingProductPoints(true);
+    try {
+      const pointsNumber = parseInt(productPoints);
+      
+      if (isNaN(pointsNumber) || pointsNumber < 0) {
+        throw new Error("Invalid number format or negative value");
+      }
+      
+      const success = await updateProductPoints(pointsNumber, currentTenant.id);
+      if (success) {
+        toast({
+          title: "Product points updated",
+          description: "Product points have been updated successfully."
+        });
+      } else {
+        throw new Error("Failed to update product points");
+      }
+    } catch (error) {
+      console.error("Error saving product points:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save product points."
+      });
+    } finally {
+      setIsSavingProductPoints(false);
+    }
+  };
+
+  // Handle product points change with input validation
+  const handleProductPointsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    
+    // Accept only non-negative integers
+    if (value === '' || /^\d+$/.test(value)) {
+      setProductPoints(value);
+    }
+  };
   
   const seoConfig = useSEOConfig('adminDashboard');
   
@@ -430,12 +498,12 @@ const SettingsPage = () => {
     <ProtectedRoute requiredRole={["admin", "super_admin"]}>
       <SEOHead {...seoConfig} />
       <AdminLayout>
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4 lg:gap-6">
           <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold">Settings</h1>
+            <h1 className="text-2xl lg:text-3xl font-bold">Settings</h1>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-[250px_1fr] gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[250px_1fr] gap-4 lg:gap-6">
             <div className="lg:border-r lg:pr-6">
               <div className="flex flex-row lg:flex-col h-auto lg:h-full w-full justify-start p-0 bg-transparent space-y-0 lg:space-y-1 space-x-1 lg:space-x-0 overflow-x-auto lg:overflow-x-visible">
                 <button
@@ -479,6 +547,27 @@ const SettingsPage = () => {
                   >
                     <Palette className="h-4 w-4 mr-2" />
                     Customizations <span className="ml-2 text-xs">(Disabled)</span>
+                  </button>
+                )}
+                {currentTenant.pointsSystem ? (
+                  <button
+                    onClick={() => setActiveTab("loyalty")}
+                    className={`flex items-center justify-start w-full px-3 py-1.5 text-sm font-medium rounded-sm ${
+                      activeTab === "loyalty"
+                        ? "bg-muted text-foreground shadow-sm"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    <Star className="h-4 w-4 mr-2" />
+                    Loyalty Points
+                  </button>
+                ) : (
+                  <button
+                    disabled
+                    className="flex items-center justify-start w-full px-3 py-1.5 text-sm font-medium rounded-sm text-muted-foreground opacity-60 cursor-not-allowed"
+                  >
+                    <Star className="h-4 w-4 mr-2" />
+                    Loyalty Points <span className="ml-2 text-xs">(Disabled)</span>
                   </button>
                 )}
                 <button
@@ -526,41 +615,41 @@ const SettingsPage = () => {
               </div>
             </div>
             
-            <div className="space-y-6">
+            <div className="space-y-4 lg:space-y-6">
               {activeTab === "discounts" && (
                 <DiscountsTab />
               )}
               
               {activeTab === "shipping" && (
-                <div className="space-y-6">
+                <div className="space-y-4 lg:space-y-6">
                   <GlassCard>
-                    <CardHeader>
+                    <CardHeader className="p-4 lg:p-6">
                       <CardTitle>General Shipping & Tax Settings</CardTitle>
                       <CardDescription>
                         Configure default shipping fees and tax rates
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-6">
+                    <CardContent className="space-y-4 lg:space-y-6 p-4 lg:p-6">
                       {isLoading ? (
                         <div className="flex justify-center p-4">
                           <Spinner />
                         </div>
                       ) : (
                         <>
-                          <div className="space-y-4">
+                          <div className="space-y-3 lg:space-y-4">
                             <h3 className="text-lg font-medium">Default Shipping Fee</h3>
                             
-                            <div className="grid gap-4 max-w-md">
+                            <div className="grid gap-3 lg:gap-4 max-w-md">
                               <div className="grid gap-2">
                                 <Label htmlFor="shippingFee">
-                                  Standard Shipping Fee ($)
+                                  Standard Shipping Fee (EGP)
                                 </Label>
                                 <div className="relative">
-                                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground text-sm font-medium">EGP</span>
                                   <Input 
                                     id="shippingFee" 
                                     type="text"
-                                    className="pl-10"
+                                    className="pl-12"
                                     placeholder="5.99"
                                     value={shippingFee}
                                     onChange={handleShippingFeeChange}
@@ -574,9 +663,9 @@ const SettingsPage = () => {
                               <div className="flex items-center space-x-2">
                                 <Switch id="freeShippingThreshold" />
                                 <div>
-                                  <Label htmlFor="freeShippingThreshold">Free shipping over $50</Label>
+                                  <Label htmlFor="freeShippingThreshold">Free shipping over 50 EGP</Label>
                                   <p className="text-sm text-muted-foreground">
-                                    Customers will get free shipping on orders over $50
+                                    Customers will get free shipping on orders over 50 EGP
                                   </p>
                                 </div>
                               </div>
@@ -585,10 +674,10 @@ const SettingsPage = () => {
                           
                           <Separator />
                           
-                          <div className="space-y-4">
+                          <div className="space-y-3 lg:space-y-4">
                             <h3 className="text-lg font-medium">Tax Settings</h3>
                             
-                            <div className="grid gap-4 max-w-md">
+                            <div className="grid gap-3 lg:gap-4 max-w-md">
                               <div className="grid gap-2">
                                 <Label htmlFor="taxRate">
                                   Tax Rate (decimal)
@@ -612,10 +701,10 @@ const SettingsPage = () => {
                           
                           <Separator />
                           
-                          <div className="space-y-4">
+                          <div className="space-y-3 lg:space-y-4">
                             <h3 className="text-lg font-medium">Delivery Settings</h3>
                             
-                            <div className="grid gap-4 max-w-md">
+                            <div className="grid gap-3 lg:gap-4 max-w-md">
                               <div className="grid gap-2">
                                 <Label htmlFor="deliveryDelay">
                                   Delivery Delay (days)
@@ -640,7 +729,7 @@ const SettingsPage = () => {
                           
                           <Separator />
                           
-                          <div className="flex justify-end gap-2">
+                          <div className="flex flex-col sm:flex-row justify-end gap-2">
                             <Button onClick={handleSaveDeliveryDelay} disabled={isSavingDeliveryDelay}>
                               {isSavingDeliveryDelay ? <Spinner className="mr-2" size="sm" /> : null}
                               Save Delivery Delay
@@ -656,17 +745,17 @@ const SettingsPage = () => {
                   </GlassCard>
 
                   <GlassCard>
-                    <CardHeader>
+                    <CardHeader className="p-4 lg:p-6">
                       <CardTitle>Government Shipping Fees</CardTitle>
                       <CardDescription>
                         Configure shipping fees for each government/region
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-6">
-                      <div className="space-y-4">
+                    <CardContent className="space-y-4 lg:space-y-6 p-4 lg:p-6">
+                      <div className="space-y-3 lg:space-y-4">
                         <h3 className="text-lg font-medium">Add New Government</h3>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
                           <div className="space-y-2">
                             <Label htmlFor="newGovernmentName">Government Name</Label>
                             <Input
@@ -678,13 +767,13 @@ const SettingsPage = () => {
                           </div>
                           
                           <div className="space-y-2">
-                            <Label htmlFor="newGovernmentFee">Shipping Fee ($)</Label>
+                            <Label htmlFor="newGovernmentFee">Shipping Fee (EGP)</Label>
                             <div className="relative">
-                              <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground text-sm font-medium">EGP</span>
                               <Input
                                 id="newGovernmentFee"
                                 type="text"
-                                className="pl-10"
+                                className="pl-12"
                                 placeholder="0.00"
                                 value={newGovernmentFee}
                                 onChange={handleGovernmentFeeChange}
@@ -692,7 +781,7 @@ const SettingsPage = () => {
                             </div>
                           </div>
                           
-                          <div className="flex items-end">
+                          <div className="flex items-end sm:col-span-2 lg:col-span-1">
                             <Button onClick={handleAddGovernment} className="w-full">
                               <Plus className="h-4 w-4 mr-2" />
                               Add Government
@@ -703,36 +792,36 @@ const SettingsPage = () => {
 
                       <Separator />
 
-                      <div className="space-y-4">
+                      <div className="space-y-3 lg:space-y-4">
                         <h3 className="text-lg font-medium">Current Governments</h3>
                         
                         {governmentFees.length === 0 ? (
                           <p className="text-muted-foreground">No governments configured yet.</p>
                         ) : (
-                          <div className="grid gap-3">
+                          <div className="grid gap-2 lg:gap-3">
                             {governmentFees.map((government) => (
                               <div
                                 key={government.name}
-                                className="flex items-center justify-between p-3 border rounded-lg bg-background/50"
+                                className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border rounded-lg bg-background/50 gap-3 sm:gap-0"
                               >
-                                <div className="flex items-center gap-3 flex-1">
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
                                   <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                                   
                                   {editingGovernment === government.name ? (
                                     // Edit mode - show inputs
-                                    <div className="flex items-center gap-3 flex-1">
-                                      <div className="flex-1">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                                      <div className="flex-1 min-w-0">
                                         <Input
                                           value={newGovernmentName}
                                           onChange={(e) => setNewGovernmentName(e.target.value)}
                                           className="h-8 text-sm"
                                         />
                                       </div>
-                                      <div className="relative w-24">
-                                        <DollarSign className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                                      <div className="relative w-full sm:w-24">
+                                        <span className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground text-xs font-medium">EGP</span>
                                         <Input
                                           type="text"
-                                          className="pl-6 h-8 text-sm"
+                                          className="pl-8 h-8 text-sm"
                                           placeholder="0.00"
                                           value={newGovernmentFee}
                                           onChange={handleGovernmentFeeChange}
@@ -741,16 +830,16 @@ const SettingsPage = () => {
                                     </div>
                                   ) : (
                                     // View mode - show text
-                                    <>
-                                      <span className="font-medium">{government.name}</span>
-                                      <Badge variant={government.shipping_fee === 0 ? "default" : "secondary"}>
-                                        ${government.shipping_fee.toFixed(2)}
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                                      <span className="font-medium truncate">{government.name}</span>
+                                      <Badge variant={government.shipping_fee === 0 ? "default" : "secondary"} className="flex-shrink-0">
+                                        {government.shipping_fee.toFixed(2)} EGP
                                       </Badge>
-                                    </>
+                                    </div>
                                   )}
                                 </div>
                                 
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 flex-shrink-0">
                                   {editingGovernment === government.name ? (
                                     // Edit mode - show save/cancel buttons
                                     <>
@@ -802,7 +891,7 @@ const SettingsPage = () => {
                       <Separator />
 
                       <div className="flex justify-end">
-                        <Button onClick={handleSaveGovernmentFees} disabled={isSavingGovernmentFees}>
+                        <Button onClick={handleSaveGovernmentFees} disabled={isSavingGovernmentFees} className="w-full sm:w-auto">
                           {isSavingGovernmentFees ? <Spinner className="mr-2" size="sm" /> : null}
                           Save Government Fees
                         </Button>
@@ -814,6 +903,56 @@ const SettingsPage = () => {
               
               {activeTab === "customizations" && currentTenant.customization?.enabled && (
                 <CustomizationsTab />
+              )}
+              
+              {activeTab === "loyalty" && currentTenant.pointsSystem && (
+                <div className="space-y-6">
+                  <GlassCard>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Star className="h-5 w-5 text-yellow-500" />
+                        Loyalty Points Settings
+                      </CardTitle>
+                      <CardDescription>
+                        Configure how many points customers earn per product purchase.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="productPoints">Points per Product</Label>
+                        <Input
+                          id="productPoints"
+                          type="number"
+                          min="0"
+                          value={productPoints}
+                          onChange={handleProductPointsChange}
+                          placeholder="Enter points per product"
+                          className="max-w-xs"
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          Number of points awarded to customers for each product they purchase.
+                        </p>
+                      </div>
+                      
+                      <div className="bg-muted/50 p-4 rounded-lg">
+                        <h4 className="font-medium mb-2">How it works:</h4>
+                        <ul className="text-sm text-muted-foreground space-y-1">
+                          <li>• Customers earn points for every product they purchase</li>
+                          <li>• Total points = Points per Product × Number of Products</li>
+                          <li>• Points are automatically added to customer accounts after successful orders</li>
+                          <li>• Customers can view their points in their account page</li>
+                        </ul>
+                      </div>
+
+                      <div className="flex justify-end">
+                        <Button onClick={handleSaveProductPoints} disabled={isSavingProductPoints}>
+                          {isSavingProductPoints ? <Spinner className="mr-2" size="sm" /> : null}
+                          Save Points Settings
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </GlassCard>
+                </div>
               )}
             </div>
           </div>

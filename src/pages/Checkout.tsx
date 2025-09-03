@@ -95,6 +95,7 @@ const Checkout = () => {
   const [discountId, setDiscountId] = useState<string | null>(null);
   const [discountCode, setDiscountCode] = useState<string | null>(null);
   const [discountPercent, setDiscountPercent] = useState<number>(0);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [shippingFee, setShippingFee] = useState<number>(5.99);
@@ -118,11 +119,19 @@ const Checkout = () => {
       try {
         const discountInfo = JSON.parse(savedDiscount);
         setDiscountCode(discountInfo.code);
-        setDiscountPercent(discountInfo.percent);
+        setDiscountPercent(discountInfo.percent || 0);
         setDiscountId(discountInfo.id);
         
         // Recalculate discount amount based on current cart total
-        const discountAmount = cartTotal * (discountInfo.percent / 100);
+        let discountAmount = 0;
+        if (discountInfo.type === 'percentage') {
+          discountAmount = cartTotal * (discountInfo.value / 100);
+        } else if (discountInfo.type === 'fixed') {
+          discountAmount = Math.min(discountInfo.value, cartTotal);
+        } else {
+          // Fallback for old format
+          discountAmount = cartTotal * (discountInfo.percent / 100);
+        }
         setDiscount(discountAmount);
       } catch (error) {
         console.error('Error parsing saved discount:', error);
@@ -298,23 +307,32 @@ const Checkout = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
   
-  const handleApplyPromo = (code: string, percent: number, id: string) => {
+  const handleApplyPromo = (code: string, discountValue: number, discountType: 'percentage' | 'fixed', id: string) => {
     setDiscountCode(code);
-    setDiscountPercent(percent);
+    setDiscountPercent(discountType === 'percentage' ? discountValue : 0);
     setDiscountId(id);
     
-    // Calculate the discount amount based on the percent
-    const discountAmount = cartTotal * (percent / 100);
+    // Calculate the discount amount based on the type
+    let discountAmount = 0;
+    if (discountType === 'percentage') {
+      discountAmount = cartTotal * (discountValue / 100);
+    } else {
+      discountAmount = Math.min(discountValue, cartTotal); // Fixed amount, but can't exceed cart total
+    }
     setDiscount(discountAmount);
     
     // Store the discount in session storage
     sessionStorage.setItem('discountInfo', JSON.stringify({
       code,
-      percent,
+      percent: discountType === 'percentage' ? discountValue : 0,
       id,
-      amount: discountAmount
+      amount: discountAmount,
+      type: discountType,
+      value: discountValue
     }));
   };
+
+
   
   const handleAddAddress = (address: Address) => {
     setAddresses(prev => [...prev, address]);
@@ -449,10 +467,38 @@ const Checkout = () => {
         }
       }
       
+      // Get points discount from session storage to include in order total
+      const savedPointsDiscount = sessionStorage.getItem('pointsDiscountInfo');
+      let pointsDiscountAmount = 0;
+      if (savedPointsDiscount) {
+        try {
+          const parsed = JSON.parse(savedPointsDiscount);
+          pointsDiscountAmount = parsed.amount || 0;
+        } catch (error) {
+          console.error('Error parsing points discount:', error);
+        }
+      }
+      
+      // Calculate final total including points discount
+      const finalTotal = total - pointsDiscountAmount;
+      console.log('Order total calculation:', {
+        originalTotal: total,
+        pointsDiscount: pointsDiscountAmount,
+        finalTotal: finalTotal
+      });
+      
+      // Calculate total discount amount (promo discount + points discount)
+      const totalDiscountAmount = parseFloat(discount.toFixed(2)) + pointsDiscountAmount;
+      console.log('Total discount calculation:', {
+        promoDiscount: parseFloat(discount.toFixed(2)),
+        pointsDiscount: pointsDiscountAmount,
+        totalDiscount: totalDiscountAmount
+      });
+      
       // Create the order
       const orderData: OrderData = {
         user_id: user.id,
-        total,
+        total: finalTotal,
         status: 'pending',
         address_id: selectedAddressId,
         delivery_slot_id: deliverySlotId,
@@ -460,7 +506,7 @@ const Checkout = () => {
         payment_method: formData.paymentMethod,
         order_notes: formData.notes,
         tax: parseFloat(tax.toFixed(2)),
-        discount_amount: parseFloat(discount.toFixed(2)),
+        discount_amount: parseFloat(totalDiscountAmount.toFixed(2)),
         shipping_amount: parseFloat(cityShippingFee.toFixed(2)), // Use city-specific shipping fee
         items: orderItems,
         // Add the new fields to save to the database
@@ -470,8 +516,50 @@ const Checkout = () => {
         tenant_id: currentTenant.id // Add tenant_id from current tenant
       };
       
+      // Handle points redemption BEFORE creating the order
+      console.log('Checking for points discount:', savedPointsDiscount);
+      let pointsRedeemed = false;
+      
+      if (savedPointsDiscount && pointsDiscountAmount > 0) {
+        try {
+          const parsed = JSON.parse(savedPointsDiscount);
+          console.log('Parsed points discount:', parsed);
+          
+          if (parsed.pointsUsed > 0) {
+            const { redeemUserPoints } = await import('@/integrations/supabase/profiles.service');
+            const redemptionResult = await redeemUserPoints(user.id, currentTenant.id, parsed.pointsUsed);
+            console.log(`Redeemed ${parsed.pointsUsed} points for user ${user.id}. Result:`, redemptionResult);
+            
+            if (redemptionResult) {
+              pointsRedeemed = true;
+              // Clear the points discount from session storage after successful redemption
+              sessionStorage.removeItem('pointsDiscountInfo');
+              console.log('Cleared points discount from session storage');
+            } else {
+              console.error('Failed to redeem points, aborting order creation');
+              toast({
+                title: "Error",
+                description: "Failed to redeem points. Please try again.",
+                variant: "destructive",
+              });
+              return;
+            }
+          }
+        } catch (error) {
+          console.error('Error redeeming points:', error);
+          toast({
+            title: "Error",
+            description: "Failed to redeem points. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+      
       // Still increment usage counter if a discount was applied
-      const order = await createOrder(orderData);
+      console.log('Creating order with data:', orderData);
+      const order = await createOrder(orderData, pointsRedeemed);
+      console.log('Order created successfully:', order);
       setCreatedOrderId(order.id);
       
       // Handle customization image uploads for completed orders

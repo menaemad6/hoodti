@@ -194,13 +194,13 @@ const CustomizationsTab = () => {
                 Text Customization Fee
               </Label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground text-sm font-medium">EGP</span>
                 <Input
                   id="textFee"
                   type="number"
                   step="0.01"
                   min="0"
-                  className="pl-10"
+                  className="pl-12"
                   value={customizations.text_fee}
                   onChange={(e) => updateTextFee(e.target.value)}
                 />
@@ -216,13 +216,13 @@ const CustomizationsTab = () => {
                 Image Customization Fee
               </Label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground text-sm font-medium">EGP</span>
                 <Input
                   id="imageFee"
                   type="number"
                   step="0.01"
                   min="0"
-                  className="pl-10"
+                  className="pl-12"
                   value={customizations.image_fee}
                   onChange={(e) => updateImageFee(e.target.value)}
                 />
@@ -268,13 +268,13 @@ const CustomizationsTab = () => {
                       Base Price
                     </Label>
                     <div className="relative">
-                      <DollarSign className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                      <span className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground text-xs font-medium">EGP</span>
                       <Input
                         id={`${productKey}-price`}
                         type="number"
                         step="0.01"
                         min="0"
-                        className="pl-6 h-8 w-24 text-sm"
+                        className="pl-8 h-8 w-24 text-sm"
                         value={product.base_price}
                         onChange={(e) => updateProductPrice(productKey, e.target.value)}
                         disabled={!product.enabled}

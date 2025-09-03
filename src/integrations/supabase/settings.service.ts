@@ -22,6 +22,7 @@ export interface SiteSettings {
   id: string;
   shipping_fee: number;
   tax_rate: number;
+  product_points?: number;
   government_shipping_fees?: GovernmentShippingFee[];
   delivery_delay?: number;
   customizations?: CustomizationSettings;
@@ -516,6 +517,46 @@ export async function updateCustomizationSettings(customizations: CustomizationS
     return true;
   } catch (error) {
     console.error("Error updating customization settings:", error);
+    return false;
+  }
+}
+
+/**
+ * Get product points setting (points awarded per product purchase)
+ */
+export async function getProductPoints(tenantId?: string): Promise<number> {
+  try {
+    const settings = await getSettings(tenantId);
+    return settings?.product_points !== undefined ? settings.product_points : 1; // Default to 1 point per product
+  } catch (error) {
+    console.error("Error getting product points setting:", error);
+    return 1; // Default fallback
+  }
+}
+
+/**
+ * Update product points setting
+ */
+export async function updateProductPoints(productPoints: number, tenantId?: string): Promise<boolean> {
+  try {
+    const settings = await getSettings(tenantId);
+    
+    if (settings) {
+      const { error } = await supabase
+        .from('settings')
+        .update({
+          product_points: productPoints,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', settings.id);
+      
+      if (error) throw error;
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error("Error updating product points setting:", error);
     return false;
   }
 }

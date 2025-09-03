@@ -20,7 +20,7 @@ export const StatCards: React.FC<StatCardsProps> = ({ stats, isLoading }) => {
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
       <DashboardWidget
         title="Total Revenue"
-        value={`$${stats.totalRevenue.toLocaleString()}`}
+        value={`${stats.totalRevenue.toLocaleString()} EGP`}
         description="Total revenue from all orders"
         trend={{ value: 20.1, isPositive: true }}
         icon={DollarSign}

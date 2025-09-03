@@ -169,7 +169,7 @@ const RecentOrders = () => {
             <Badge className={getStatusColor(order.status)}>
               {order.status}
             </Badge>
-            <div className="font-medium whitespace-nowrap">${order.total.toFixed(2)}</div>
+            <div className="font-medium whitespace-nowrap">{order.total.toFixed(2)} EGP</div>
             <Button 
               variant="ghost" 
               size="icon" 

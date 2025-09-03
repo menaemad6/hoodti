@@ -19,8 +19,8 @@ export async function getUserAddresses(userId: string) {
       line1: address.line1,
       line2: address.line2 || undefined,
       city: address.city,
-      state: address.state,
-      postalCode: address.postal_code,
+      state: address.state || undefined,
+      postalCode: address.postal_code || undefined,
       isDefault: address.is_default || false
     })) as Address[];
   } catch (error) {
@@ -52,8 +52,8 @@ export async function addAddress(userId: string, address: Omit<Address, 'id'>) {
         line1: address.line1,
         line2: address.line2 || null,
         city: address.city,
-        state: address.state,
-        postal_code: address.postalCode,
+        state: address.state || null,
+        postal_code: address.postalCode || null,
         is_default: isDefault
       }])
       .select('*')
@@ -67,8 +67,8 @@ export async function addAddress(userId: string, address: Omit<Address, 'id'>) {
       line1: data.line1,
       line2: data.line2 || undefined,
       city: data.city,
-      state: data.state,
-      postalCode: data.postal_code,
+      state: data.state || undefined,
+      postalCode: data.postal_code || undefined,
       isDefault: data.is_default || false
     } as Address;
   } catch (error) {
@@ -95,8 +95,8 @@ export async function updateAddress(addressId: string, address: Omit<Address, 'i
         line1: address.line1,
         line2: address.line2 || null,
         city: address.city,
-        state: address.state,
-        postal_code: address.postalCode,
+        state: address.state || null,
+        postal_code: address.postalCode || null,
         is_default: address.isDefault
       })
       .eq('id', addressId)
@@ -111,8 +111,8 @@ export async function updateAddress(addressId: string, address: Omit<Address, 'i
       line1: data.line1,
       line2: data.line2 || undefined,
       city: data.city,
-      state: data.state,
-      postalCode: data.postal_code,
+      state: data.state || undefined,
+      postalCode: data.postal_code || undefined,
       isDefault: data.is_default || false
     } as Address;
   } catch (error) {

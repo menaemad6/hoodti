@@ -452,3 +452,110 @@ export async function updateProfile(
     return false;
   }
 }
+
+/**
+ * Get user's current points from metadata
+ */
+export async function getUserPoints(userId: string, tenantId: string): Promise<{ points: number; redeemedPoints: number }> {
+  try {
+    const { data: profile, error } = await supabase
+      .from("profiles")
+      .select("metadata")
+      .eq("id", userId)
+      .eq("tenant_id", tenantId)
+      .single();
+
+    if (error) {
+      console.error("Error fetching user points:", error);
+      return { points: 0, redeemedPoints: 0 };
+    }
+
+    const metadata = (profile?.metadata as Record<string, any>) || {};
+    return {
+      points: metadata.points || 0,
+      redeemedPoints: metadata.redeemedPoints || 0
+    };
+  } catch (error) {
+    console.error("Error getting user points:", error);
+    return { points: 0, redeemedPoints: 0 };
+  }
+}
+
+/**
+ * Add points to user's profile metadata
+ */
+export async function addUserPoints(userId: string, tenantId: string, pointsToAdd: number): Promise<boolean> {
+  try {
+    // Get current points
+    const currentPoints = await getUserPoints(userId, tenantId);
+    
+    // Calculate new points
+    const newPoints = currentPoints.points + pointsToAdd;
+    
+    // Update metadata
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        metadata: {
+          points: newPoints,
+          redeemedPoints: currentPoints.redeemedPoints
+        },
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", userId)
+      .eq("tenant_id", tenantId);
+
+    if (error) {
+      console.error("Error adding user points:", error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error adding user points:", error);
+    return false;
+  }
+}
+
+/**
+ * Redeem points from user's profile metadata
+ */
+export async function redeemUserPoints(userId: string, tenantId: string, pointsToRedeem: number): Promise<boolean> {
+  try {
+    // Get current points
+    const currentPoints = await getUserPoints(userId, tenantId);
+    
+    // Check if user has enough points
+    if (currentPoints.points < pointsToRedeem) {
+      console.error("Insufficient points for redemption");
+      return false;
+    }
+    
+    // Calculate new points
+    const newPoints = currentPoints.points - pointsToRedeem;
+    const newRedeemedPoints = currentPoints.redeemedPoints + pointsToRedeem;
+    
+    // Update metadata
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        metadata: {
+          points: newPoints,
+          redeemedPoints: newRedeemedPoints
+        },
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", userId)
+      .eq("tenant_id", tenantId);
+
+    if (error) {
+      console.error("Error redeeming user points:", error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error redeeming user points:", error);
+    return false;
+  }
+}

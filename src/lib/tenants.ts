@@ -60,6 +60,7 @@ export interface Tenant {
     materials?: boolean;
     gender?: boolean;
   };
+  pointsSystem?: boolean;
 }
 
 export const tenants: Tenant[] = [
@@ -97,6 +98,7 @@ export const tenants: Tenant[] = [
       liveChat: false,
       customization: true,
     },
+    pointsSystem: false,
     shipping: {
       freeShippingThreshold: 500,
       defaultShippingFee: 30,
@@ -189,7 +191,8 @@ export const tenants: Tenant[] = [
       sizes: false,
       materials: false,
       gender: false,
-    }
+    },
+    pointsSystem: true,
   },
   {
     id: "diamond",
@@ -225,6 +228,7 @@ export const tenants: Tenant[] = [
       liveChat: false,
       customization: false, // Phone cases don't need clothing customization
     },
+    pointsSystem: false,
     shipping: {
       freeShippingThreshold: 500,
       defaultShippingFee: 30,
@@ -270,6 +274,7 @@ export const tenants: Tenant[] = [
       liveChat: false,
       customization: true,
     },
+    pointsSystem: false,
     shipping: {
       freeShippingThreshold: 300,
       defaultShippingFee: 25,
@@ -329,6 +334,7 @@ export const tenants: Tenant[] = [
       liveChat: true,
       customization: true,
     },
+    pointsSystem: false,
     shipping: {
       freeShippingThreshold: 400,
       defaultShippingFee: 35,

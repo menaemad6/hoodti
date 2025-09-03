@@ -532,7 +532,7 @@ const CustomersPage = () => {
       id: "spent",
       header: "Total Spent",
       accessorKey: "totalSpent",
-      cell: ({ row }) => `$${row.original.totalSpent.toFixed(2)}`
+      cell: ({ row }) => `${row.original.totalSpent.toFixed(2)} EGP`
     },
     {
       id: "joined",
@@ -663,7 +663,7 @@ const CustomersPage = () => {
                           <p className="text-xs text-muted-foreground mt-1">Orders</p>
                         </div>
                         <div className="bg-muted/30 p-4 rounded-lg text-center">
-                          <p className="text-3xl font-bold text-primary">${selectedCustomer.totalSpent.toFixed(2)}</p>
+                          <p className="text-3xl font-bold text-primary">{selectedCustomer.totalSpent.toFixed(2)} EGP</p>
                           <p className="text-xs text-muted-foreground mt-1">Total Spent</p>
                         </div>
                       </div>
@@ -695,7 +695,7 @@ const CustomersPage = () => {
                             </div>
                             <div className="bg-card px-4 py-2 rounded-lg shadow-sm">
                               <p className="text-sm font-medium flex items-center gap-2">
-                                Total Spent: <span className="font-bold text-primary">${selectedCustomer.totalSpent.toFixed(2)}</span>
+                                Total Spent: <span className="font-bold text-primary">{selectedCustomer.totalSpent.toFixed(2)} EGP</span>
                               </p>
                             </div>
                           </div>
@@ -742,7 +742,7 @@ const CustomersPage = () => {
                                           {order.status}
                                         </Badge>
                                       </div>
-                                      <p className="font-semibold text-primary">${order.total.toFixed(2)}</p>
+                                      <p className="font-semibold text-primary">{order.total.toFixed(2)} EGP</p>
                                     </div>
                                   </div>
                                 </button>
@@ -944,33 +944,33 @@ const CustomersPage = () => {
                         <div className="flex justify-between">
                           <p className="text-sm">Subtotal:</p>
                           <p className="text-sm font-medium">
-                            ${(selectedOrder.total - (selectedOrder.tax || 0) - (selectedOrder.shipping_amount || 0) + (selectedOrder.discount_amount || 0)).toFixed(2)}
+                            {(selectedOrder.total - (selectedOrder.tax || 0) - (selectedOrder.shipping_amount || 0) + (selectedOrder.discount_amount || 0)).toFixed(2)} EGP
                           </p>
                         </div>
                         <div className="flex justify-between">
                           <p className="text-sm">Shipping:</p>
                           <p className="text-sm font-medium">
-                            ${selectedOrder.shipping_amount?.toFixed(2) || "0.00"}
+                            {selectedOrder.shipping_amount?.toFixed(2) || "0.00"} EGP
                           </p>
                         </div>
                         <div className="flex justify-between">
                           <p className="text-sm">Tax:</p>
                           <p className="text-sm font-medium">
-                            ${selectedOrder.tax?.toFixed(2) || "0.00"}
+                            {selectedOrder.tax?.toFixed(2) || "0.00"} EGP
                           </p>
                         </div>
                         {selectedOrder.discount_amount > 0 && (
                           <div className="flex justify-between">
                             <p className="text-sm">Discount:</p>
                             <p className="text-sm font-medium text-green-600">
-                              -${selectedOrder.discount_amount.toFixed(2)}
+                              -{selectedOrder.discount_amount.toFixed(2)} EGP
                             </p>
                           </div>
                         )}
                         <div className="border-t pt-2 mt-2">
                           <div className="flex justify-between">
                             <p className="font-medium">Total:</p>
-                            <p className="font-bold">${selectedOrder.total.toFixed(2)}</p>
+                            <p className="font-bold">{selectedOrder.total.toFixed(2)} EGP</p>
                           </div>
                         </div>
                       </div>

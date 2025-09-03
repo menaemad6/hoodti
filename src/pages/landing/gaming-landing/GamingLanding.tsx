@@ -186,7 +186,7 @@ const Navbar = () => {
   const { isAuthenticated, user } = useAuth();
   const { isAdmin, isSuperAdmin } = useRoleAccess();
 
-  const navItems = ["Games", "Categories", "Story", "About", "Contact"];
+  const navItems = ["Games", "Categories", "Story", "About",];
   const currentTenant = useCurrentTenant();
 
   useEffect(() => {

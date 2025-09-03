@@ -309,7 +309,7 @@ const ReportsPage = () => {
           y={ey}
           textAnchor={textAnchor}
           fill="#333"
-        >{`Value: ${formatPrice(value)}`}</text>
+        >{`Value: ${formatPrice(value)} EGP`}</text>
         <text
           x={ex + (cos >= 0 ? 1 : -1) * 12}
           y={ey}
@@ -575,9 +575,9 @@ const ReportsPage = () => {
                           >
                             <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" />
                             <XAxis dataKey="month" axisLine={false} tickLine={false} />
-                            <YAxis axisLine={false} tickLine={false} width={60} tickFormatter={(value) => `$${value}`} />
+                            <YAxis axisLine={false} tickLine={false} width={60} tickFormatter={(value) => `${value} EGP`} />
                           <Tooltip 
-                            formatter={(value) => [`$${value}`, undefined]}
+                            formatter={(value) => [`${value} EGP`, undefined]}
                             labelFormatter={(label) => `Month: ${label}`}
                               contentStyle={{ 
                                 borderRadius: '8px', 
@@ -625,9 +625,9 @@ const ReportsPage = () => {
                         >
                             <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" />
                             <XAxis dataKey="month" axisLine={false} tickLine={false} />
-                            <YAxis axisLine={false} tickLine={false} width={60} tickFormatter={(value) => `$${value}`} />
+                            <YAxis axisLine={false} tickLine={false} width={60} tickFormatter={(value) => `${value} EGP`} />
                           <Tooltip 
-                            formatter={(value) => [`$${value}`, undefined]}
+                            formatter={(value) => [`${value} EGP`, undefined]}
                             labelFormatter={(label) => `Month: ${label}`}
                               contentStyle={{ 
                                 borderRadius: '8px', 
@@ -705,7 +705,7 @@ const ReportsPage = () => {
                           <XAxis dataKey="month" axisLine={false} tickLine={false} />
                           <YAxis axisLine={false} tickLine={false} width={60} tickFormatter={(value) => `$${value}`} />
                             <Tooltip 
-                              formatter={(value) => [`$${value}`, undefined]}
+                              formatter={(value) => [`${value} EGP`, undefined]}
                               labelFormatter={(label) => `Month: ${label}`}
                             contentStyle={{ 
                               borderRadius: '8px', 
@@ -957,7 +957,7 @@ const ReportsPage = () => {
                                 type="number"
                                 domain={[0, "auto"]}
                                 tickFormatter={(value) =>
-                                  productSortBy === "revenue" ? `$${value}` : `${value}`
+                                  productSortBy === "revenue" ? `${value} EGP` : `${value}`
                                 }
                               />
                           <YAxis 
@@ -971,7 +971,7 @@ const ReportsPage = () => {
                               <Tooltip
                                 formatter={(value, name) => {
                                   if (name === "sales") {
-                                    return [`$${value}`, "Revenue"];
+                                    return [`${value} EGP`, "Revenue"];
                                   }
                                   return [value, "Units Sold"];
                                 }}

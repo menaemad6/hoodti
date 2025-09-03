@@ -32,8 +32,6 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onSubmit, onCancel }
       line1: address?.line1 || '',
       line2: address?.line2 || '',
       city: address?.city || '',
-      state: address?.state || '',
-      postalCode: address?.postalCode || '',
       isDefault: address?.isDefault || false
     }
   });
@@ -123,10 +121,22 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onSubmit, onCancel }
               <SelectTrigger>
                 <SelectValue placeholder="Select a city/government" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-[300px] overflow-y-auto">
                 {governmentFees.map((government) => (
-                  <SelectItem key={government.name} value={government.name}>
-                    {government.name} {government.shipping_fee === 0 && '(Free Shipping)'}
+                  <SelectItem key={government.name} value={government.name} className="py-3">
+                    <div className="flex items-center justify-between w-full">
+                      <span className="font-medium">{government.name}</span>
+                      <span className={`text-sm ml-2 ${
+                        government.shipping_fee === 0 
+                          ? 'text-green-600 font-semibold' 
+                          : 'text-muted-foreground'
+                      }`}>
+                        {government.shipping_fee === 0 
+                          ? 'Free Shipping' 
+                          : `${government.shipping_fee.toFixed(2)} EGP`
+                        }
+                      </span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -137,34 +147,13 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onSubmit, onCancel }
           )}
           {selectedCity && !errors.city && (
             <p className="text-sm text-muted-foreground">
-              Shipping fee: ${governmentFees.find(g => g.name === selectedCity)?.shipping_fee.toFixed(2) || '0.00'}
+              Shipping fee: {governmentFees.find(g => g.name === selectedCity)?.shipping_fee === 0 
+                ? 'Free' 
+                : `${governmentFees.find(g => g.name === selectedCity)?.shipping_fee.toFixed(2) || '0.00'} EGP`
+              }
             </p>
           )}
         </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="state">State</Label>
-          <Input
-            id="state"
-            placeholder="State"
-            {...register('state', { required: 'State is required' })}
-          />
-          {errors.state && (
-            <p className="text-sm text-destructive">{errors.state.message}</p>
-          )}
-        </div>
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="postalCode">Postal Code</Label>
-        <Input
-          id="postalCode"
-          placeholder="Postal code"
-          {...register('postalCode', { required: 'Postal code is required' })}
-        />
-        {errors.postalCode && (
-          <p className="text-sm text-destructive">{errors.postalCode.message}</p>
-        )}
       </div>
       
       <div className="flex items-center space-x-2">

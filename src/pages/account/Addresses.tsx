@@ -71,12 +71,6 @@ const addressSchema = z.object({
   city: z.string().min(2, {
     message: "City must be at least 2 characters.",
   }),
-  state: z.string().min(2, {
-    message: "State must be at least 2 characters.",
-  }),
-  postalCode: z.string().min(5, {
-    message: "Postal code must be at least 5 characters.",
-  }),
   isDefault: z.boolean().default(false),
 });
 
@@ -102,8 +96,6 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onSuccess, onCancel 
       line1: address?.line1 || "",
       line2: address?.line2 || "",
       city: address?.city || "",
-      state: address?.state || "",
-      postalCode: address?.postalCode || "",
       isDefault: address?.isDefault || false,
     },
   });
@@ -153,8 +145,8 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onSuccess, onCancel 
             line1: values.line1,
             line2: values.line2,
             city: values.city,
-            state: values.state,
-            postal_code: values.postalCode,
+            state: null,
+            postal_code: null,
             is_default: values.isDefault
           })
           .eq("id", address.id);
@@ -171,8 +163,8 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onSuccess, onCancel 
           line1: values.line1,
           line2: values.line2,
           city: values.city,
-          state: values.state,
-          postal_code: values.postalCode,
+          state: null,
+          postal_code: null,
           is_default: values.isDefault,
           user_id: userId
         });
@@ -259,10 +251,22 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onSuccess, onCancel 
                       <SelectTrigger>
                         <SelectValue placeholder="Select a city/government" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="max-h-[300px] overflow-y-auto">
                         {governmentFees.map((government) => (
-                          <SelectItem key={government.name} value={government.name}>
-                            {government.name} {government.shipping_fee === 0 && '(Free Shipping)'}
+                          <SelectItem key={government.name} value={government.name} className="py-3">
+                            <div className="flex items-center justify-between w-full">
+                              <span className="font-medium">{government.name}</span>
+                              <span className={`text-sm ml-2 ${
+                                government.shipping_fee === 0 
+                                  ? 'text-green-600 font-semibold' 
+                                  : 'text-muted-foreground'
+                              }`}>
+                                {government.shipping_fee === 0 
+                                  ? 'Free Shipping' 
+                                  : `${government.shipping_fee.toFixed(2)} EGP`
+                                }
+                              </span>
+                            </div>
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -272,38 +276,16 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onSuccess, onCancel 
                 <FormMessage />
                 {selectedCity && (
                   <p className="text-sm text-muted-foreground">
-                    Shipping fee: ${governmentFees.find(g => g.name === selectedCity)?.shipping_fee.toFixed(2) || '0.00'}
+                    Shipping fee: {governmentFees.find(g => g.name === selectedCity)?.shipping_fee === 0 
+                      ? 'Free' 
+                      : `${governmentFees.find(g => g.name === selectedCity)?.shipping_fee.toFixed(2) || '0.00'} EGP`
+                    }
                   </p>
                 )}
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="state"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>State</FormLabel>
-                <FormControl>
-                  <Input placeholder="NY" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="postalCode"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Postal Code</FormLabel>
-                <FormControl>
-                  <Input placeholder="10001" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+
         </div>
         <FormField
           control={form.control}
@@ -411,7 +393,7 @@ const AddressList: React.FC<AddressListProps> = ({
             
             <CardContent>
               <div className="text-sm text-muted-foreground mb-4">
-                {address.city}, {address.state} {address.postalCode}
+                {address.city}{address.state && `, ${address.state}`}{address.postalCode && ` ${address.postalCode}`}
               </div>
               
               <div className="flex space-x-2 justify-end">

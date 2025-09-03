@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Building, CreditCard, Heart, LogOut, Package, User, AlertCircle, Settings, Shield, Bell, MapPin, RefreshCw, ChevronRight, Edit, LifeBuoy } from "lucide-react";
+import { Building, CreditCard, Heart, LogOut, Package, User, AlertCircle, Settings, Shield, Bell, MapPin, RefreshCw, ChevronRight, Edit, LifeBuoy, Star, Gift } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import GlassCard from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
@@ -18,10 +18,15 @@ import { useToast } from "@/hooks/use-toast";
 import SEOHead from "@/components/seo/SEOHead";
 import { useSEOConfig } from "@/lib/seo-config";
 import { stripTenantFromEmail } from "@/lib/utils";
+import { useCurrentTenant } from "@/context/TenantContext";
+import { usePoints } from "@/hooks/usePoints";
+import PointsDisplay from "@/components/ui/points-display";
 
 const Account = () => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
+  const currentTenant = useCurrentTenant();
+  const { points, redeemedPoints, loading: pointsLoading } = usePoints();
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRepairing, setIsRepairing] = useState(false);
@@ -172,7 +177,27 @@ const Account = () => {
                   </Badge>
                 )}
               </div>
-                                      <p className="text-muted-foreground mt-1">{stripTenantFromEmail(user.email)}</p>
+              <p className="text-muted-foreground mt-1">{stripTenantFromEmail(user.email)}</p>
+              
+              {/* Points Display in Header - Only show if enabled for this tenant */}
+              {currentTenant?.pointsSystem && (
+                <div className="mt-3 flex items-center gap-4">
+                  <div className="flex items-center gap-2 bg-yellow-500/10 px-3 py-1.5 rounded-full border border-yellow-500/20">
+                    <Star className="h-4 w-4 text-yellow-500" />
+                    <span className="text-sm font-medium text-yellow-600 dark:text-yellow-400">
+                      {points} Points
+                    </span>
+                  </div>
+                  {redeemedPoints > 0 && (
+                    <div className="flex items-center gap-2 bg-green-500/10 px-3 py-1.5 rounded-full border border-green-500/20">
+                      <Gift className="h-4 w-4 text-green-500" />
+                      <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                        {redeemedPoints} Used
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
               
               {showProfileAlert && (
                 <div className="mt-4">
@@ -439,6 +464,88 @@ const Account = () => {
             </div>
           </GlassCard>
         </div>
+
+        {/* Loyalty Points Section - Only show if enabled for this tenant */}
+        {currentTenant?.pointsSystem && (
+          <div className="mt-8">
+            <GlassCard className="overflow-hidden border-none bg-gradient-to-br from-background/80 to-background/40 shadow-sm rounded-xl">
+              <div className="p-5 border-b bg-muted/30">
+                <h2 className="text-xl font-semibold flex items-center">
+                  <Star className="h-5 w-5 mr-2 text-yellow-500" />
+                  Loyalty Points
+                </h2>
+              </div>
+              
+              <div className="p-5">
+                <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                  {/* Available Points */}
+                  <div className="space-y-4">
+                    <div className="bg-gradient-to-r from-yellow-500/10 to-transparent p-4 rounded-lg border border-yellow-500/20">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-sm font-medium text-muted-foreground">Available Points</h3>
+                        <Star className="h-4 w-4 text-yellow-500" />
+                      </div>
+                      <p className="font-bold text-2xl text-yellow-600 dark:text-yellow-400">{points}</p>
+                      <p className="text-xs text-muted-foreground">Points ready to use</p>
+                    </div>
+                  </div>
+                  
+                  {/* Redeemed Points */}
+                  <div className="space-y-4">
+                    <div className="bg-gradient-to-r from-green-500/10 to-transparent p-4 rounded-lg border border-green-500/20">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-sm font-medium text-muted-foreground">Redeemed Points</h3>
+                        <Gift className="h-4 w-4 text-green-500" />
+                      </div>
+                      <p className="font-bold text-2xl text-green-600 dark:text-green-400">{redeemedPoints}</p>
+                      <p className="text-xs text-muted-foreground">Points used for discounts</p>
+                    </div>
+                  </div>
+                  
+                  {/* Points Info */}
+                  <div className="sm:col-span-2 lg:col-span-1">
+                    <div className="bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 p-5 rounded-lg border border-border/30 h-full">
+                      <div className="flex items-center space-x-3 mb-4">
+                        <Gift className="h-5 w-5 text-primary/70" />
+                        <h3 className="font-medium">How Points Work</h3>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <div className="flex items-start space-x-3">
+                          <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                          <p className="text-sm text-muted-foreground">
+                            Earn points for every product you purchase
+                          </p>
+                        </div>
+                        <div className="flex items-start space-x-3">
+                          <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                          <p className="text-sm text-muted-foreground">
+                            Use points to get discounts at checkout
+                          </p>
+                        </div>
+                        <div className="flex items-start space-x-3">
+                          <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                          <p className="text-sm text-muted-foreground">
+                            Points never expire and are automatically added
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {points > 0 && (
+                        <div className="mt-4 pt-4 border-t border-border/30">
+                          <div className="flex items-center gap-2 text-sm text-primary">
+                            <Gift className="h-4 w-4" />
+                            <span className="font-medium">You have {points} points available for discounts!</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </GlassCard>
+          </div>
+        )}
       </div>
       
       <EditProfileModal
