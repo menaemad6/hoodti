@@ -3,6 +3,7 @@ import { format, addDays, startOfToday } from "date-fns";
 import { Clock, Info } from "lucide-react";
 import GlassCard from "@/components/ui/glass-card";
 import { supabase } from "@/integrations/supabase/client";
+import { DeliverySlotRow } from "@/integrations/supabase/types.service";
 import { getDeliveryDelay } from "@/integrations/supabase/settings.service";
 import Spinner from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
@@ -28,11 +29,13 @@ interface DeliverySlotSelectorProps {
   selectedSlotId: string;
   onSelectSlot: (slotId: string) => void;
   availableSlots?: any[];
+  onShouldShow?: (shouldShow: boolean) => void;
 }
 
 const DeliverySlotSelector: React.FC<DeliverySlotSelectorProps> = ({
   selectedSlotId,
   onSelectSlot,
+  onShouldShow,
 }) => {
   const currentTenant = useCurrentTenant();
   const [loading, setLoading] = useState(true);
@@ -59,38 +62,45 @@ const DeliverySlotSelector: React.FC<DeliverySlotSelectorProps> = ({
 
       if (error) throw error;
 
-      // Generate the next 7 days of slots starting from the delay date
+      // Only generate slots if there are actual time slots configured
       const slots: DaySlots[] = [];
-      const today = startOfToday();
-      const startDate = addDays(today, delay); // Start from delay days from today
+      
+      if (timeSlots && timeSlots.length > 0) {
+        const today = startOfToday();
+        const startDate = addDays(today, delay); // Start from delay days from today
 
-      for (let i = 0; i < 7; i++) {
-        const date = addDays(startDate, i);
-        const dateStr = format(date, "yyyy-MM-dd");
-        const formattedDate = format(date, "EEEE, MMMM d");
+        for (let i = 0; i < 7; i++) {
+          const date = addDays(startDate, i);
+          const dateStr = format(date, "yyyy-MM-dd");
+          const formattedDate = format(date, "EEEE, MMMM d");
 
-        // Add all available time slots for this day
-        const daySlots = timeSlots.map(slot => ({
-          id: `${dateStr}_${slot.time_slot}`,
-          time: slot.time_slot,
-          available: slot.available
-        }));
+          // Add all available time slots for this day
+          const daySlots = timeSlots.map(slot => ({
+            id: `${dateStr}_${slot.time_slot}`,
+            time: slot.time_slot,
+            available: slot.available
+          }));
 
-        // Sort time slots by their start time
-        daySlots.sort((a, b) => {
-          const timeA = a.time.split(" - ")[0];
-          const timeB = b.time.split(" - ")[0];
-          return timeA.localeCompare(timeB);
-        });
+          // Sort time slots by their start time
+          daySlots.sort((a, b) => {
+            const timeA = a.time.split(" - ")[0];
+            const timeB = b.time.split(" - ")[0];
+            return timeA.localeCompare(timeB);
+          });
 
-        slots.push({
-          date,
-          formattedDate,
-          slots: daySlots
-        });
+          slots.push({
+            date,
+            formattedDate,
+            slots: daySlots
+          });
+        }
       }
 
       setWeeklySlots(slots);
+
+      // Notify parent whether this section should be shown
+      const shouldShow = slots.length > 0 || delay > 0;
+      onShouldShow?.(shouldShow);
 
       // Auto-select first available slot if none selected
       if (!selectedSlotId && slots.length > 0 && slots[0].slots.length > 0) {
@@ -117,6 +127,11 @@ const DeliverySlotSelector: React.FC<DeliverySlotSelectorProps> = ({
     );
   }
 
+  // If no slots and no delivery delay, don't render anything
+  if (weeklySlots.length === 0 && deliveryDelay === 0) {
+    return null;
+  }
+
   return (
     <div className="space-y-4 animate-fade-in">
       <div className="flex items-center justify-between">
@@ -141,9 +156,26 @@ const DeliverySlotSelector: React.FC<DeliverySlotSelectorProps> = ({
       )}
       
       {weeklySlots.length === 0 ? (
-        <GlassCard className="p-4 text-center">
-          <p className="text-muted-foreground">No delivery slots available.</p>
-        </GlassCard>
+        deliveryDelay > 0 ? (
+          <GlassCard className="p-4">
+            <div className="text-center space-y-3">
+              <div className="flex items-center justify-center gap-2">
+                <Clock className="h-5 w-5 text-primary" />
+                <span className="font-medium">Standard Delivery</span>
+              </div>
+              <p className="text-muted-foreground text-sm">
+                Your order will be delivered within {deliveryDelay === 1 ? '1 day' : `${deliveryDelay} days`} of processing.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Earliest delivery: {format(addDays(startOfToday(), deliveryDelay), "EEEE, MMMM d")}
+              </p>
+            </div>
+          </GlassCard>
+        ) : (
+          <GlassCard className="p-4 text-center">
+            <p className="text-muted-foreground">No delivery options available.</p>
+          </GlassCard>
+        )
       ) : (
         <div className="space-y-4">
           {weeklySlots.map((day) => (

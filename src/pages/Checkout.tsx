@@ -21,6 +21,8 @@ import { getShippingFee, getTaxRate, getShippingFeeForGovernment } from "@/integ
 import { checkProductStock, updateProductStock } from "@/integrations/supabase/products.service";
 import Spinner from "@/components/ui/spinner";
 import { getAvailableDeliverySlots } from "@/integrations/supabase/delivery.service";
+import { getDeliveryDelay } from "@/integrations/supabase/settings.service";
+import { addDays, format } from "date-fns";
 import { useCurrentTenant } from "@/context/TenantContext";
 import { incrementDiscountUsage } from "@/integrations/supabase/discounts.service";
 import { sendOrderConfirmationEmail } from "@/integrations/email.service";
@@ -107,6 +109,7 @@ const Checkout = () => {
   const seoConfig = useSEOConfig('checkout');
   const [policyOpen, setPolicyOpen] = useState(false);
   const [policyTab, setPolicyTab] = useState<"shipping" | "terms">("terms");
+  const [showDeliverySection, setShowDeliverySection] = useState(true);
 
   // Load discount from session storage
   useEffect(() => {
@@ -333,7 +336,8 @@ const Checkout = () => {
       return;
     }
     
-    if (!selectedSlotId) {
+    // Only require delivery slot if there are actual delivery slots available
+    if (!selectedSlotId && availableSlots.length > 0) {
       toast({
         title: "Delivery slot required",
         description: "Please select a delivery time slot",
@@ -366,7 +370,8 @@ const Checkout = () => {
       return;
     }
     
-    if (!selectedSlotId) {
+    // Only require delivery slot if there are actual delivery slots available
+    if (!selectedSlotId && availableSlots.length > 0) {
       toast({
         title: "Delivery slot required",
         description: "Please select a delivery time slot",
@@ -427,13 +432,30 @@ const Checkout = () => {
       // Create the full name from first and last name
       const fullName = `${formData.firstName} ${formData.lastName}`.trim();
       
+      // Handle delivery slot/delay logic
+      let deliverySlotId = selectedSlotId;
+      if (!selectedSlotId && availableSlots.length === 0) {
+        // No delivery slots configured, use delivery delay
+        const deliveryDelay = await getDeliveryDelay(currentTenant.id);
+        if (deliveryDelay > 0) {
+          const deliveryDate = addDays(new Date(), deliveryDelay);
+          const dateStr = format(deliveryDate, "yyyy-MM-dd");
+          deliverySlotId = `${dateStr}_Standard Delivery`;
+        } else {
+          // If no delivery delay is configured, use current date + 1 day as fallback
+          const deliveryDate = addDays(new Date(), 1);
+          const dateStr = format(deliveryDate, "yyyy-MM-dd");
+          deliverySlotId = `${dateStr}_Standard Delivery`;
+        }
+      }
+      
       // Create the order
       const orderData: OrderData = {
         user_id: user.id,
         total,
         status: 'pending',
         address_id: selectedAddressId,
-        delivery_slot_id: selectedSlotId,
+        delivery_slot_id: deliverySlotId,
         shipping_address: shippingAddressText,
         payment_method: formData.paymentMethod,
         order_notes: formData.notes,
@@ -689,13 +711,16 @@ const Checkout = () => {
                       />
                     </GlassCard>
                     
-                    <GlassCard className="mb-8 p-4 sm:p-6 animate-fade-in">
-                      <DeliverySlotSelector
-                        selectedSlotId={selectedSlotId}
-                        onSelectSlot={setSelectedSlotId}
-                        availableSlots={availableSlots}
-                      />
-                    </GlassCard>
+                    {showDeliverySection && (
+                      <GlassCard className="mb-8 p-4 sm:p-6 animate-fade-in">
+                        <DeliverySlotSelector
+                          selectedSlotId={selectedSlotId}
+                          onSelectSlot={setSelectedSlotId}
+                          availableSlots={availableSlots}
+                          onShouldShow={setShowDeliverySection}
+                        />
+                      </GlassCard>
+                    )}
                     
                     <Button 
                       type="button"

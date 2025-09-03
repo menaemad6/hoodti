@@ -18,7 +18,39 @@ export default {
 			}
 		},
 		extend: {
+			// Gaming Landing:
+			fontFamily: {
+				zentry: ["zentry", "sans-serif"],
+				general: ["general", "sans-serif"],
+				"circular-web": ["circular-web", "sans-serif"],
+				"robert-medium": ["robert-medium", "sans-serif"],
+				"robert-regular": ["robert-regular", "sans-serif"],
+			  },
+			// Gaming Landing:
+
 			colors: {
+				// Gaming Landing:
+				blue_gaming: {
+					50: "#DFDFF0",
+					75: "#dfdff2",
+					100: "#F0F2FA",
+					200: "#010101",
+					300: "#4FB7DD",
+				  },
+				  violet_gaming: {
+					300: "#5724ff",
+				  },
+				  yellow_gaming: {
+					100: "#8e983f",
+					300: "#edff66",
+				  },
+				  creamy_gaming: {
+					100: '#DFDFF0'
+				  },
+
+				  ///////////////////////////
+
+
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',

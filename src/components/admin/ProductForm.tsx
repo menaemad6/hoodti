@@ -765,6 +765,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
               <Separator className="mb-4" />
               
               {/* Product Type MultiSelect */}
+              {currentTenant.productsOptions?.types !== false && (
               <div className="space-y-2 mb-4">
                 <Label htmlFor="type">Product Type Sizing Options</Label>
                 <MultiSelect
@@ -776,63 +777,72 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
                   sizingOptions={SIZING_OPTIONS}
                 />
               </div>
+              )}
 
               <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                {/* Sizes MultiSelect grouped by type */}
-                <div className="space-y-2 mb-4">
-                  <Label htmlFor="size">Available Sizes</Label>
-                  {selectedTypes.length === 0 ? (
-                    <div className="text-muted-foreground text-xs">Select product types to see size options.</div>
-                  ) : (
-                    selectedTypes.map((type) => {
-                      const sizing = SIZING_OPTIONS.find(opt => opt.type === type) || SIZING_OPTIONS.find(opt => opt.type === 'Other');
-                      if (!sizing) return null;
-                      const isDefault = sizing.type === 'Other';
-                      return (
-                        <div key={type} className="mb-2">
-                          <div className="font-semibold text-xs mb-1 text-primary flex flex-wrap items-center gap-2">
-                            <span>{type}</span>
-                            {isDefault && (
-                              <span className="text-xs text-orange-500 bg-orange-50 rounded px-2 py-0.5">Default Sizing</span>
-                            )}
+                {/* Sizes MultiSelect grouped by type - only show if sizes option is enabled */}
+                {currentTenant.productsOptions?.sizes !== false && (
+                  <div className="space-y-2 mb-4">
+                    <Label htmlFor="size">Available Sizes</Label>
+                    {selectedTypes.length === 0 ? (
+                      <div className="text-muted-foreground text-xs">Select product types to see size options.</div>
+                    ) : (
+                      selectedTypes.map((type) => {
+                        const sizing = SIZING_OPTIONS.find(opt => opt.type === type) || SIZING_OPTIONS.find(opt => opt.type === 'Other');
+                        if (!sizing) return null;
+                        const isDefault = sizing.type === 'Other';
+                        return (
+                          <div key={type} className="mb-2">
+                            <div className="font-semibold text-xs mb-1 text-primary flex flex-wrap items-center gap-2">
+                              <span>{type}</span>
+                              {isDefault && (
+                                <span className="text-xs text-orange-500 bg-orange-50 rounded px-2 py-0.5">Default Sizing</span>
+                              )}
+                            </div>
+                            <MultiSelect
+                              options={sizing.sizes.map(s => s.size)}
+                              selectedValues={selectedSizesByType[type] || []}
+                              onChange={(values) => setSelectedSizesByType(prev => ({ ...prev, [type]: values }))}
+                              placeholder={`Select sizes for ${type}`}
+                              label={`Sizes for ${type}`}
+                            />
                           </div>
-                          <MultiSelect
-                            options={sizing.sizes.map(s => s.size)}
-                            selectedValues={selectedSizesByType[type] || []}
-                            onChange={(values) => setSelectedSizesByType(prev => ({ ...prev, [type]: values }))}
-                            placeholder={`Select sizes for ${type}`}
-                            label={`Sizes for ${type}`}
-                          />
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
                 
-                <div className="space-y-2">
-                  <Label htmlFor="color">Available Colors</Label>
-                  <MultiSelect
-                    options={COLOR_OPTIONS}
-                    selectedValues={selectedColors}
-                    onChange={setSelectedColors}
-                    placeholder="Select colors"
-                    label="Colors"
-                    className="mt-2"
-                  />
-                </div>
+                {/* Colors MultiSelect - only show if colors option is enabled */}
+                {currentTenant.productsOptions?.colors !== false && (
+                  <div className="space-y-2">
+                    <Label htmlFor="color">Available Colors</Label>
+                    <MultiSelect
+                      options={COLOR_OPTIONS}
+                      selectedValues={selectedColors}
+                      onChange={setSelectedColors}
+                      placeholder="Select colors"
+                      label="Colors"
+                      className="mt-2"
+                    />
+                  </div>
+                )}
               </div>
               
               <div className="grid gap-4 grid-cols-2 mt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="material">Material</Label>
-                  <Input
-                    id="material"
-                    name="material"
-                    value={formData.material || ""}
-                    onChange={handleChange}
-                    placeholder="Cotton, Polyester, etc."
-                  />
-                </div>
+                {/* Material input - only show if materials option is enabled */}
+                {currentTenant.productsOptions?.materials !== false && (
+                  <div className="space-y-2">
+                    <Label htmlFor="material">Material</Label>
+                    <Input
+                      id="material"
+                      name="material"
+                      value={formData.material || ""}
+                      onChange={handleChange}
+                      placeholder="Cotton, Polyester, etc."
+                    />
+                  </div>
+                )}
                 
                 <div className="space-y-2">
                   <Label htmlFor="brand">Brand</Label>
@@ -846,23 +856,26 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
                 </div>
               </div>
               
-              <div className="space-y-2 mt-4">
-                <Label htmlFor="gender">Gender</Label>
-                <Select
-                  value={formData.gender || ""}
-                  onValueChange={(value) => handleSelectChange("gender", value)}
-                >
-                  <SelectTrigger id="gender">
-                    <SelectValue placeholder="Select gender" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="men">Men</SelectItem>
-                    <SelectItem value="women">Women</SelectItem>
-                    <SelectItem value="kids">Kids</SelectItem>
-                    <SelectItem value="unisex">Unisex</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Gender select - only show if gender option is enabled */}
+              {currentTenant.productsOptions?.gender !== false && (
+                <div className="space-y-2 mt-4">
+                  <Label htmlFor="gender">Gender</Label>
+                  <Select
+                    value={formData.gender || ""}
+                    onValueChange={(value) => handleSelectChange("gender", value)}
+                  >
+                    <SelectTrigger id="gender">
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="men">Men</SelectItem>
+                      <SelectItem value="women">Women</SelectItem>
+                      <SelectItem value="kids">Kids</SelectItem>
+                      <SelectItem value="unisex">Unisex</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
           </div>
           

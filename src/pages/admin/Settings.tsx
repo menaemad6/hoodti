@@ -75,11 +75,17 @@ const SettingsPage = () => {
   // Validate active tab is available
   useEffect(() => {
     // Only discounts, shipping, and customizations tabs are available
-    const availableTabs = ["discounts", "shipping", "customizations"];
+    const availableTabs = ["discounts", "shipping"];
+    
+    // Add customizations tab only if enabled in tenant settings
+    if (currentTenant.customization?.enabled) {
+      availableTabs.push("customizations");
+    }
+    
     if (!availableTabs.includes(activeTab)) {
       setActiveTab("discounts");
     }
-  }, [activeTab]);
+  }, [activeTab, currentTenant.customization?.enabled]);
   
   useEffect(() => {
     // Load settings when component mounts or shipping tab is activated
@@ -454,17 +460,27 @@ const SettingsPage = () => {
                   <Truck className="h-4 w-4 mr-2" />
                   Shipping
                 </button>
-                <button
-                  onClick={() => setActiveTab("customizations")}
-                  className={`flex items-center justify-start w-full px-3 py-1.5 text-sm font-medium rounded-sm ${
-                    activeTab === "customizations"
-                      ? "bg-muted text-foreground shadow-sm"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  <Palette className="h-4 w-4 mr-2" />
-                  Customizations
-                </button>
+                {currentTenant.customization?.enabled ? (
+                  <button
+                    onClick={() => setActiveTab("customizations")}
+                    className={`flex items-center justify-start w-full px-3 py-1.5 text-sm font-medium rounded-sm ${
+                      activeTab === "customizations"
+                        ? "bg-muted text-foreground shadow-sm"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    <Palette className="h-4 w-4 mr-2" />
+                    Customizations
+                  </button>
+                ) : (
+                  <button
+                    disabled
+                    className="flex items-center justify-start w-full px-3 py-1.5 text-sm font-medium rounded-sm text-muted-foreground opacity-60 cursor-not-allowed"
+                  >
+                    <Palette className="h-4 w-4 mr-2" />
+                    Customizations <span className="ml-2 text-xs">(Disabled)</span>
+                  </button>
+                )}
                 <button
                   disabled
                   className="flex items-center justify-start w-full px-3 py-1.5 text-sm font-medium rounded-sm text-muted-foreground opacity-60 cursor-not-allowed"
@@ -796,7 +812,7 @@ const SettingsPage = () => {
                 </div>
               )}
               
-              {activeTab === "customizations" && (
+              {activeTab === "customizations" && currentTenant.customization?.enabled && (
                 <CustomizationsTab />
               )}
             </div>

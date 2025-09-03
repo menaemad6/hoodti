@@ -89,6 +89,7 @@
             // Map known production domains to tenant ids
             var domainToTenant = {
               'hoodti.store': 'hoodti',
+              'gamezoo.store': 'gamezoo',
               'ecommerce-v15.netlify.app': 'streetwear',
               'collab.com': 'collab',
               "diamond-covers.netlify.app": "diamond"
@@ -104,11 +105,13 @@
 
           var tenantColors = {
             hoodti: { primary: '#DE41FF', secondary: '#f5f5f5' },
+            gamezoo: { primary: '#5879DB', secondary: '#f5f5f5' },
             streetwear: { primary: '#ff6b35', secondary: '#2c3e50' },
             collab: { primary: '#8e44ad', secondary: '#ecf0f1' }
           };
           var tenantLogos = {
             hoodti: '/hoodti-logo.jpg',
+            gamezoo: '/gaming-assets/img/gamezoo-logo.jpg',
             streetwear: '/streetwear-logo.jpg',
             collab: '/collab-collection.jpg',
             diamond: '/diamond-logo.jpg'
@@ -145,6 +148,14 @@
               seoDescription: 'Explore collaborative fashion collections, limited releases, and creative capsules.',
               keywords: 'collaboration, limited collection, capsule, fashion, streetwear, artists, creators, Collab Collection',
               twitter: 'https://twitter.com/collab'
+            },
+            gamezoo: {
+              name: 'GameZoo',
+              domain: 'gamezoo.store',
+              description: 'Explore GameZoo\'s premium board game collection – strategy games, family favorites, and exclusive tabletop gaming experiences.',
+              seoDescription: 'Explore GameZoo\'s premium board game collection – strategy games, family favorites, and exclusive tabletop gaming experiences.',
+              keywords: 'board games, tabletop games, strategy games, family games, card games, dice games, gaming accessories, GameZoo, board game store, tabletop gaming, party games, cooperative games, competitive games, board game collection',
+              twitter: 'https://twitter.com/gamezoo'
             }
           };
 

@@ -15,7 +15,8 @@ import {
   Menu, 
   X,
   Clock,
-  Palette
+  Palette,
+  Ungroup
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -103,7 +104,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     { name: "Customers", icon: Users, path: "/admin/customers" },
     { name: "Delivery Slots", icon: Clock, path: "/admin/delivery-slots" },
     { name: "Reports", icon: BarChart, path: "/admin/reports" },
-    { name: "Content", icon: FileText, path: "/admin/content" },
+    { name: "Categories", icon: Ungroup, path: "/admin/content" },
     { name: "Settings", icon: Settings, path: "/admin/settings" },
   ];
 

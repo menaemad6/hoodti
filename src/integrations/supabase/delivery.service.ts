@@ -56,29 +56,33 @@ export async function generateWeeklySlots(tenantId?: string): Promise<WeeklySlot
     
     const timeSlots = await getBaseTimeSlots(tenant_id);
     const slots: WeeklySlot[] = [];
-    const today = startOfToday();
     
-    // Get the delivery delay from settings
-    const deliveryDelay = await getDeliveryDelay(tenant_id);
-    console.log("Using delivery delay:", deliveryDelay, "days");
-
-    // Generate slots starting from the delay date (e.g., if delay is 2, start from day 2)
-    const startDate = addDays(today, deliveryDelay);
-    
-    // Generate slots for the next 7 days starting from the delay date
-    for (let i = 0; i < 7; i++) {
-      const date = addDays(startDate, i);
-      const dateStr = format(date, "yyyy-MM-dd");
+    // Only generate slots if there are actual time slots configured
+    if (timeSlots && timeSlots.length > 0) {
+      const today = startOfToday();
       
-      // Add all available time slots for this day
-      timeSlots.forEach(slot => {
-        slots.push({
-          id: `${dateStr}_${slot.time_slot}`,
-          date,
-          time_slot: slot.time_slot,
-          available: slot.available
+      // Get the delivery delay from settings
+      const deliveryDelay = await getDeliveryDelay(tenant_id);
+      console.log("Using delivery delay:", deliveryDelay, "days");
+
+      // Generate slots starting from the delay date (e.g., if delay is 2, start from day 2)
+      const startDate = addDays(today, deliveryDelay);
+      
+      // Generate slots for the next 7 days starting from the delay date
+      for (let i = 0; i < 7; i++) {
+        const date = addDays(startDate, i);
+        const dateStr = format(date, "yyyy-MM-dd");
+        
+        // Add all available time slots for this day
+        timeSlots.forEach(slot => {
+          slots.push({
+            id: `${dateStr}_${slot.time_slot}`,
+            date,
+            time_slot: slot.time_slot,
+            available: slot.available
+          });
         });
-      });
+      }
     }
 
     return slots;

@@ -7,6 +7,7 @@ export interface Tenant {
   secondaryColor: string;
   description: string;
   // Background music autoplay per tenant
+  musicSrc?: string;
   autoPlayMusic?: boolean;
   // Background music autoplay per tenant
   hideInitialNavbar?: boolean;
@@ -51,6 +52,13 @@ export interface Tenant {
       [key: string]: number;
     };
     enabled: boolean;
+  };
+  productsOptions?: {
+    colors?: boolean;
+    types?: boolean;
+    sizes?: boolean;
+    materials?: boolean;
+    gender?: boolean;
   };
 }
 
@@ -114,6 +122,74 @@ export const tenants: Tenant[] = [
       },
       enabled: true,
     },
+  },
+  {
+    id: "gamezoo",
+    name: "GameZoo",
+    domain: "gamezoo.store",
+    logo: "/gaming-assets/img/gamezoo-logo.jpg",
+    primaryColor: "#edff66",
+    secondaryColor: "#f5f5f5",
+    description: "Premium board games and tabletop gaming",
+    autoPlayMusic: true,
+    musicSrc: "/gaming-assets/audio/loop.mp3",
+    hideInitialNavbar: true,
+    footerDescription:
+      "Discover curated board game collections for every gamer. Strategy, family fun, and premium tabletop experiences that bring people together.",
+    seoDescription:
+      "Explore GameZoo's premium board game collection – strategy games, family favorites, and exclusive tabletop gaming experiences.",
+    seoKeywords:
+      "board games, tabletop games, strategy games, family games, card games, dice games, gaming accessories, GameZoo, board game store, tabletop gaming, party games, cooperative games, competitive games, board game collection",
+    currency: "EGP",
+    currencySymbol: "E£",
+    defaultLanguage: "en",
+    contactEmail: "email@gmail.com",
+    contactPhone: "+0000000000000",
+    address: "Sohag, Egypt",
+    socialMedia: {
+      // facebook: "https://facebook.com/hoodti",
+      instagram: "https://instagram.com/gamezoo_store/",
+      // twitter: "https://twitter.com/hoodti",
+    },
+    features: {
+      wishlist: true,
+      reviews: true,
+      loyalty: true,
+      liveChat: false,
+      customization: true,
+    },
+    shipping: {
+      freeShippingThreshold: 500,
+      defaultShippingFee: 30,
+      expressShippingFee: 50,
+    },
+    payment: {
+      cashOnDelivery: true,
+      onlinePayment: false,
+      bankTransfer: false,
+    },
+    customization: {
+      textPrice: 5.00,
+      imagePrice: 30.00,
+      baseProductPrices: {
+        "Hoodie": 150.00,
+        "Sweatshirt": 120.00,
+        "Regular T-shirt": 80.00,
+        "Boxy T-shirt": 85.00,
+        "Oversized T-shirt": 90.00,
+        "Slim-Fit T-shirt": 75.00,
+        "Polo Shirt": 95.00,
+        "Polo Baskota": 100.00,
+      },
+      enabled: false,
+    },
+    productsOptions: {
+      colors: false,
+      types: false,
+      sizes: false,
+      materials: false,
+      gender: false,
+    }
   },
   {
     id: "diamond",

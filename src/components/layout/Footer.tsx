@@ -15,12 +15,12 @@ import { useCurrentTenant } from "@/context/TenantContext";
 import { Button } from "@/components/ui/button";
 import PolicyModal from "@/components/policies/PolicyModal";
 
-const Footer = () => {
+const Footer = ({ bgColor }: { bgColor?: string }) => {
   const tenant = useCurrentTenant();
   const [policyOpen, setPolicyOpen] = React.useState(false);
   const [policyTab, setPolicyTab] = React.useState<"shipping" | "terms">("shipping");
   return (
-    <footer className="pt-16 pb-24 md:pb-8 bg-background">
+    <footer className={"pt-16 pb-24 md:pb-8 bg-background"} style={{ backgroundColor: bgColor }}>
       {/* Main Footer Content */}
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12 mb-12">

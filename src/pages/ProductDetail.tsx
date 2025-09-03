@@ -72,6 +72,15 @@ const ProductDetail = () => {
   // Add state for selected type
   const [selectedType, setSelectedType] = useState<string | null>(null);
   
+  // Add state for description expansion
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  
+  // Function to truncate description text
+  const truncateDescription = (text: string, maxLength: number = 200) => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength).trim() + '...';
+  };
+  
   // Get SEO configuration for product page
   const productSeoInput = product
     ? {
@@ -947,8 +956,21 @@ const ProductDetail = () => {
                   <TabsContent value="description" className="pt-6">
                     <div className="prose dark:prose-invert max-w-none">
                       <p className="text-muted-foreground dark:text-muted-foreground/90 text-sm sm:text-base leading-relaxed">
-                        {product.description}
+                        {isDescriptionExpanded 
+                          ? product.description 
+                          : truncateDescription(product.description || '')
+                        }
                       </p>
+                      {product.description && product.description.length > 200 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                          className="mt-3 p-0 h-auto text-primary hover:bg-transparent hover:text-primary font-medium"
+                        >
+                          {isDescriptionExpanded ? 'See less' : 'See more'}
+                        </Button>
+                      )}
                     </div>
                   </TabsContent>
                     
@@ -1081,10 +1103,10 @@ const ProductDetail = () => {
                   <Shield className="w-3 h-3 mr-1.5 text-primary/80" />
                   <span className="font-medium">Secure Checkout</span>
                 </Badge>
-                <Badge variant="outline" className="rounded-full px-4 py-1.5 text-xs bg-background/60 backdrop-blur-sm border-border/40 dark:border-border/20 shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-300">
+                {/* <Badge variant="outline" className="rounded-full px-4 py-1.5 text-xs bg-background/60 backdrop-blur-sm border-border/40 dark:border-border/20 shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-300">
                   <Truck className="w-3 h-3 mr-1.5 text-primary/80" />
-                  <span className="font-medium">Free Returns</span>
-                </Badge>
+                  <span className="font-medium">Free Shipping</span>
+                </Badge> */}
               </div>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Pause, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTenant } from "@/context/TenantContext";
@@ -19,20 +19,35 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ className, src = "/house-musi
   const [isPlaying, setIsPlaying] = useState(false);
   const [isUserToggled, setIsUserToggled] = useState(false);
 
+  // Use tenant musicSrc if available, otherwise use the provided src or default
+  const musicSrc = currentTenant?.musicSrc || src;
+  
+  // Update audio source when musicSrc changes
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    
+    // If the source has changed, update it
+    if (audio.src !== musicSrc) {
+      audio.src = musicSrc;
+      audio.load();
+    }
+  }, [musicSrc]);
+  
   // Ensure we don't load the audio file until we actually intend to play
-  const ensureSrcLoaded = () => {
+  const ensureSrcLoaded = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
     if (!audio.src) {
-      audio.src = src;
+      audio.src = musicSrc;
       // Hint the browser to start fetching now that we've set src
       try {
         audio.load();
       } catch {
-        // no-op
+        // Ignore load errors
       }
     }
-  };
+  }, [musicSrc]);
 
   // Keep UI state in sync with the audio element
   useEffect(() => {
@@ -48,7 +63,9 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ className, src = "/house-musi
         audio.pause();
         audio.removeAttribute("src");
         audio.load();
-      } catch {}
+      } catch {
+        // Ignore cleanup errors
+      }
       audio.removeEventListener("play", handlePlay);
       audio.removeEventListener("pause", handlePause);
     };
@@ -106,7 +123,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ className, src = "/house-musi
     });
 
     return cleanup;
-  }, [autoPlayMusic, isUserToggled, src, isLoading]);
+  }, [autoPlayMusic, isUserToggled, musicSrc, isLoading, ensureSrcLoaded]);
 
   const toggle = () => {
     setIsUserToggled(true);

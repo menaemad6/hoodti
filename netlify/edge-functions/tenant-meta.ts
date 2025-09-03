@@ -8,6 +8,7 @@ export default async function handler(request: Request) {
   // Map hostname to tenant id
   const domainToTenant: Record<string, string> = {
     'hoodti.store': 'hoodti',
+    'gamezoo.store': 'gamezoo',
     'diamond-covers.netlify.app': 'diamond',
     'ecommerce-v15.netlify.app': 'streetwear',
     'collab.com': 'collab',
@@ -52,6 +53,13 @@ export default async function handler(request: Request) {
       description: 'Explore collaborative fashion collections, limited releases, and creative capsules.',
       image: '/collab-collection.jpg',
       twitter: 'https://twitter.com/collab'
+    },
+    gamezoo: {
+      name: 'GameZoo',
+      domain: 'gamezoo.store',
+      description: 'Explore GameZoo\'s premium board game collection – strategy games, family favorites, and exclusive tabletop gaming experiences.',
+      image: '/gamezoo-logo.jpg',
+      twitter: 'https://twitter.com/gamezoo'
     }
   };
 
