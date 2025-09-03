@@ -15,6 +15,7 @@ export type ProductDetail = {
   name: string;
   price: number;
   images?: string[];
+  videos?: string[];
   unit?: string;
   discount?: number;
   is_new?: boolean;
@@ -40,6 +41,7 @@ export type Product = {
   name: string;
   price: number;
   images?: string[]; // This is the actual database field (JSONB array)
+  videos?: string[]; // Array of YouTube video URLs
   image?: string; // Keep for backward compatibility
   unit?: string;
   discount?: number;

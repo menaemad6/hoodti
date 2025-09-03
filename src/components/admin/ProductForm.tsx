@@ -58,6 +58,7 @@ interface ProductFormData {
   brand?: string;
   gender?: string;
   images?: string[] | null;
+  videos?: string[] | null;
   type?: string;
 }
 
@@ -222,6 +223,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
     brand: "",
     gender: "",
     images: [],
+    videos: [],
     type: ""
   });
   
@@ -234,6 +236,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
   // Add state for new images (not yet saved)
   const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
   const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
+  
+  // Add state for videos
+  const [videoUrls, setVideoUrls] = useState<string[]>([]);
   
   // Parse string arrays from Supabase
   const parseArrayField = (field: string | string[] | null | undefined): string[] => {
@@ -285,22 +290,25 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
         if (data) {
           setFormData({
             ...data,
+            unit: data.unit || "item",
           });
           
           // Parse colors and sizes arrays from the database
           const colors = parseArrayField(data.color);
           const sizes = parseArrayField(data.size);
+          const videos = parseArrayField((data as any).videos);
           
           setSelectedColors(colors);
           setSelectedSizes(sizes);
+          setVideoUrls(videos);
           
           if (data.image) {
             setImagePreview(data.image);
           }
           
           // When fetching product, parse types and sizes
-          if (data.type) {
-            const types = parseArrayField(data.type);
+          if ((data as any).type) {
+            const types = parseArrayField((data as any).type);
             setSelectedTypes(types);
           }
           if (data.size) {
@@ -389,6 +397,26 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
       ...prev,
       images: prev.images.filter((_, i) => i !== index),
     }));
+  };
+  
+  // Video handling functions
+  const addVideoUrl = () => {
+    setVideoUrls(prev => [...prev, ""]);
+  };
+  
+  const updateVideoUrl = (index: number, url: string) => {
+    setVideoUrls(prev => prev.map((video, i) => i === index ? url : video));
+  };
+  
+  const removeVideoUrl = (index: number) => {
+    setVideoUrls(prev => prev.filter((_, i) => i !== index));
+  };
+  
+  // Helper function to extract YouTube video ID from URL
+  const extractYouTubeId = (url: string): string | null => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
   };
   
   const uploadImage = async (): Promise<string | null> => {
@@ -493,7 +521,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
     setIsSaving(true);
     try {
       // Upload new images and collect URLs
-      let uploadedUrls: string[] = [];
+      const uploadedUrls: string[] = [];
       for (const file of newImageFiles) {
         try {
           const url = await uploadProductImage(file);
@@ -519,10 +547,13 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
       const sizesJson = Object.keys(selectedSizesByType || {}).length
         ? JSON.stringify(selectedSizesByType)
         : null;
+      // Filter out empty video URLs and validate YouTube URLs
+      const validVideos = videoUrls.filter(url => url.trim() !== "" && extractYouTubeId(url.trim()));
       // Prepare productData for insert/update
       const productData = {
         ...formData,
         images: allImages,
+        videos: validVideos,
         name: formData.name,
         description: formData.description,
         price: formData.price,
@@ -540,7 +571,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
         brand: formData.brand && formData.brand.trim() !== "" ? formData.brand.trim() : null,
         gender: formData.gender && formData.gender.trim() !== "" ? formData.gender.trim() : null,
         type: typesJson
-      };
+      } as any;
       // Save to DB
       if (productId) {
         const { error } = await supabase
@@ -952,6 +983,46 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess }) => {
                   onChange={handleImageChange}
                   className="hidden"
                 />
+              </div>
+            </div>
+            
+            {/* Product Videos Section */}
+            <div className="space-y-2">
+              <Label htmlFor="videos">Product Videos</Label>
+              <p className="text-xs text-muted-foreground">
+                Add YouTube video URLs to showcase your product
+              </p>
+              <div className="space-y-3">
+                {videoUrls.map((url, index) => (
+                  <div key={index} className="flex gap-2 items-center">
+                    <Input
+                      type="url"
+                      placeholder="https://www.youtube.com/watch?v=..."
+                      value={url}
+                      onChange={(e) => updateVideoUrl(index, e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeVideoUrl(index)}
+                      className="shrink-0"
+                    >
+                      <X size={16} />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addVideoUrl}
+                  className="w-full"
+                >
+                  <Plus size={16} className="mr-2" />
+                  Add Video
+                </Button>
               </div>
             </div>
             

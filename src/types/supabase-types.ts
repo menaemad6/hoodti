@@ -38,6 +38,7 @@ export function mapSupabaseProductToAppProduct(supabaseProduct: any): AppProduct
     price: typeof supabaseProduct.price === 'number' ? supabaseProduct.price : 0,
     discount: supabaseProduct.discount || 0,
     images: Array.isArray(supabaseProduct.images) ? supabaseProduct.images : (supabaseProduct.images ? JSON.parse(supabaseProduct.images) : []),
+    videos: Array.isArray(supabaseProduct.videos) ? supabaseProduct.videos : (supabaseProduct.videos ? JSON.parse(supabaseProduct.videos) : []),
     unit: supabaseProduct.unit || '',
     stock: typeof supabaseProduct.stock === 'number' ? supabaseProduct.stock : 0,
     featured: supabaseProduct.featured || false,
@@ -72,7 +73,7 @@ export function mapAppProductToSupabaseProduct(appProduct: Partial<AppProduct>):
     description: appProduct.description,
     price: appProduct.price,
     discount: appProduct.discount || 0,
-    image: appProduct.image,
+    images: appProduct.images,
     unit: appProduct.unit,
     stock: appProduct.stock,
     featured: appProduct.featured,
@@ -85,6 +86,7 @@ export function mapAppProductToSupabaseProduct(appProduct: Partial<AppProduct>):
     material: appProduct.material || null,
     brand: appProduct.brand || null,
     gender: appProduct.gender || null,
+    videos: appProduct.videos || [],
     created_at: appProduct.created_at || new Date().toISOString(),
     updated_at: appProduct.updated_at || new Date().toISOString()
   };
@@ -129,7 +131,8 @@ export function ensureProductTypeCompatibility(product: any): AppProduct {
       color: product.color || '',
       material: product.material || '',
       brand: product.brand || '',
-      gender: product.gender || ''
+      gender: product.gender || '',
+      videos: Array.isArray(product.videos) ? product.videos : (product.videos ? JSON.parse(product.videos) : [])
     } as AppProduct;
   }
   
@@ -178,7 +181,7 @@ export function mapAppProductToSupabaseProductForDisplay(appProduct: AppProduct)
     description: appProduct.description,
     price: appProduct.price,
     discount: appProduct.discount || 0,
-    image: appProduct.image,
+    images: appProduct.images,
     unit: appProduct.unit,
     stock: appProduct.stock,
     featured: appProduct.featured,
@@ -192,6 +195,7 @@ export function mapAppProductToSupabaseProductForDisplay(appProduct: AppProduct)
     material: appProduct.material || null,
     brand: appProduct.brand || null,
     gender: appProduct.gender || null,
+    videos: appProduct.videos || [],
     created_at: appProduct.created_at || new Date().toISOString(),
     updated_at: appProduct.updated_at || new Date().toISOString()
   } as SupabaseProduct;

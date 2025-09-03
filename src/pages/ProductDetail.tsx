@@ -69,6 +69,10 @@ const ProductDetail = () => {
   const [policyOpen, setPolicyOpen] = useState(false);
   const [policyTab, setPolicyTab] = useState<"shipping" | "terms">("shipping");
   
+  // Add state for video modal
+  const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+  
   // Add state for selected type
   const [selectedType, setSelectedType] = useState<string | null>(null);
   
@@ -79,6 +83,32 @@ const ProductDetail = () => {
   const truncateDescription = (text: string, maxLength: number = 200) => {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength).trim() + '...';
+  };
+  
+  // Helper function to extract YouTube video ID from URL
+  const extractYouTubeId = (url: string): string | null => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+  
+  // Helper function to get YouTube embed URL
+  const getYouTubeEmbedUrl = (url: string): string => {
+    const videoId = extractYouTubeId(url);
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
+  };
+  
+  // Video navigation functions
+  const nextVideo = () => {
+    if (product?.videos && product.videos.length > 0) {
+      setCurrentVideoIndex((prev) => (prev + 1) % product.videos.length);
+    }
+  };
+  
+  const prevVideo = () => {
+    if (product?.videos && product.videos.length > 0) {
+      setCurrentVideoIndex((prev) => (prev - 1 + product.videos.length) % product.videos.length);
+    }
   };
   
   // Get SEO configuration for product page
@@ -174,19 +204,19 @@ const ProductDetail = () => {
     
     // Use the 'image' field from database (string[])
     if (Array.isArray(product.image) && product.image.length > 0) {
-      return product.image.filter(Boolean);
+      return product.image.filter(Boolean) as string[];
     }
     
     // Fallback to 'images' field if it exists
     if (Array.isArray(product.images) && product.images.length > 0) {
-      return product.images.filter(Boolean);
+      return product.images.filter(Boolean) as string[];
     }
     
     // If image is a string (bad data), try to parse as JSON
     if (typeof product.image === 'string' && product.image) {
       try {
         const parsed = JSON.parse(product.image);
-        if (Array.isArray(parsed)) return parsed.filter(Boolean);
+        if (Array.isArray(parsed)) return parsed.filter(Boolean) as string[];
       } catch {
         return [product.image as string];
       }
@@ -534,6 +564,23 @@ const ProductDetail = () => {
                   </DialogClose>
                 </DialogContent>
               </Dialog>
+              
+              {/* Videos Button - Show only if product has videos */}
+              {product?.videos && product.videos.length > 0 && (
+                <div className="mt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setCurrentVideoIndex(0);
+                      setVideoModalOpen(true);
+                    }}
+                    className="w-full sm:w-auto"
+                  >
+                    <Camera className="h-4 w-4 mr-2" />
+                    Watch Product Videos ({product.videos.length})
+                  </Button>
+                </div>
+              )}
             </div>
               
             {/* Product Info - Enhanced */}
@@ -1134,6 +1181,89 @@ const ProductDetail = () => {
           )}
         </div>
       </div>
+      
+      {/* Video Modal */}
+      <Dialog open={videoModalOpen} onOpenChange={setVideoModalOpen}>
+        <DialogContent className="w-[80vw] max-w-4xl h-auto p-0 bg-background border-border/30 dark:border-border/10">
+          <div className="flex flex-col h-full">
+            {/* Video Header */}
+            <div className="flex items-center justify-between p-4 border-b border-border/20">
+              <DialogTitle className="text-lg font-semibold">
+                Product Videos ({product?.videos?.length || 0})
+              </DialogTitle>
+              <DialogClose className="rounded-full w-8 h-8 flex items-center justify-center bg-background/80 backdrop-blur-sm border border-border/30 hover:bg-background hover:border-primary/40 shadow-sm transition-all duration-200">
+                <X className="h-4 w-4" />
+                <span className="sr-only">Close</span>
+              </DialogClose>
+            </div>
+            
+            {/* Video Content */}
+            <div className="flex-1 flex items-center justify-center p-4">
+              {product?.videos && product.videos.length > 0 && (
+                <div className="w-full h-full flex flex-col items-center">
+                  {/* Video Player */}
+                  <div className="w-full aspect-video bg-black rounded-lg overflow-hidden">
+                    <iframe
+                      src={getYouTubeEmbedUrl(product.videos[currentVideoIndex])}
+                      title={`Product Video ${currentVideoIndex + 1}`}
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                  
+                  {/* Video Navigation */}
+                  {product.videos.length > 1 && (
+                    <div className="flex items-center justify-center gap-4 mt-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={prevVideo}
+                        disabled={product.videos.length <= 1}
+                      >
+                        <ChevronLeft className="h-4 w-4 mr-1" />
+                        Previous
+                      </Button>
+                      
+                      <div className="flex items-center gap-2">
+                        {product.videos.map((_, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setCurrentVideoIndex(index)}
+                            className={cn(
+                              "w-3 h-3 rounded-full transition-all duration-200",
+                              index === currentVideoIndex
+                                ? "bg-primary scale-125"
+                                : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                            )}
+                          />
+                        ))}
+                      </div>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={nextVideo}
+                        disabled={product.videos.length <= 1}
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {/* Video Info */}
+                  <div className="text-center mt-4">
+                    <p className="text-sm text-muted-foreground">
+                      Video {currentVideoIndex + 1} of {product.videos.length}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };
