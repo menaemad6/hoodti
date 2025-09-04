@@ -46,6 +46,7 @@ export type Product = {
   unit?: string;
   discount?: number;
   is_new?: boolean;
+  featured?: boolean;
   original_price?: number;
   description?: string;
   size?: string;
@@ -54,6 +55,8 @@ export type Product = {
   brand?: string;
   gender?: string;
   stock?: number; // Add stock property
+  created_at?: string;
+  updated_at?: string;
   category: Category | string;
   category_id?: string;
   type?: string;

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -18,6 +18,14 @@ import Footer from '@/components/layout/Footer';
 import './GamingLanding.css';
 import { useCurrentTenant } from '@/context/TenantContext';
 import BannersModal from '@/components/ui/BannersModal';
+import ScrollStack, { ScrollStackItem } from '@/components/react-bits/ScrollStack';
+import GamingCategoryCard from '@/components/gaming/GamingCategoryCard';
+import GamingProductsSection from '@/components/gaming/GamingProductsSection';
+import GamingSectionTitle from '@/components/gaming/GamingSectionTitle';
+import TargetCursor from '@/components/react-bits/TargetCursor';
+import { useCategories } from '@/hooks/useCategories';
+import { useProducts } from '@/hooks/useProducts';
+import { Product } from '@/integrations/supabase/types.service';
 // Register GSAP plugins
 gsap.registerPlugin(ScrollTrigger);
 
@@ -50,6 +58,7 @@ const Button = ({ id, title, rightIcon, leftIcon, containerClass }: {
     </button>
   );
 };
+
 
 // AnimatedTitle Component
 const AnimatedTitle = ({ title, containerClass }: {
@@ -186,8 +195,23 @@ const Navbar = () => {
   const { isAuthenticated, user } = useAuth();
   const { isAdmin, isSuperAdmin } = useRoleAccess();
 
-  const navItems = ["Games", "Categories", "Story", "About",];
+  const navItems = [
+    { name: "Games", type: "route", path: "/shop" },
+    { name: "Categories", type: "route", path: "/categories" },
+    { name: "Story", type: "section", id: "story" },
+    { name: "About", type: "section", id: "about" },
+  ];
   const currentTenant = useCurrentTenant();
+
+  // Function to handle navigation clicks
+  const handleNavClick = (item: typeof navItems[0]) => {
+    if (item.type === "section") {
+      const element = document.getElementById(item.id);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  };
 
   useEffect(() => {
     if (currentScrollY === 0) {
@@ -219,7 +243,7 @@ const Navbar = () => {
       <header className="absolute top-1/2 w-full -translate-y-1/2">
         <nav className="flex size-full items-center justify-between p-4">
           <div className="flex items-center gap-7">
-            <Link to="/">
+            <Link to="/" className="cursor-target">
               <img src="/gaming-assets/img/gamezoo-logo-erased.png" alt="logo" className="w-20" />
             </Link>
             <Link to="/shop">
@@ -227,7 +251,7 @@ const Navbar = () => {
               id="product-button"
               title="Games"
               rightIcon={<TiLocationArrow />}
-              containerClass="bg-blue_gaming-50 md:flex hidden items-center justify-center gap-1"
+              containerClass="bg-blue_gaming-50 md:flex hidden items-center justify-center gap-1 cursor-target"
             />
             </Link>
           </div>
@@ -236,7 +260,7 @@ const Navbar = () => {
             {/* Mobile Menu */}
             <Sheet>
               <SheetTrigger asChild className="md:hidden">
-                <UIButton variant="ghost" size="icon" className="hover:bg-primary/10 dark:hover:bg-primary/20 rounded-full">
+                <UIButton variant="ghost" size="icon" className="hover:bg-primary/10 dark:hover:bg-primary/20 rounded-full cursor-target">
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Open menu</span>
                 </UIButton>
@@ -244,7 +268,7 @@ const Navbar = () => {
               <SheetContent side="left" className="w-full max-w-xs p-0 bg-black/98 backdrop-blur-2xl border-r border-blue_gaming-50/40">
                 <div className="flex flex-col h-full">
                   <div className="p-4 border-b border-blue_gaming-50/40">
-                    <Link to="/" className="flex items-center space-x-2 mb-6">
+                    <Link to="/" className="flex items-center space-x-2 mb-6 cursor-target">
                       <img src="/gaming-assets/img/logo.png" alt="logo" className="w-8" />
                       <span className="text-xl font-bold text-blue_gaming-50">{currentTenant.name}</span>
                     </Link>
@@ -254,22 +278,27 @@ const Navbar = () => {
                     <div className="space-y-4">
                       {/* Main Navigation */}
                       {navItems.map((item, index) => (
-                        <a
-                          key={index}
-                          href={`#${item.toLowerCase()}`}
-                          className="block text-blue_gaming-50 hover:text-yellow_gaming-300 transition-colors"
-                        >
-                          {item}
-                        </a>
+                        item.type === "route" ? (
+                          <Link
+                            key={index}
+                            to={item.path}
+                            className="block text-blue_gaming-50 hover:text-yellow_gaming-300 transition-colors cursor-target"
+                          >
+                            {item.name}
+                          </Link>
+                        ) : (
+                          <button
+                            key={index}
+                            onClick={() => handleNavClick(item)}
+                            className="block text-blue_gaming-50 hover:text-yellow_gaming-300 transition-colors cursor-target text-left"
+                          >
+                            {item.name}
+                          </button>
+                        )
                       ))}
                       
-                      {/* Additional Links */}
-                      <Link to="/shop" className="block text-blue_gaming-50 hover:text-yellow_gaming-300 transition-colors">
-                        Shop
-                      </Link>
-                      
                       {isAuthenticated && (
-                        <Link to="/account" className="block text-blue_gaming-50 hover:text-yellow_gaming-300 transition-colors">
+                        <Link to="/account" className="block text-blue_gaming-50 hover:text-yellow_gaming-300 transition-colors cursor-target">
                           Account
                         </Link>
                       )}
@@ -279,11 +308,11 @@ const Navbar = () => {
                         <>
                           <div className="border-t border-blue_gaming-50/20 pt-4 mt-4">
                             <p className="text-xs text-blue_gaming-50/60 uppercase tracking-wider mb-2">Admin</p>
-                            <Link to="/admin" className="block text-blue_gaming-50 hover:text-green_gaming-50 transition-colors">
+                            <Link to="/admin" className="block text-blue_gaming-50 hover:text-green_gaming-50 transition-colors cursor-target">
                               Dashboard
                             </Link>
                             {isSuperAdmin && (
-                              <Link to="/admin/users" className="block text-blue_gaming-50 hover:text-purple_gaming-50 transition-colors">
+                              <Link to="/admin/users" className="block text-blue_gaming-50 hover:text-purple_gaming-50 transition-colors cursor-target">
                                 User Management
                               </Link>
                             )}
@@ -305,7 +334,7 @@ const Navbar = () => {
                       </div>
                     ) : (
                       <Link to="/signin">
-                        <UIButton className="w-full bg-yellow_gaming-300 text-black hover:bg-yellow_gaming-200">
+                        <UIButton className="w-full bg-yellow_gaming-300 text-black hover:bg-yellow_gaming-200 cursor-target">
                           <User className="w-4 h-4 mr-2" />
                           Sign In
                         </UIButton>
@@ -319,22 +348,27 @@ const Navbar = () => {
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-6">
               {navItems.map((item, index) => (
-                <a
-                  key={index}
-                  href={`#${item.toLowerCase()}`}
-                  className="nav-hover-btn"
-                >
-                  {item}
-                </a>
+                item.type === "route" ? (
+                  <Link
+                    key={index}
+                    to={item.path}
+                    className="nav-hover-btn cursor-target"
+                  >
+                    {item.name}
+                  </Link>
+                ) : (
+                  <button
+                    key={index}
+                    onClick={() => handleNavClick(item)}
+                    className="nav-hover-btn cursor-target"
+                  >
+                    {item.name}
+                  </button>
+                )
               ))}
               
-              {/* Additional Navigation Links */}
-              <Link to="/shop" className="nav-hover-btn">
-                Shop
-              </Link>
-              
               {isAuthenticated && (
-                <Link to="/account" className="nav-hover-btn">
+                <Link to="/account" className="nav-hover-btn cursor-target">
                   Account
                 </Link>
               )}
@@ -346,7 +380,7 @@ const Navbar = () => {
                 <Button
                   title="Dashboard"
                   leftIcon={<LayoutDashboard className="w-4 h-4" />}
-                  containerClass="bg-yellow_gaming-300 flex items-center justify-center gap-1"
+                  containerClass="bg-yellow_gaming-300 flex items-center justify-center gap-1 cursor-target"
                 />
               </Link>
             )}
@@ -357,7 +391,7 @@ const Navbar = () => {
                 <Button
                   title="Users"
                   leftIcon={<Shield className="w-4 h-4" />}
-                  containerClass="bg-yellow_gaming-300 flex items-center justify-center gap-1"
+                  containerClass="bg-yellow_gaming-300 flex items-center justify-center gap-1 cursor-target"
                 />
               </Link>
             )}
@@ -371,7 +405,7 @@ const Navbar = () => {
                   <Button
                     title="Sign In"
                     leftIcon={<User className="w-4 h-4" />}
-                    containerClass="bg-yellow_gaming-300 flex items-center justify-center gap-1"
+                    containerClass="bg-yellow_gaming-300 flex items-center justify-center gap-1 cursor-target"
                   />
                 </Link>
               )}
@@ -534,7 +568,7 @@ const Hero = () => {
               id="watch-trailer"
               title="Explore Games"
               leftIcon={<TiLocationArrow />}
-              containerClass="bg-yellow_gaming-300 flex-center gap-1"
+              containerClass="bg-yellow_gaming-300 flex-center gap-1 cursor-target"
               />
               </Link>
           </div>
@@ -610,6 +644,7 @@ const BentoTilt = ({ children, className = "" }: {
   className?: string;
 }) => {
   const [transformStyle, setTransformStyle] = useState("");
+  const [lightingStyle, setLightingStyle] = useState("");
   const itemRef = useRef<HTMLDivElement>(null);
 
   const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -622,30 +657,44 @@ const BentoTilt = ({ children, className = "" }: {
     const tiltY = (relativeX - 0.5) * -5;
     const newTransform = `perspective(700px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale3d(.95, .95, .95)`;
     setTransformStyle(newTransform);
+
+    // Create dynamic lighting effect
+    const lightX = relativeX * 100;
+    const lightY = relativeY * 100;
+    const lightingGradient = `radial-gradient(circle at ${lightX}% ${lightY}%, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.1) 20%, rgba(255, 255, 255, 0.05) 40%, transparent 70%)`;
+    setLightingStyle(lightingGradient);
   };
 
   const handleMouseLeave = () => {
     setTransformStyle("");
+    setLightingStyle("");
   };
 
   return (
     <div
       ref={itemRef}
-      className={className}
+      className={`relative ${className}`}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       style={{ transform: transformStyle }}
     >
       {children}
+      {/* Dynamic lighting overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none transition-opacity duration-200"
+        style={{
+          background: lightingStyle,
+          opacity: lightingStyle ? 1 : 0,
+        }}
+      />
     </div>
   );
 };
 
-const BentoCard = ({ src, title, description, isComingSoon }: {
-  src: string;
+const BentoCard = ({ category, title, description }: {
+  category?: { id: string; name: string; image: string; description?: string };
   title: React.ReactNode;
   description?: string;
-  isComingSoon?: boolean;
 }) => {
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
   const [hoverOpacity, setHoverOpacity] = useState(0);
@@ -663,120 +712,236 @@ const BentoCard = ({ src, title, description, isComingSoon }: {
   const handleMouseEnter = () => setHoverOpacity(1);
   const handleMouseLeave = () => setHoverOpacity(0);
 
+  // Get the category image
+  const getCategoryImage = () => {
+    if (!category) return '';
+    return category.image || '';
+  };
+
+  const categoryImage = getCategoryImage();
+
   return (
     <div className="relative size-full">
-      <video
-        src={src}
-        loop
-        muted
-        autoPlay
-        className="absolute left-0 top-0 size-full object-cover object-center"
-      />
-      <div className="relative z-10 flex size-full flex-col justify-between p-5 text-blue_gaming-50">
+      {categoryImage ? (
+        <img
+          src={categoryImage}
+          alt={category?.name || 'Category'}
+          className="absolute left-0 top-0 size-full object-cover object-center"
+        />
+      ) : (
+        <div className="absolute left-0 top-0 size-full bg-gradient-to-br from-blue_gaming-75 to-violet_gaming-50" />
+      )}
+            <div className="relative z-10 flex size-full flex-col justify-between p-5 text-blue_gaming-50">
         <div>
-          <h1 className="bento-title special-font">{title}</h1>
-          {description && (
-            <p className="mt-3 max-w-64 text-xs md:text-base">{description}</p>
-          )}
+          <div className="relative inline-block">
+            {/* Overlay under category name for better visibility - only under text */}
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm rounded-lg -m-1"></div>
+            <h1 className="bento-title special-font relative z-10 px-2 py-1">
+              {category ? (
+                <>
+                  {category.name.split(' ').map((word, index) => (
+                    <span key={index}>
+                      {word.split('').map((char, charIndex) => (
+                        <span key={charIndex}>
+                          {charIndex === Math.floor(word.length / 2) ? <b>{char}</b> : char}
+                        </span>
+                      ))}
+                      {index < category.name.split(' ').length - 1 && ' '}
+                    </span>
+                  ))}
+                </>
+              ) : (
+                title
+              )}
+            </h1>
+          </div>
         </div>
 
-        {isComingSoon && (
-          <div
-            ref={hoverButtonRef}
-            onMouseMove={handleMouseMove}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-            className="border-hsla relative flex w-fit cursor-pointer items-center gap-1 overflow-hidden rounded-full bg-black px-5 py-2 text-xs uppercase text-white/20"
-          >
+        {category && (
+          <Link to={`/category/${category.id}`}>
             <div
-              className="pointer-events-none absolute -inset-px opacity-0 transition duration-300"
-              style={{
-                opacity: hoverOpacity,
-                background: `radial-gradient(100px circle at ${cursorPosition.x}px ${cursorPosition.y}px, #656fe288, #00000026)`,
-              }}
-            />
-            <TiLocationArrow className="relative z-20" />
-            <p className="relative z-20">coming soon</p>
-          </div>
+              ref={hoverButtonRef}
+              onMouseMove={handleMouseMove}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+              className="border-hsla relative flex w-fit cursor-pointer items-center gap-1 overflow-hidden rounded-full bg-black px-5 py-2 text-xs uppercase text-white hover:bg-white hover:text-black transition-colors duration-300 cursor-target"
+            >
+              <div
+                className="pointer-events-none absolute -inset-px opacity-0 transition duration-300"
+                style={{
+                  opacity: hoverOpacity,
+                  background: `radial-gradient(100px circle at ${cursorPosition.x}px ${cursorPosition.y}px, #656fe288, #00000026)`,
+                }}
+              />
+              <TiLocationArrow className="relative z-20" />
+              <p className="relative z-20">view category</p>
+            </div>
+          </Link>
         )}
       </div>
     </div>
   );
 };
 
-const Features = () => (
-  <section className="bg-black pb-52">
-    <div className="container mx-auto px-3 md:px-10">
-      <div className="px-5 py-32">
-        <p className="font-circular-web text-lg text-blue_gaming-50">
-          Into the Board Game Universe
-        </p>
-        <p className="max-w-md font-circular-web text-lg text-blue_gaming-50 opacity-50">
-          Immerse yourself in a rich and ever-expanding collection where premium
-          tabletop games, strategy classics, and family favorites converge into 
-          the ultimate board gaming experience.
-        </p>
+const Features = () => {
+  const { categories, isLoading, error } = useCategories();
+
+  if (isLoading) {
+    return (
+      <section className="bg-black pb-52">
+        <div className="container mx-auto px-3 md:px-10">
+          <div className="px-5 py-32">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue_gaming-50 mx-auto mb-4"></div>
+              <p className="text-blue_gaming-50 font-general text-sm">Loading Categories...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="bg-black pb-52">
+        <div className="container mx-auto px-3 md:px-10">
+          <div className="px-5 py-32">
+            <div className="text-center">
+              <p className="text-red-400 font-general text-sm">Error loading categories: {error}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Get the first 5 categories for the cards
+  const featuredCategories = categories.slice(0, 5);
+
+  return (
+    <section className="bg-black pb-52">
+      <div className="container mx-auto px-3 md:px-10">
+        <div className="px-5 py-32">
+          <GamingSectionTitle
+            subtitle="the board game universe"
+            title="explore <b>c</b>ategories"
+            containerClass="mb-8"
+          />
+          <p className="max-w-md font-circular-web text-lg text-blue_gaming-50 opacity-50 text-center mx-auto">
+            Explore our diverse collection of board game categories. From strategy 
+            masterpieces to family favorites, find the perfect game for every 
+            occasion and player type.
+          </p>
+        </div>
+
+        {/* Mobile Layout - Simple Grid */}
+        <div className="grid grid-cols-1 gap-7 md:hidden -mx-3 md:mx-0 px-3 md:px-0">
+          <BentoTilt className="bento-tilt_1 h-80 cursor-target">
+            <BentoCard
+              category={featuredCategories[0]}
+              title={<>strat<b>e</b>gy</>}
+              description="Premium strategy board games that challenge your mind and reward tactical thinking."
+            />
+          </BentoTilt>
+          <BentoTilt className="bento-tilt_1 h-80 cursor-target">
+            <BentoCard
+              category={featuredCategories[1]}
+              title={<>fam<b>i</b>ly</>}
+              description="Fun and engaging family board games that bring everyone together for memorable moments."
+            />
+          </BentoTilt>
+
+          <BentoTilt className="bento-tilt_1 h-80 cursor-target">
+            <BentoCard
+              category={featuredCategories[2]}
+              title={<>puzz<b>l</b>e</>}
+              description="Mind-bending puzzle games and brain teasers that challenge your problem-solving skills."
+            />
+          </BentoTilt>
+
+          <BentoTilt className="bento-tilt_1 h-80 cursor-target">
+            <BentoCard
+              category={featuredCategories[3]}
+              title={<>r<b>p</b>g</>}
+              description="Immersive role-playing games and adventure board games that tell epic stories."
+            />
+          </BentoTilt>
+
+          <BentoTilt className="bento-tilt_1 h-80 cursor-target">
+            <BentoCard
+              category={featuredCategories[4]}
+              title={<>ad<b>v</b>enture</>}
+              description="Epic adventure games that take you on unforgettable journeys."
+            />
+          </BentoTilt>
+
+          <BentoTilt className="bento-tilt_1 h-40 w-full cursor-target">
+            <Link to="/shop" className="flex w-full h-full flex-col justify-between bg-violet_gaming-300 p-5 hover:bg-violet_gaming-200 transition-colors cursor-target">
+              <h1 className="bento-title special-font text-black w-full">
+                V<b>i</b>ew A<b>l</b>l
+              </h1>
+              <TiLocationArrow className="scale-[5] self-end" />
+            </Link>
+          </BentoTilt>
+        </div>
+
+        {/* Desktop Layout - Original Bento Grid */}
+        <div className="hidden md:block">
+          <BentoTilt className="border-hsla relative mb-7 h-96 w-full overflow-hidden rounded-md md:h-[65vh] cursor-target">
+            <BentoCard
+              category={featuredCategories[0]}
+              title={<>strat<b>e</b>gy</>}
+              description="Premium strategy board games that challenge your mind and reward tactical thinking."
+            />
+          </BentoTilt>
+        </div>
+
+        <div className="hidden md:grid h-[135vh] w-full grid-cols-2 grid-rows-3 gap-7">
+          <BentoTilt className="bento-tilt_1 row-span-1 md:col-span-1 md:row-span-2 cursor-target">
+            <BentoCard
+              category={featuredCategories[1]}
+              title={<>fam<b>i</b>ly</>}
+              description="Fun and engaging family board games that bring everyone together for memorable moments."
+            />
+          </BentoTilt>
+
+          <BentoTilt className="bento-tilt_1 row-span-1 md:col-span-1 cursor-target">
+            <BentoCard
+              category={featuredCategories[2]}
+              title={<>puzz<b>l</b>e</>}
+              description="Mind-bending puzzle games and brain teasers that challenge your problem-solving skills."
+            />
+          </BentoTilt>
+
+          <BentoTilt className="bento-tilt_1 row-span-1 md:col-span-1 cursor-target">
+            <BentoCard
+              category={featuredCategories[3]}
+              title={<>r<b>p</b>g</>}
+              description="Immersive role-playing games and adventure board games that tell epic stories."
+            />
+          </BentoTilt>
+
+          <BentoTilt className="bento-tilt_1 row-span-1 md:col-span-1 cursor-target">
+            <BentoCard
+              category={featuredCategories[4]}
+              title={<>ad<b>v</b>enture</>}
+              description="Epic adventure games that take you on unforgettable journeys."
+            />
+          </BentoTilt>
+
+          <BentoTilt className="bento-tilt_2 md:col-span-1 cursor-target">
+            <Link to="/shop" className="flex size-full flex-col justify-between bg-violet_gaming-300 p-5 hover:bg-violet_gaming-200 transition-colors cursor-target">
+              <h1 className="bento-title special-font max-w-64 text-black">
+                V<b>i</b>ew A<b>l</b>l
+              </h1>
+              <TiLocationArrow className="m-5 scale-[5] self-end" />
+            </Link>
+          </BentoTilt>
+        </div>
       </div>
-
-      <BentoTilt className="border-hsla relative mb-7 h-96 w-full overflow-hidden rounded-md md:h-[65vh]">
-        <BentoCard
-          src="/gaming-assets/videos/feature-1.mp4"
-          title={<>strat<b>e</b>gy</>}
-          description="Premium strategy board games that challenge your mind and reward tactical thinking."
-          isComingSoon
-        />
-      </BentoTilt>
-
-      <div className="grid h-[135vh] w-full grid-cols-2 grid-rows-3 gap-7">
-        <BentoTilt className="bento-tilt_1 row-span-1 md:col-span-1 md:row-span-2">
-          <BentoCard
-            src="/gaming-assets/videos/feature-2.mp4"
-            title={<>fam<b>i</b>ly</>}
-            description="Fun and engaging family board games that bring everyone together for memorable moments."
-            isComingSoon
-          />
-        </BentoTilt>
-
-        <BentoTilt className="bento-tilt_1 row-span-1 ms-32 md:col-span-1 md:ms-0">
-          <BentoCard
-            src="/gaming-assets/videos/feature-3.mp4"
-            title={<>puzz<b>l</b>e</>}
-            description="Mind-bending puzzle games and brain teasers that challenge your problem-solving skills."
-            isComingSoon
-          />
-        </BentoTilt>
-
-        <BentoTilt className="bento-tilt_1 me-14 md:col-span-1 md:me-0">
-          <BentoCard
-            src="/gaming-assets/videos/feature-4.mp4"
-            title={<>r<b>p</b>g</>}
-            description="Immersive role-playing games and adventure board games that tell epic stories."
-            isComingSoon
-          />
-        </BentoTilt>
-
-        <BentoTilt className="bento-tilt_2">
-          <Link to="/shop" className="flex size-full flex-col justify-between bg-violet_gaming-300 p-5 hover:bg-violet_gaming-200 transition-colors">
-            <h1 className="bento-title special-font max-w-64 text-black">
-              V<b>i</b>ew A<b>l</b>l
-            </h1>
-            <TiLocationArrow className="m-5 scale-[5] self-end" />
-          </Link>
-        </BentoTilt>
-
-        <BentoTilt className="bento-tilt_2">
-          <video
-            src="/gaming-assets/videos/feature-5.mp4"
-            loop
-            muted
-            autoPlay
-            className="size-full object-cover object-center"
-          />
-        </BentoTilt>
-      </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 // Story Component
 const Story = () => {
@@ -820,12 +985,9 @@ const Story = () => {
   return (
     <div id="story" className="min-h-dvh w-screen bg-black text-blue_gaming-50">
       <div className="flex size-full flex-col items-center py-10 pb-24">
-        <p className="font-general text-sm uppercase md:text-[10px]">
-          the board game universe
-        </p>
-
         <div className="relative size-full">
-          <AnimatedTitle
+          <GamingSectionTitle
+            subtitle="the board game universe"
             title="the st<b>o</b>ry of <br /> tabletop ad<b>v</b>entures"
             containerClass="mt-5 pointer-events-none mix-blend-difference relative z-10"
           />
@@ -874,11 +1036,51 @@ const Story = () => {
             <Button
               id="realm-btn"
               title="explore collection"
-              containerClass="mt-5"
+              containerClass="mt-5 cursor-target"
             />
           </div>
         </div>
       </div>
+    </div>
+  );
+};
+
+// Categories Component
+const Categories = () => {
+  const { categories, isLoading } = useCategories();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen w-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue_gaming-50 mx-auto mb-4"></div>
+          <p className="text-blue_gaming-50 font-general text-sm">Loading Categories...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div id="categories" className="h-[80vh] w-screen bg-black pt-20">
+
+        <ScrollStack
+          className="h-full"
+          itemDistance={120}
+          itemScale={0.05}
+          itemStackDistance={40}
+          stackPosition="25%"
+          scaleEndPosition="15%"
+          baseScale={0.8}
+          rotationAmount={2}
+          blurAmount={1}
+        >
+          {categories.map((category, index) => (
+            <ScrollStackItem key={category.id}>
+              <GamingCategoryCard category={category} index={index} />
+            </ScrollStackItem>
+          ))}
+        </ScrollStack>
+
     </div>
   );
 };
@@ -931,7 +1133,7 @@ const CTA = () => {
           />
 
           <Link to="/shop">
-          <Button title="Shop Board Games" containerClass="mt-10 cursor-pointer bg-creamy_gaming-100" />
+          <Button title="Shop Board Games" containerClass="mt-10 cursor-pointer bg-creamy_gaming-100 cursor-target" />
           </Link>
         </div>
       </div>
@@ -957,10 +1159,16 @@ const GamingLanding = () => {
 
   return (
     <main className="relative min-h-screen w-screen overflow-x-hidden bg-creamy_gaming-100">
+      <TargetCursor 
+        spinDuration={2}
+        hideDefaultCursor={true}
+      />
       <Navbar />
       <Hero />
       <About />
       <Features />
+      <GamingProductsSection />
+      {/* <Categories /> */}
       <Story />
       <CTA />
       <Footer bgColor="black" />

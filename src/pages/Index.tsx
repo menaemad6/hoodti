@@ -3,9 +3,9 @@ import { Link } from "react-router-dom";
 import HomeLayout from "@/components/layout/HomeLayout";
 import SEOHead from "@/components/seo/SEOHead";
 import { useSEOConfig } from "@/lib/seo-config";
-import { useProductsService } from "@/integrations/supabase/products.service";
-import { getCategories } from "@/integrations/supabase/categories.service";
+import { useProducts } from "@/hooks/useProducts";
 import { Product, CategoryRow } from "@/integrations/supabase/types.service";
+import { useCategories } from "@/hooks/useCategories";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, ArrowRight, ExternalLink, Tag, Check, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import AnimatedWrapper from "@/components/ui/animated-wrapper";
@@ -19,10 +19,8 @@ import { useCurrentTenant } from "@/context/TenantContext";
 import StreetHero from "@/components/home/StreetHero";
 
 const Index = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<{ image: string; created_at: string; description: string; id: string; name: string; }[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isCategoriesLoading, setIsCategoriesLoading] = useState(true);
+  const { products, isLoading } = useProducts();
+  const { categories, isLoading: isCategoriesLoading } = useCategories();
   const [activeIndex, setActiveIndex] = useState(0);
   const [featuredActiveIndex, setFeaturedActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -31,7 +29,6 @@ const Index = () => {
   const featuredCarouselRef = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
   const { addToCart } = useCart();
-  const productsService = useProductsService();
   const currentTenant = useCurrentTenant();
 
   // Get SEO configuration for home page
@@ -108,24 +105,50 @@ const Index = () => {
   // Filter for featured products
   const getFeaturedProducts = useCallback((products: Product[]) => {
     // Create a copy of the array to avoid modifying the original
-    return products
-      .filter(product => product.is_new === true)
+    const featured = products
+      .filter(product => product.featured === true)
       .map(product => ({
         ...product,
         id: `featured-${product.id}` // Ensure unique IDs for featured products
       }))
       .slice(0, 8);
+    
+    // If no featured products, fall back to most expensive products
+    if (featured.length === 0) {
+      return products
+        .sort((a, b) => b.price - a.price)
+        .slice(0, 8)
+        .map(product => ({
+          ...product,
+          id: `featured-${product.id}`
+        }));
+    }
+    
+    return featured;
   }, []);
 
   // Filter for new arrivals
   const getNewArrivals = useCallback((products: Product[]) => {
-    return products
+    const newArrivals = products
       .filter(product => product.is_new === true)
       .map(product => ({
         ...product, 
         id: `new-${product.id}` // Ensure unique IDs for new arrivals
       }))
       .slice(0, 8);
+    
+    // If no new products, fall back to most recently created products
+    if (newArrivals.length === 0) {
+      return products
+        .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
+        .slice(0, 8)
+        .map(product => ({
+          ...product,
+          id: `new-${product.id}`
+        }));
+    }
+    
+    return newArrivals;
   }, []);
 
   // Memoized filtered products to prevent excessive recalculations
@@ -249,34 +272,6 @@ const Index = () => {
     return () => carousel.removeEventListener('scroll', handleScroll);
   }, [featuredActiveIndex]);
 
-  const fetchProducts = async () => {
-    setIsLoading(true);
-    try {
-      const productsData = await productsService.getProducts();
-      setProducts(productsData);
-    } catch (error) {
-      console.error("Error fetching products:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchCategories = async () => {
-    setIsCategoriesLoading(true);
-    try {
-      const categoriesData = await getCategories(currentTenant.id);
-      setCategories(categoriesData.map(cat => ({ ...cat, image: Array.isArray(cat.image) ? cat.image[0] : cat.image })));
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-    } finally {
-      setIsCategoriesLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchProducts();
-    fetchCategories();
-  }, [currentTenant.id]);
 
   const renderHero = () => {
     switch(currentTenant.id){
@@ -412,7 +407,7 @@ const Index = () => {
             {/* Desktop View All button */}
             <Link
               to="/categories"
-              className="inline-flex items-center gap-2 px-8 py-3.5 bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-sm uppercase transition-colors duration-300 rounded-full shadow-md hover:shadow-lg hidden md:inline-flex"
+              className="hidden md:inline-flex items-center gap-2 px-8 py-3.5 bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-sm uppercase transition-colors duration-300 rounded-full shadow-md hover:shadow-lg"
             >
               Explore All Categories 
               <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
