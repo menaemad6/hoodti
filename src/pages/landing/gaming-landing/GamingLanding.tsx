@@ -11,7 +11,7 @@ import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
 import { useRoleAccess } from '@/hooks/use-role-access';
 import ProfileButton from '@/components/auth/ProfileButton';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import SharedMobileSidebar from '@/components/layout/SharedMobileSidebar';
 import { Button as UIButton } from '@/components/ui/button';
 
 import Footer from '@/components/layout/Footer';
@@ -26,6 +26,8 @@ import TargetCursor from '@/components/react-bits/TargetCursor';
 import { useCategories } from '@/hooks/useCategories';
 import { useProducts } from '@/hooks/useProducts';
 import { Product } from '@/integrations/supabase/types.service';
+import SEOHead from '@/components/seo/SEOHead';
+import { useSEOConfig } from '@/lib/seo-config';
 // Register GSAP plugins
 gsap.registerPlugin(ScrollTrigger);
 
@@ -41,12 +43,12 @@ const Button = ({ id, title, rightIcon, leftIcon, containerClass }: {
     <button
       id={id}
       className={clsx(
-        "group relative z-10 w-fit cursor-pointer overflow-hidden rounded-full bg-violet_gaming-50 px-7 py-3 text-black",
+        "group relative z-10 w-fit cursor-pointer overflow-hidden rounded-full bg-violet_gaming-50 px-8 py-4 sm:px-9 sm:py-5 md:px-8 md:py-4 lg:px-7 lg:py-3 xl:px-7 xl:py-3 text-black",
         containerClass
       )}
     >
       {leftIcon}
-      <span className="relative inline-flex overflow-hidden font-general text-xs uppercase">
+      <span className="relative inline-flex overflow-hidden font-general text-sm sm:text-base md:text-sm lg:text-xs xl:text-xs uppercase">
         <div className="translate-y-0 skew-y-0 transition duration-500 group-hover:translate-y-[-160%] group-hover:skew-y-12">
           {title}
         </div>
@@ -190,6 +192,7 @@ const Navbar = () => {
   const { y: currentScrollY } = useWindowScroll();
   const [isNavVisible, setIsNavVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Authentication hooks
   const { isAuthenticated, user } = useAuth();
@@ -258,92 +261,17 @@ const Navbar = () => {
 
           <div className="flex h-full items-center gap-4">
             {/* Mobile Menu */}
-            <Sheet>
-              <SheetTrigger asChild className="md:hidden">
-                <UIButton variant="ghost" size="icon" className="hover:bg-primary/10 dark:hover:bg-primary/20 rounded-full cursor-target">
+            <SharedMobileSidebar
+              variant="gaming"
+              isOpen={isMobileSidebarOpen}
+              onOpenChange={setIsMobileSidebarOpen}
+              trigger={
+                <UIButton variant="ghost" size="icon" className="md:hidden hover:bg-primary/10 dark:hover:bg-primary/20 rounded-full cursor-target">
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Open menu</span>
                 </UIButton>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-full max-w-xs p-0 bg-black/98 backdrop-blur-2xl border-r border-blue_gaming-50/40">
-                <div className="flex flex-col h-full">
-                  <div className="p-4 border-b border-blue_gaming-50/40">
-                    <Link to="/" className="flex items-center space-x-2 mb-6 cursor-target">
-                      <img src="/gaming-assets/img/logo.png" alt="logo" className="w-8" />
-                      <span className="text-xl font-bold text-blue_gaming-50">{currentTenant.name}</span>
-                    </Link>
-                  </div>
-
-                  <nav className="flex-1 overflow-y-auto p-4">
-                    <div className="space-y-4">
-                      {/* Main Navigation */}
-                      {navItems.map((item, index) => (
-                        item.type === "route" ? (
-                          <Link
-                            key={index}
-                            to={item.path}
-                            className="block text-blue_gaming-50 hover:text-yellow_gaming-300 transition-colors cursor-target"
-                          >
-                            {item.name}
-                          </Link>
-                        ) : (
-                          <button
-                            key={index}
-                            onClick={() => handleNavClick(item)}
-                            className="block text-blue_gaming-50 hover:text-yellow_gaming-300 transition-colors cursor-target text-left"
-                          >
-                            {item.name}
-                          </button>
-                        )
-                      ))}
-                      
-                      {isAuthenticated && (
-                        <Link to="/account" className="block text-blue_gaming-50 hover:text-yellow_gaming-300 transition-colors cursor-target">
-                          Account
-                        </Link>
-                      )}
-                      
-                      {/* Admin Links */}
-                      {(isAdmin || isSuperAdmin) && (
-                        <>
-                          <div className="border-t border-blue_gaming-50/20 pt-4 mt-4">
-                            <p className="text-xs text-blue_gaming-50/60 uppercase tracking-wider mb-2">Admin</p>
-                            <Link to="/admin" className="block text-blue_gaming-50 hover:text-green_gaming-50 transition-colors cursor-target">
-                              Dashboard
-                            </Link>
-                            {isSuperAdmin && (
-                              <Link to="/admin/users" className="block text-blue_gaming-50 hover:text-purple_gaming-50 transition-colors cursor-target">
-                                User Management
-                              </Link>
-                            )}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </nav>
-
-                  {/* Authentication Section */}
-                  <div className="p-4 border-t border-blue_gaming-50/40">
-                    {isAuthenticated ? (
-                      <div className="space-y-2">
-                        <p className="text-sm text-blue_gaming-50/80">Signed in as:</p>
-                        <p className="text-sm font-medium text-blue_gaming-50 truncate">
-                          {user?.user_metadata?.name || "User"}
-                        </p>
-                        <ProfileButton />
-                      </div>
-                    ) : (
-                      <Link to="/signin">
-                        <UIButton className="w-full bg-yellow_gaming-300 text-black hover:bg-yellow_gaming-200 cursor-target">
-                          <User className="w-4 h-4 mr-2" />
-                          Sign In
-                        </UIButton>
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              </SheetContent>
-            </Sheet>
+              }
+            />
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-6">
@@ -559,7 +487,7 @@ const Hero = () => {
               disc<b>o</b>ver
             </h1>
 
-            <p className="mb-5 max-w-64 font-robert-regular text-blue_gaming-100">
+            <p className="mb-5 max-w-64 font-robert-regular text-blue_gaming-100 text-lg sm:text-xl md:text-xl lg:text-lg xl:text-lg">
               Enter the Board Game Universe <br /> Unleash Your Strategy
             </p>
 
@@ -617,7 +545,7 @@ const About = () => {
         />
 
         <div className="text-black mt-8 text-center font-circular-web text-lg max-w-96 mx-auto md:max-w-[34rem]">
-          <p>The Ultimate Board Gaming Experience begins—your strategy awaits</p>
+          <p>The Ultimate Board Gaming Experience begins</p>
           <p className="text-gray-500">
             GameZoo unites every board game enthusiast with premium tabletop games, 
             strategy classics, and family favorites into a unified gaming community
@@ -876,7 +804,7 @@ const Features = () => {
           </BentoTilt>
 
           <BentoTilt className="bento-tilt_1 h-40 w-full cursor-target">
-            <Link to="/shop" className="flex w-full h-full flex-col justify-between bg-violet_gaming-300 p-5 hover:bg-violet_gaming-200 transition-colors cursor-target">
+            <Link to="/categories" className="flex w-full h-full flex-col justify-between bg-violet_gaming-300 p-5 hover:bg-violet_gaming-200 transition-colors cursor-target">
               <h1 className="bento-title special-font text-black w-full">
                 V<b>i</b>ew A<b>l</b>l
               </h1>
@@ -930,7 +858,7 @@ const Features = () => {
           </BentoTilt>
 
           <BentoTilt className="bento-tilt_2 md:col-span-1 cursor-target">
-            <Link to="/shop" className="flex size-full flex-col justify-between bg-violet_gaming-300 p-5 hover:bg-violet_gaming-200 transition-colors cursor-target">
+            <Link to="/categories" className="flex size-full flex-col justify-between bg-violet_gaming-300 p-5 hover:bg-violet_gaming-200 transition-colors cursor-target">
               <h1 className="bento-title special-font max-w-64 text-black">
                 V<b>i</b>ew A<b>l</b>l
               </h1>
@@ -1146,6 +1074,7 @@ const CTA = () => {
 // Main GamingLanding Component
 const GamingLanding = () => {
   const [showBannersModal, setShowBannersModal] = useState(false);
+  const seoConfig = useSEOConfig('home');
 
   const showDelay = 5000;
   useEffect(() => {
@@ -1157,8 +1086,11 @@ const GamingLanding = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  
+
   return (
     <main className="relative min-h-screen w-screen overflow-x-hidden bg-creamy_gaming-100">
+            <SEOHead {...seoConfig} />
       <TargetCursor 
         spinDuration={2}
         hideDefaultCursor={true}

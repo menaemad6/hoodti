@@ -23,8 +23,10 @@ import { cn } from "@/lib/utils";
 import { useCart } from "@/context/CartContext";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import SharedMobileSidebar from "./SharedMobileSidebar";
 import { useTheme } from "@/context/ThemeContext";
 import { useAuth } from "@/context/AuthContext";
+import { useCurrentTenant } from "@/context/TenantContext";
 import { stripTenantFromEmail } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -65,6 +67,7 @@ const MobileNavbar: React.FC<MobileNavbarProps> = ({ isVisible = true }) => {
   const { theme, setTheme } = useTheme();
   const { isAuthenticated, signOut, user } = useAuth();
   const { isAdmin, isSuperAdmin } = useRoleAccess();
+  const currentTenant = useCurrentTenant();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   
   const getBottomNavItems = (): NavItem[] => {
@@ -127,13 +130,6 @@ const MobileNavbar: React.FC<MobileNavbarProps> = ({ isVisible = true }) => {
         iconColor: "text-blue-600 dark:text-blue-400",
       },
       {
-        icon: Palette,
-        label: "Customize Product",
-        href: "/customize",
-        iconBg: "bg-red-100 dark:bg-red-900/20",
-        iconColor: "text-red-600 dark:text-red-400",
-      },
-      {
         icon: TagIcon,
         label: "Categories",
         href: "/categories",
@@ -142,6 +138,17 @@ const MobileNavbar: React.FC<MobileNavbarProps> = ({ isVisible = true }) => {
       },
 
     ];
+
+    // Only add customize link if tenant has customization enabled
+    if (currentTenant.customization?.enabled) {
+      items.splice(1, 0, {
+        icon: Palette,
+        label: "Customize Product",
+        href: "/customize",
+        iconBg: "bg-red-100 dark:bg-red-900/20",
+        iconColor: "text-red-600 dark:text-red-400",
+      });
+    }
     
     if (isAuthenticated) {
       items.push({
@@ -345,8 +352,12 @@ const MobileNavbar: React.FC<MobileNavbarProps> = ({ isVisible = true }) => {
               
               if (item.href === "#more") {
                 return (
-                  <Sheet key={item.href} open={isMoreOpen} onOpenChange={setIsMoreOpen}>
-                    <SheetTrigger asChild>
+                  <SharedMobileSidebar
+                    key={item.href}
+                    variant="default"
+                    isOpen={isMoreOpen}
+                    onOpenChange={setIsMoreOpen}
+                    trigger={
                       <button
                         className={cn(
                           "flex flex-col items-center justify-center px-2 py-1 transition-colors w-full bg-transparent border-none",
@@ -363,158 +374,8 @@ const MobileNavbar: React.FC<MobileNavbarProps> = ({ isVisible = true }) => {
                           <span className="text-[10px] font-medium">{item.label}</span>
                         </div>
                       </button>
-                    </SheetTrigger>
-                    <SheetContent side="right" className="w-80 p-0 bg-background/95 backdrop-blur-xl border-l border-border/40">
-                      <div className="flex flex-col h-full">
-                        {/* Modernized Header */}
-                        <div className="p-4 flex items-center justify-between">
-                          <h2 className="text-lg font-semibold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70">More Options</h2>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 rounded-full bg-muted/50" 
-                            onClick={closeMoreMenu}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        
-                        {/* Stylish Theme Selector */}
-                        <div className="mx-4 p-3 rounded-xl bg-muted/50 backdrop-blur-sm border border-border/40">
-                          <div className="font-medium text-sm mb-2 text-muted-foreground">Choose Theme</div>
-                          <div className="grid grid-cols-3 gap-2">
-                            <Button
-                              variant={theme === 'light' ? 'default' : 'outline'}
-                              size="sm"
-                              onClick={() => setTheme('light')}
-                              className="h-9 rounded-lg"
-                            >
-                              <Sun className="h-4 w-4 mr-1.5" />
-                              Light
-                            </Button>
-                            <Button
-                              variant={theme === 'dark' ? 'default' : 'outline'}
-                              size="sm"
-                              onClick={() => setTheme('dark')}
-                              className="h-9 rounded-lg"
-                            >
-                              <Moon className="h-4 w-4 mr-1.5" />
-                              Dark
-                            </Button>
-                            <Button
-                              variant={theme === 'system' ? 'default' : 'outline'}
-                              size="sm"
-                              onClick={() => setTheme('system')}
-                              className="h-9 rounded-lg"
-                            >
-                              <Laptop className="h-4 w-4 mr-1.5" />
-                              Auto
-                            </Button>
-                          </div>
-                        </div>
-                        
-                        {/* Menu Items */}
-                        <div className="flex-1 overflow-y-auto px-2">
-                          <div className="py-4 space-y-1">
-                            {sidebarItems.map((item) => (
-                              <Link 
-                                key={item.href}
-                                to={item.href} 
-                                className="flex items-center justify-between p-3 hover:bg-primary/10 dark:hover:bg-primary/20 rounded-lg transition-colors"
-                                onClick={closeMoreMenu}
-                              >
-                                <div className="flex items-center">
-                                  <span className={cn("p-2 rounded-lg mr-3", item.iconBg)}>
-                                    <item.icon className={cn("h-5 w-5", item.iconColor)} />
-                                  </span>
-                                  <span className="font-medium">{item.label}</span>
-                                </div>
-                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                              </Link>
-                            ))}
-                          </div>
-                        </div>
-                        
-                        <Separator className="my-2" />
-                        
-                        {/* Profile Card - for both authenticated and non-authenticated users */}
-                        <div className="p-4">
-                          {isAuthenticated ? (
-                            <Link 
-                              to="/account" 
-                              className="flex items-center space-x-3 p-3 bg-muted/60 hover:bg-primary/10 dark:hover:bg-primary/20 rounded-xl transition-colors border border-border/40"
-                              onClick={closeMoreMenu}
-                            >
-                              <Avatar className="h-12 w-12 border-2 border-primary/20">
-                                <AvatarImage src={user?.avatar} alt={user?.name || "User"} />
-                                <AvatarFallback className="bg-primary/10 text-primary">
-                                  {getInitials(user?.name || "")}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate">{user?.name || "User"}</p>
-                                <p className="text-xs text-muted-foreground truncate">{stripTenantFromEmail(user?.email) || "user@example.com"}</p>
-                                <p className="text-xs text-primary mt-0.5">View Profile</p>
-                              </div>
-                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                            </Link>
-                          ) : (
-                            <div className="p-3 bg-muted/60 rounded-xl border border-border/40">
-                              <div className="flex items-center mb-3">
-                                <Avatar className="h-10 w-10 mr-3 border border-border/40">
-                                  <AvatarFallback className="bg-muted/80">
-                                    <User className="h-5 w-5 text-muted-foreground" />
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <p className="font-medium">Not signed in</p>
-                                  <p className="text-xs text-muted-foreground">Sign in to view your profile</p>
-                                </div>
-                              </div>
-                              <div className="grid grid-cols-2 gap-2">
-                                <Button
-                                  variant="default"
-                                  size="sm"
-                                  asChild
-                                  className="w-full"
-                                  onClick={closeMoreMenu}
-                                >
-                                  <Link to="/signin">Sign In</Link>
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  asChild
-                                  className="w-full"
-                                  onClick={closeMoreMenu}
-                                >
-                                  <Link to="/signup">Sign Up</Link>
-                                </Button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        
-                        {/* Sign Out Button - show only if authenticated */}
-                        {isAuthenticated && (
-                          <div className="p-4 pt-0">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                signOut();
-                                closeMoreMenu();
-                              }}
-                              className="w-full flex items-center justify-center h-10 rounded-lg border-dashed"
-                            >
-                              <LogOut className="h-4 w-4 mr-2 text-destructive" />
-                              <span className="text-destructive">Sign Out</span>
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    </SheetContent>
-                  </Sheet>
+                    }
+                  />
                 );
               }
               

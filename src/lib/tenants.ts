@@ -128,7 +128,7 @@ export const tenants: Tenant[] = [
   {
     id: "gamezoo",
     name: "GameZoo",
-    domain: "gamezoo.store",
+    domain: "gamezoo.games",
     logo: "/gaming-assets/img/gamezoo-logo.jpg",
     primaryColor: "#edff66",
     secondaryColor: "#f5f5f5",
@@ -146,7 +146,7 @@ export const tenants: Tenant[] = [
     currencySymbol: "E£",
     defaultLanguage: "en",
     contactEmail: "email@gmail.com",
-    contactPhone: "+0000000000000",
+    contactPhone: "+201224599663",
     address: "Sohag, Egypt",
     socialMedia: {
       // facebook: "https://facebook.com/hoodti",

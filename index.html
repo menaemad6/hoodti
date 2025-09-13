@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
     <title>Shop Online</title>
-    <link rel="icon" type="image/x-icon" href="/hoodti-logo.jpg">
+    <!-- <link rel="icon" type="image/x-icon" href="/hoodti-logo.jpg"> -->
     <meta name="description" content="Discover curated products with fast delivery and easy returns." />
     <meta name="author" content="Store" />
 
@@ -14,7 +14,7 @@
     <meta property="og:description" content="Discover curated products with fast delivery and easy returns." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="/" />
-    <meta property="og:image" content="/hoodti-logo.jpg" />
+    <!-- <meta property="og:image" content="/hoodti-logo.jpg" /> -->
     <meta property="og:site_name" content="Store" />
 
     <!-- Twitter Meta Tags -->
@@ -22,7 +22,7 @@
     <meta name="twitter:site" content="" />
     <meta name="twitter:title" content="Shop Online" />
     <meta name="twitter:description" content="Discover curated products with fast delivery and easy returns." />
-    <meta name="twitter:image" content="/hoodti-logo.jpg" />
+    <!-- <meta name="twitter:image" content="/hoodti-logo.jpg" /> -->
 
     <!-- Fonts (Do not touch) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -89,7 +89,7 @@
             // Map known production domains to tenant ids
             var domainToTenant = {
               'hoodti.store': 'hoodti',
-              'gamezoo.store': 'gamezoo',
+              'gamezoo.games': 'gamezoo',
               'ecommerce-v15.netlify.app': 'streetwear',
               'collab.com': 'collab',
               "diamond-covers.netlify.app": "diamond"
@@ -101,15 +101,17 @@
             }
           }
 
-          if (!tenantId) tenantId = 'hoodti';
+          if (!tenantId) tenantId = 'default';
 
           var tenantColors = {
+            default: { primary: '#3b82f6', secondary: '#f8fafc' },
             hoodti: { primary: '#DE41FF', secondary: '#f5f5f5' },
             gamezoo: { primary: '#5879DB', secondary: '#f5f5f5' },
             streetwear: { primary: '#ff6b35', secondary: '#2c3e50' },
             collab: { primary: '#8e44ad', secondary: '#ecf0f1' }
           };
           var tenantLogos = {
+            default: '/loader.png',
             hoodti: '/hoodti-logo.jpg',
             gamezoo: '/gaming-assets/img/gamezoo-logo.jpg',
             streetwear: '/streetwear-logo.jpg',
@@ -117,6 +119,14 @@
             diamond: '/diamond-logo.jpg'
           };
           var tenantMeta = {
+            default: {
+              name: 'Store',
+              domain: 'store.com',
+              description: 'Discover curated products with fast delivery and easy returns.',
+              seoDescription: 'Discover curated products with fast delivery and easy returns.',
+              keywords: 'online store, shopping, products, delivery, ecommerce, retail',
+              twitter: ''
+            },
             hoodti: {
               name: 'Hoodti',
               domain: 'hoodti.store',
@@ -151,7 +161,7 @@
             },
             gamezoo: {
               name: 'GameZoo',
-              domain: 'gamezoo.store',
+              domain: 'gamezoo.games',
               description: 'Explore GameZoo\'s premium board game collection – strategy games, family favorites, and exclusive tabletop gaming experiences.',
               seoDescription: 'Explore GameZoo\'s premium board game collection – strategy games, family favorites, and exclusive tabletop gaming experiences.',
               keywords: 'board games, tabletop games, strategy games, family games, card games, dice games, gaming accessories, GameZoo, board game store, tabletop gaming, party games, cooperative games, competitive games, board game collection',
@@ -195,9 +205,9 @@
             return L > 0.5 ? '222.2 84% 4.9%' : '0 0% 100%';
           }
 
-          var colors = tenantColors[tenantId] || tenantColors['hoodti'];
-          var logo = tenantLogos[tenantId] || tenantLogos['hoodti'];
-          var meta = tenantMeta[tenantId] || tenantMeta['hoodti'];
+          var colors = tenantColors[tenantId] || tenantColors['default'];
+          var logo = tenantLogos[tenantId] || tenantLogos['default'];
+          var meta = tenantMeta[tenantId] || tenantMeta['default'];
           var pRgb = hexToRgb(colors.primary);
           var sRgb = hexToRgb(colors.secondary);
           var pHsl = pRgb ? rgbToHsl(pRgb.r, pRgb.g, pRgb.b) : [225,64,53];
@@ -288,14 +298,14 @@
     <div id="preload-overlay" aria-label="Loading" role="status">
       <div class="preload-ring" aria-hidden="true"></div>
       <div class="preload-logo" aria-hidden="true">
-        <img id="preload-logo-img" src="/hoodti-logo.jpg" alt="Loading" />
+        <img id="preload-logo-img" src="/loader.png" alt="Loading" />
       </div>
     </div>
     <script>
       // Set dynamic logo src as early as possible
       (function(){
         try{
-          var logo = window.__TENANT_LOGO__ || '/hoodti-logo.jpg';
+          var logo = window.__TENANT_LOGO__ || '/loader.png';
           var img = document.getElementById('preload-logo-img');
           if(img && logo){ img.src = logo; }
         }catch(e){}
@@ -307,80 +317,3 @@
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-
-
-
-<!-- <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Glass Grocer | Modern Grocery Delivery</title>
-    <meta name="description" content="Premium grocery delivery service with the freshest produce and pantry essentials delivered right to your doorstep." />
-    <meta name="author" content="Glass Grocer" />
-
-    <meta property="og:title" content="Glass Grocer | Modern Grocery Delivery" />
-    <meta property="og:description" content="Premium grocery delivery service with the freshest produce and pantry essentials delivered right to your doorstep." />
-    <meta property="og:type" content="website" />
-
-
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@GlassGrocer" />
-
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  </head>
-
-  <body>
-    <div id="root"></div>
-    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>  -->
-
-
-
-
-
-
-<!-- <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hoodti | Bold Streetwear for Urban Culture</title>
-    <meta name="description" content="Elevate your street game with Hoodti – your plug for premium streetwear drops, exclusive collections, and bold urban fashion." />
-    <meta name="author" content="Hoodti" />
-
-
-    <meta property="og:title" content="Hoodti | Bold Streetwear for Urban Culture" />
-    <meta property="og:description" content="Elevate your street game with Hoodti – your plug for premium streetwear drops, exclusive collections, and bold urban fashion." />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://Hoodti.com" />
-    <meta property="og:image" content="https://Hoodti.com/og-image.jpg" />
-
-
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@Hoodti" />
-    <meta name="twitter:title" content="Hoodti | Bold Streetwear for Urban Culture" />
-    <meta name="twitter:description" content="Your plug for premium streetwear drops and bold urban fashion." />
-    <meta name="twitter:image" content="https://Hoodti.com/twitter-image.jpg" />
-
-
-    <meta name="keywords" content="streetwear, urban fashion, hype clothing, sneakers, street style, exclusive drops, Hoodti, streetwear ecommerce" />
-    <meta name="robots" content="index, follow" />
-
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  </head>
-
-  <body>
-    <div id="root"></div>
-    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html> -->

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
+import { useCurrentTenant } from "@/context/TenantContext";
 import { stripTenantFromEmail } from "@/lib/utils";
 import ProfileButton from "@/components/auth/ProfileButton";
 import ThemeToggle from "@/components/theme/ThemeToggle";
@@ -24,6 +25,7 @@ const Navbar = () => {
   const { cartItemsCount } = useCart();
   const { isAuthenticated, user } = useAuth();
   const { theme, setTheme, resolvedTheme } = useTheme();
+  const currentTenant = useCurrentTenant();
   const navigate = useNavigate();
 
   return (
@@ -99,12 +101,14 @@ const Navbar = () => {
                         <Link to="/deals" className="flex items-center px-2 py-3 text-sm font-medium hover:bg-primary/10 dark:hover:bg-primary/20 rounded-lg transition-colors">
                           Deals
                         </Link>
-                        <Link to="/customize" className="flex items-center px-2 py-3 text-sm font-medium hover:bg-primary/10 dark:hover:bg-primary/20 rounded-lg transition-colors">
-                          <span>Customize</span>
-                          <Badge variant="default" className="ml-2 text-xs px-1.5 py-0.5 bg-gradient-to-r from-green-500 to-emerald-500 text-white">
-                            New
-                          </Badge>
-                        </Link>
+                        {currentTenant.customization?.enabled && (
+                          <Link to="/customize" className="flex items-center px-2 py-3 text-sm font-medium hover:bg-primary/10 dark:hover:bg-primary/20 rounded-lg transition-colors">
+                            <span>Customize</span>
+                            <Badge variant="default" className="ml-2 text-xs px-1.5 py-0.5 bg-gradient-to-r from-green-500 to-emerald-500 text-white">
+                              New
+                            </Badge>
+                          </Link>
+                        )}
                         {!isAuthenticated && (
                           <>
                             <Link to="/signin" className="flex items-center px-2 py-3 text-sm font-medium hover:bg-primary/10 dark:hover:bg-primary/20 rounded-lg transition-colors">
@@ -174,12 +178,14 @@ const Navbar = () => {
                 <Link to="/deals" className="px-3 py-1.5 text-sm font-medium hover:bg-primary/10 dark:hover:bg-primary/20 rounded-full transition-colors">
                   Deals
                 </Link>
-                <Link to="/customize" className="px-3 py-1.5 text-sm font-medium hover:bg-primary/10 dark:hover:bg-primary/20 rounded-full transition-colors">
-                  <span>Customize</span>
-                  <Badge variant="default" className="ml-2 text-xs px-1.5 py-0.5 bg-gradient-to-r from-green-500 to-emerald-500 text-white">
-                    New
-                  </Badge>
-                </Link>
+                {currentTenant.customization?.enabled && (
+                  <Link to="/customize" className="px-3 py-1.5 text-sm font-medium hover:bg-primary/10 dark:hover:bg-primary/20 rounded-full transition-colors">
+                    <span>Customize</span>
+                    <Badge variant="default" className="ml-2 text-xs px-1.5 py-0.5 bg-gradient-to-r from-green-500 to-emerald-500 text-white">
+                      New
+                    </Badge>
+                  </Link>
+                )}
               </nav>
 
               {/* Desktop Actions */}

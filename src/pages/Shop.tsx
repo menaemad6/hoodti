@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/seo/SEOHead";
@@ -30,15 +30,14 @@ import { mapSupabaseProductToAppProduct } from "@/types/supabase-types";
 import { 
   Filter, 
   SlidersHorizontal, 
-  Star, 
+  Star,
   Tag, 
   Percent,
   Package,
   ArrowUpDown,
   Search,
   ChevronRight,
-  X,
-  ShoppingBag
+  X
 } from "lucide-react";
 import {
   Sheet,
@@ -49,8 +48,8 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import SearchInput from "@/components/shop/SearchInput";
+import FloatingProductCards from "@/components/shop/FloatingProductCards";
 import AnimatedWrapper from "@/components/ui/animated-wrapper";
-import GlassCard from "@/components/ui/glass-card";
 import { useCurrentTenant } from "@/context/TenantContext";
 
 const Shop = () => {
@@ -91,6 +90,28 @@ const Shop = () => {
 
   // Get SEO configuration for shop page
   const seoConfig = useSEOConfig('shop');
+  
+  // Get filter options from tenant configuration (memoized to prevent re-renders)
+  const filterOptions = useMemo(() => {
+    return currentTenant.productsOptions || {
+      colors: true,
+      types: true,
+      sizes: true,
+      materials: true,
+      gender: true,
+    };
+  }, [currentTenant.productsOptions]);
+
+  // Reset accordion state if the currently open section is disabled
+  useEffect(() => {
+    if (openAccordion === "sizes" && !filterOptions.sizes) {
+      setOpenAccordion("categories");
+    } else if (openAccordion === "colors" && !filterOptions.colors) {
+      setOpenAccordion("categories");
+    } else if (openAccordion === "gender" && !filterOptions.gender) {
+      setOpenAccordion("categories");
+    }
+  }, [filterOptions, openAccordion]);
   
   // Use the tenant-aware products service
   const productsService = useProductsService();
@@ -239,8 +260,8 @@ const Shop = () => {
       product.price <= priceRange[1]
     );
     
-    // Size filter
-    if (selectedSizes.length > 0) {
+    // Size filter - only apply if enabled
+    if (filterOptions.sizes && selectedSizes.length > 0) {
       const beforeFilter = result.length;
       result = result.filter(product => {
         // Check if the product's size matches any of the selected sizes
@@ -271,8 +292,8 @@ const Shop = () => {
       console.log(`Size filter: ${beforeFilter} → ${result.length} products`);
     }
     
-    // Color filter
-    if (selectedColors.length > 0) {
+    // Color filter - only apply if enabled
+    if (filterOptions.colors && selectedColors.length > 0) {
       const beforeFilter = result.length;
       result = result.filter(product => {
         // Check if the product's color matches any of the selected colors
@@ -303,8 +324,8 @@ const Shop = () => {
       console.log(`Color filter: ${beforeFilter} → ${result.length} products`);
     }
     
-    // Gender filter
-    if (selectedGender) {
+    // Gender filter - only apply if enabled
+    if (filterOptions.gender && selectedGender) {
       const beforeFilter = result.length;
       result = result.filter(product => {
         if (!product.gender) return false;
@@ -379,10 +400,10 @@ const Shop = () => {
     setDebouncedSearchQuery("");
     setShowNew(false);
     setShowDiscounted(false);
-    // Clear clothing filters
-    setSelectedSizes([]);
-    setSelectedColors([]);
-    setSelectedGender("");
+    // Clear clothing filters - only clear if they are enabled
+    if (filterOptions.sizes) setSelectedSizes([]);
+    if (filterOptions.colors) setSelectedColors([]);
+    if (filterOptions.gender) setSelectedGender("");
   };
 
   const handlePriceInputChange = (type: 'min' | 'max', value: string) => {
@@ -415,7 +436,9 @@ const Shop = () => {
   const FilterSection = () => (
     <div className="space-y-6">
       {/* Active Filter Badges */}
-      {(selectedSizes.length > 0 || selectedColors.length > 0 || selectedGender) && (
+      {((filterOptions.sizes && selectedSizes.length > 0) || 
+        (filterOptions.colors && selectedColors.length > 0) || 
+        (filterOptions.gender && selectedGender)) && (
         <div className="space-y-2">
           <div className="flex justify-between items-center">
             <h3 className="text-sm font-medium">Active Filters</h3>
@@ -429,7 +452,7 @@ const Shop = () => {
             </Button>
           </div>
           <div className="flex flex-wrap gap-2">
-            {selectedSizes.map(size => (
+            {filterOptions.sizes && selectedSizes.map(size => (
               <div 
                 key={`badge-size-${size}`} 
                 className="flex items-center bg-primary/10 text-primary text-xs rounded-full px-2 py-1"
@@ -441,7 +464,7 @@ const Shop = () => {
                 />
               </div>
             ))}
-            {selectedColors.map(color => (
+            {filterOptions.colors && selectedColors.map(color => (
               <div 
                 key={`badge-color-${color}`} 
                 className="flex items-center bg-primary/10 text-primary text-xs rounded-full px-2 py-1"
@@ -453,7 +476,7 @@ const Shop = () => {
                 />
               </div>
             ))}
-            {selectedGender && (
+            {filterOptions.gender && selectedGender && (
               <div 
                 className="flex items-center bg-primary/10 text-primary text-xs rounded-full px-2 py-1"
               >
@@ -567,7 +590,11 @@ const Shop = () => {
         </AccordionItem>
 
         {/* Size Filter */}
-        <AccordionItem value="sizes" className="border-b">
+        <AccordionItem 
+          value="sizes" 
+          className="border-b"
+          style={{ display: filterOptions.sizes ? 'block' : 'none' }}
+        >
           <AccordionTrigger className="hover:no-underline">
             <div className="flex items-center gap-2">
               <SlidersHorizontal className="h-4 w-4" />
@@ -619,7 +646,11 @@ const Shop = () => {
         </AccordionItem>
 
         {/* Color Filter */}
-        <AccordionItem value="colors" className="border-b">
+        <AccordionItem 
+          value="colors" 
+          className="border-b"
+          style={{ display: filterOptions.colors ? 'block' : 'none' }}
+        >
           <AccordionTrigger className="hover:no-underline">
             <div className="flex items-center gap-2">
               <div className="h-4 w-4 bg-gradient-to-r from-red-500 via-green-500 to-blue-500 rounded-full" />
@@ -671,7 +702,11 @@ const Shop = () => {
         </AccordionItem>
 
         {/* Gender Filter */}
-        <AccordionItem value="gender" className="border-b">
+        <AccordionItem 
+          value="gender" 
+          className="border-b"
+          style={{ display: filterOptions.gender ? 'block' : 'none' }}
+        >
           <AccordionTrigger className="hover:no-underline">
             <div className="flex items-center gap-2">
               <div className="h-4 w-4 flex items-center justify-center">
@@ -787,7 +822,7 @@ const Shop = () => {
                 </div>
                 
                 <h1 className="text-4xl md:text-5xl xl:text-6xl font-bold">
-                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">Discover</span>
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">Discover</span>
                   <span className="block mt-1">Premium Products</span>
                 </h1>
                 
@@ -819,70 +854,7 @@ const Shop = () => {
             </AnimatedWrapper>
             
             {/* Right: Visual elements */}
-            <AnimatedWrapper animation="fade-in" delay="300" className="hidden lg:block">
-              <div className="relative h-96">
-                {/* 3D-like floating cards */}
-                <GlassCard 
-                  className="absolute right-0 top-0 w-64 transform rotate-3 hover:rotate-0 transition-transform duration-500 z-20"
-                  variant="elevated"
-                  hoverEffect={true}
-                >
-                  <div className="flex items-center p-3">
-                    <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mr-4">
-                      <ShoppingBag className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium">Premium Selection</h3>
-                      <p className="text-xs text-muted-foreground">Quality at its finest</p>
-                    </div>
-                  </div>
-                </GlassCard>
-                
-                <GlassCard 
-                  className="absolute right-20 top-32 w-72 transform -rotate-2 hover:rotate-0 transition-transform duration-500 z-10"
-                  variant="elevated"
-                  hoverEffect={true}
-                >
-                  <div className="relative aspect-video overflow-hidden rounded-lg">
-                    <img 
-                      src="/assets/hero-product.jpg" 
-                      alt="Featured product" 
-                      className="object-cover w-full h-full"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = "https://placehold.co/600x400/f5f5f5/cccccc?text=Premium+Product";
-                      }}
-                    />
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-                      <div className="text-white">
-                        <div className="flex justify-between items-center">
-                          <p className="text-sm font-medium">Premium Product</p>
-                          <p className="text-sm font-bold">$49.99</p>
-                        </div>
-                        <div className="flex items-center mt-1">
-                          {[1, 2, 3, 4, 5].map(star => (
-                            <Star key={star} className="h-3 w-3 fill-primary text-primary" />
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </GlassCard>
-                
-                <GlassCard 
-                  className="absolute left-8 bottom-0 w-60 transform rotate-6 hover:rotate-0 transition-transform duration-500"
-                  variant="bordered"
-                  hoverEffect={true}
-                >
-                  <div className="p-3">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-xs font-medium text-muted-foreground">Today's Offer</span>
-                      <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">25% OFF</span>
-                    </div>
-                    <p className="text-sm font-medium">Special discount on selected items</p>
-                  </div>
-                </GlassCard>
-              </div>
-            </AnimatedWrapper>
+            <FloatingProductCards products={filteredProducts} />
           </div>
         </div>
       </section>
