@@ -28,6 +28,7 @@ import { useProducts } from '@/hooks/useProducts';
 import { Product } from '@/integrations/supabase/types.service';
 import SEOHead from '@/components/seo/SEOHead';
 import { useSEOConfig } from '@/lib/seo-config';
+import { useIsTouch } from '@/hooks/use-touch';
 // Register GSAP plugins
 gsap.registerPlugin(ScrollTrigger);
 
@@ -266,7 +267,7 @@ const Navbar = () => {
               isOpen={isMobileSidebarOpen}
               onOpenChange={setIsMobileSidebarOpen}
               trigger={
-                <UIButton variant="ghost" size="icon" className="md:hidden hover:bg-primary/10 dark:hover:bg-primary/20 rounded-full cursor-target">
+                <UIButton variant="ghost" size="icon" className="md:hidden hover:bg-primary/10 dark:hover:bg-primary/20 rounded-full cursor-target text-white">
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Open menu</span>
                 </UIButton>
@@ -327,7 +328,7 @@ const Navbar = () => {
             {/* Authentication Section */}
             <div className="flex items-center gap-2">
               {isAuthenticated ? (
-                <ProfileButton />
+                <ProfileButton  />
               ) : (
                 <Link to="/signin">
                   <Button
@@ -355,18 +356,40 @@ const Hero = () => {
   const [loadedVideos, setLoadedVideos] = useState(0);
   const totalVideos = 3;
   const nextVdRef = useRef<HTMLVideoElement>(null);
+  const isTouch = useIsTouch();
 
   const handleVideoLoad = () => {
     setLoadedVideos((prev) => prev + 1);
   };
 
   useEffect(() => {
-    if (loadedVideos === totalVideos - 1) {
+    // On touch screens, only wait for the first video to load
+    // On desktop, wait for all videos except one to load
+    const requiredVideos = isTouch ? 1 : totalVideos - 1;
+    if (loadedVideos >= requiredVideos) {
       setLoading(false);
     }
-  }, [loadedVideos]);
+  }, [loadedVideos, isTouch]);
+
+  // Fallback: Stop loading after 10 seconds regardless
+  useEffect(() => {
+    const fallbackTimer = setTimeout(() => {
+      setLoading(false);
+    }, 10000);
+
+    return () => clearTimeout(fallbackTimer);
+  }, []);
+
+  // On touch screens, if we already have the video loaded, stop loading immediately
+  useEffect(() => {
+    if (isTouch && loadedVideos >= 1) {
+      setLoading(false);
+    }
+  }, [isTouch, loadedVideos]);
 
   const handleMiniVdClick = () => {
+    // Disable video switching on touch screens
+    if (isTouch) return;
     setHasClicked(true);
     setCurrentIndex((prevIndex) => (prevIndex % totalVideos) + 1);
   };
@@ -437,38 +460,42 @@ const Hero = () => {
         className="relative z-10 h-dvh w-screen overflow-hidden rounded-lg bg-blue_gaming-75"
       >
         <div>
-          <div className="mask-clip-path absolute-center absolute z-50 size-64 cursor-pointer overflow-hidden rounded-lg">
-            <VideoPreview>
-              <div
-                onClick={handleMiniVdClick}
-                className="origin-center scale-50 opacity-0 transition-all duration-500 ease-in hover:scale-100 hover:opacity-100"
-              >
-                <video
-                  ref={nextVdRef}
-                  src={getVideoSrc((currentIndex % totalVideos) + 1)}
-                  loop
-                  muted
-                  id="current-video"
-                  className="size-64 origin-center scale-150 object-cover object-center"
-                  onLoadedData={handleVideoLoad}
-                />
-              </div>
-            </VideoPreview>
-          </div>
+          {/* Only render center video on non-touch devices */}
+          {!isTouch && (
+            <div className="mask-clip-path absolute-center absolute z-50 size-64 cursor-pointer overflow-hidden rounded-lg">
+              <VideoPreview>
+                <div
+                  onClick={handleMiniVdClick}
+                  className="origin-center scale-50 opacity-0 transition-all duration-500 ease-in hover:scale-100 hover:opacity-100"
+                >
+                  <video
+                    ref={nextVdRef}
+                    src={getVideoSrc((currentIndex % totalVideos) + 1)}
+                    loop
+                    muted
+                    id="current-video"
+                    className="size-64 origin-center scale-150 object-cover object-center"
+                    onLoadedData={handleVideoLoad}
+                  />
+                </div>
+              </VideoPreview>
+            </div>
+          )}
 
+          {/* Only render next video on non-touch devices */}
+          {!isTouch && (
+            <video
+              ref={nextVdRef}
+              src={getVideoSrc(currentIndex)}
+              loop
+              muted
+              id="next-video"
+              className="absolute-center invisible absolute z-20 size-64 object-cover object-center"
+              onLoadedData={handleVideoLoad}
+            />
+          )}
           <video
-            ref={nextVdRef}
-            src={getVideoSrc(currentIndex)}
-            loop
-            muted
-            id="next-video"
-            className="absolute-center invisible absolute z-20 size-64 object-cover object-center"
-            onLoadedData={handleVideoLoad}
-          />
-          <video
-            src={getVideoSrc(
-              currentIndex === totalVideos - 1 ? 1 : currentIndex
-            )}
+            src={getVideoSrc(isTouch ? 1 : (currentIndex === totalVideos - 1 ? 1 : currentIndex))}
             autoPlay
             loop
             muted
@@ -484,11 +511,11 @@ const Hero = () => {
         <div className="absolute left-0 top-0 z-40 size-full">
           <div className="mt-24 px-5 sm:px-10">
             <h1 className="special-font hero-heading text-blue_gaming-100">
-              disc<b>o</b>ver
+              dom<b>i</b>nate
             </h1>
 
             <p className="mb-5 max-w-64 font-robert-regular text-blue_gaming-100 text-lg sm:text-xl md:text-xl lg:text-lg xl:text-lg">
-              Enter the Board Game Universe <br /> Unleash Your Strategy
+              Where Legends Are Born <br /> Every Move Changes Everything
             </p>
 
             <Link to="/shop">
@@ -664,7 +691,7 @@ const BentoCard = ({ category, title, description }: {
           <div className="relative inline-block">
             {/* Overlay under category name for better visibility - only under text */}
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm rounded-lg -m-1"></div>
-            <h1 className="bento-title special-font relative z-10 px-2 py-1">
+            <h1 className="bento-title special-font relative z-10 px-2 py-1 text-white">
               {category ? (
                 <>
                   {category.name.split(' ').map((word, index) => (
@@ -1075,6 +1102,7 @@ const CTA = () => {
 const GamingLanding = () => {
   const [showBannersModal, setShowBannersModal] = useState(false);
   const seoConfig = useSEOConfig('home');
+  const isTouch = useIsTouch();
 
   const showDelay = 5000;
   useEffect(() => {
@@ -1091,10 +1119,13 @@ const GamingLanding = () => {
   return (
     <main className="relative min-h-screen w-screen overflow-x-hidden bg-creamy_gaming-100">
             <SEOHead {...seoConfig} />
-      <TargetCursor 
-        spinDuration={2}
-        hideDefaultCursor={true}
-      />
+      {/* Only render TargetCursor on non-touch devices */}
+      {!isTouch && (
+        <TargetCursor 
+          spinDuration={2}
+          hideDefaultCursor={true}
+        />
+      )}
       <Navbar />
       <Hero />
       <About />
