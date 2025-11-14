@@ -62,6 +62,8 @@ export const PRODUCT_TYPE_OPTIONS = [
   "Polo Baskota",
   "Sweatshirt",
   "Hoodie",
+  "Oversized Hoodie",
+  "Oversized Crewneck",
   "Shorts",
   "Jacket",
   "Cargo Pants",
@@ -135,6 +137,25 @@ export const SIZING_OPTIONS = [
     ],
   },
   {
+    type: "Oversized Hoodie",
+    sizes: [
+      { size: "S", length: 70, width: 58 },
+      { size: "M", length: 72, width: 60 },
+      { size: "L", length: 74, width: 62 },
+      { size: "XL", length: 76, width: 64 },
+      { size: "XXL", length: 78, width: 66 },
+    ],
+  },
+  {
+    type: "Oversized Crewneck",
+    sizes: [
+      { size: "M", length: 72, width: 60 },
+      { size: "L", length: 74, width: 62 },
+      { size: "XL", length: 76, width: 64 },
+      { size: "XXL", length: 78, width: 66 },
+    ],
+  },
+  {
     type: "Sweatshirt",
     sizes: [
       { size: "M", sleve: 44, length: 77, width: 62},
@@ -159,6 +180,8 @@ export const SIZING_OPTIONS = [
 // Product type to blank image mapping for customization
 export const PRODUCT_BLANK_IMAGES: Record<string, string> = {
   "Hoodie": "/assets/blank-hoodie.png",
+  "Oversized Hoodie": "/assets/blank-hoodie.png",
+  "Oversized Crewneck": "/assets/blank-sweatshirt.png",
   "Sweatshirt": "/assets/blank-sweatshirt.png",
   "Regular T-shirt": "/assets/blank-tshirt.png",
   "Boxy T-shirt": "/assets/blank-tshirt.png",
@@ -173,6 +196,13 @@ export const PRODUCT_COLORS_BY_TYPE: Record<string, string[]> = {
   "Hoodie": [
     "black", "white", "red", "blue", "green", "yellow", "orange", "purple", "pink", 
     "brown", "gray", "navy-blue", "light-blue", "dark-green", "beige"
+  ],
+  "Oversized Hoodie": [
+    "black", "white", "red", "blue", "green", "yellow", "orange", "purple", "pink", 
+    "brown", "gray", "navy-blue", "light-blue", "dark-green", "beige"
+  ],
+  "Oversized Crewneck": [
+    "black", "white", "red", "blue", "green", "pink", "beige", "offwhite", "baby-blue", "bubblegum"
   ],
   "Sweatshirt": [
     "black", "white", "red", "blue", "green", "pink", "beige", "offwhite", "baby-blue", "bubblegum"
@@ -249,6 +279,35 @@ export const PRODUCT_COLOR_IMAGES: Record<string, Record<string, string>> = {
     "light-blue": "/assets/hoodies/light-blue-hoodie.jpg",
     "dark-green": "/assets/hoodies/dark-green-hoodie.jpg",
     "beige": "/assets/hoodies/beige-hoodie.jpg"
+  },
+  "Oversized Hoodie": {
+    "black": "/assets/hoodies/black-hoodie.jpg",
+    "white": "/assets/hoodies/white-hoodie.jpg",
+    "red": "/assets/hoodies/red-hoodie.jpg",
+    "blue": "/assets/hoodies/blue-hoodie.jpg",
+    "green": "/assets/hoodies/green-hoodie.jpg",
+    "yellow": "/assets/hoodies/yellow-hoodie.jpg",
+    "orange": "/assets/hoodies/orange-hoodie.jpg",
+    "purple": "/assets/hoodies/purple-hoodie.jpg",
+    "pink": "/assets/hoodies/pink-hoodie.jpg",
+    "brown": "/assets/hoodies/brown-hoodie.jpg",
+    "gray": "/assets/hoodies/gray-hoodie.jpg",
+    "navy-blue": "/assets/hoodies/navy-blue-hoodie.jpg",
+    "light-blue": "/assets/hoodies/light-blue-hoodie.jpg",
+    "dark-green": "/assets/hoodies/dark-green-hoodie.jpg",
+    "beige": "/assets/hoodies/beige-hoodie.jpg"
+  },
+  "Oversized Crewneck": {
+    "black": "/assets/sweatshirts/black-sweatshirt.jpg",
+    "white": "/assets/sweatshirts/white-sweatshirt.jpg",
+    "red": "/assets/sweatshirts/red-sweatshirt.jpg",
+    "blue": "/assets/sweatshirts/blue-sweatshirt.jpg",
+    "green": "/assets/sweatshirts/green-sweatshirt.jpg",
+    "pink": "/assets/sweatshirts/pink-sweatshirt.jpg",
+    "beige": "/assets/sweatshirts/beige-sweatshirt.jpg",
+    "offwhite": "/assets/sweatshirts/offwhite--sweatshirt.jpg",
+    "baby-blue": "/assets/sweatshirts/baby-blue-sweatshirt.jpg",
+    "bubblegum": "/assets/sweatshirts/bubblegum-sweatshirt.jpg"
   },
   "Sweatshirt": {
     "black": "/assets/sweatshirts/black-sweatshirt.jpg",

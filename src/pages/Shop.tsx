@@ -371,7 +371,12 @@ const Shop = () => {
         result.sort((a, b) => b.name.localeCompare(a.name));
         break;
       default:
-        result.sort((a, b) => (b.is_new ? 1 : 0) - (a.is_new ? 1 : 0));
+        // Sort by newest first (created_at descending)
+        result.sort((a, b) => {
+          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+          return dateB - dateA; // Descending order (newest first)
+        });
         break;
     }
     
