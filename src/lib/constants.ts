@@ -54,6 +54,7 @@ export const BRAND_NAME = resolveBrandName();
 export const PRODUCT_TYPE_OPTIONS = [
   "Sweet Pants",
   "Jeans",
+  "Straight Pants",
   "Regular T-shirt",
   "Boxy T-shirt",
   "Oversized T-shirt",
@@ -90,6 +91,15 @@ export const SIZING_OPTIONS = [
       { size: "L", waist: 33, length: 103 },
       { size: "XL", waist: 36, length: 106 },
       { size: "XXL", waist: 39, length: 109 },
+    ],
+  },
+  {
+    type: "Straight Pants",
+    sizes: [
+      { size: "M", waist: 28, length: 97 },
+      { size: "L", waist: 31, length: 101 },
+      { size: "XL", waist: 34, length: 104 },
+      { size: "XXL", waist: 37, length: 107 },
     ],
   },
   {
@@ -235,6 +245,9 @@ export const PRODUCT_COLORS_BY_TYPE: Record<string, string[]> = {
     "black", "white", "blue", "gray", "navy", "brown"
   ],
   "Sweet Pants": [
+    "black", "white", "blue", "gray", "navy", "brown", "beige"
+  ],
+  "Straight Pants": [
     "black", "white", "blue", "gray", "navy", "brown", "beige"
   ],
   "Shorts": [
@@ -479,6 +492,7 @@ function transformProductType(dbType: string): string {
     'polo_shirt': 'Polo Shirt',
     'polo_baskota': 'Polo Baskota',
     'sweet_pants': 'Sweet Pants',
+    'straight_pants': 'Straight Pants',
     'cargo_pants': 'Cargo Pants',
     'track_pants': 'Track Pants',
     'denim_jacket': 'Denim Jacket'
